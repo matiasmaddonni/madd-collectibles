@@ -1,5 +1,6 @@
 export type ProductCondition = 'mint_sealed' | 'mint_open' | 'near_mint' | 'good' | 'fair'
 export type ProductStatus = 'available' | 'reserved' | 'sold'
+export type Currency = 'USD' | 'ARS'
 
 export interface Brand {
   id: string
@@ -39,6 +40,7 @@ export interface Product {
   slug: string
   description: string | null
   price: number
+  currency: Currency
   cost_price: number | null
   condition: ProductCondition
   status: ProductStatus
