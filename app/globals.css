@@ -151,7 +151,8 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  height: 1px;
+  height: 2px;
+  z-index: 20;
   background: linear-gradient(
     90deg,
     transparent,
@@ -161,15 +162,18 @@ body {
   transform: scaleX(0.25);
   transform-origin: center;
   opacity: 0.55;
+  pointer-events: none;
   transition:
     transform 0.4s ease,
     opacity 0.4s ease,
-    height 0.3s ease;
+    height 0.3s ease,
+    box-shadow 0.4s ease;
 }
 .group:hover .top-accent {
   transform: scaleX(1);
   opacity: 1;
-  height: 2px;
+  height: 3px;
+  box-shadow: 0 0 12px 1px var(--accent-strong-glow);
 }
 
 .product-img-zoom {

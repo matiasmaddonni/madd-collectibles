@@ -1,7 +1,10 @@
 import { ProductCard } from "@/components/catalog/ProductCard";
-import { featuredProducts } from "@/lib/sample-products";
+import { getFeaturedProducts } from "@/lib/queries";
 
-export function FeaturedProducts() {
+export async function FeaturedProducts() {
+  const cards = await getFeaturedProducts(4);
+  if (cards.length === 0) return null;
+
   return (
     <section id="catalogo" className="border-b border-border-subtle">
       <div className="max-w-7xl mx-auto px-6 py-20 md:py-28">
@@ -23,8 +26,8 @@ export function FeaturedProducts() {
         </header>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {featuredProducts.map((p) => (
-            <ProductCard key={p.id} product={p} />
+          {cards.map((c) => (
+            <ProductCard key={c.id} card={c} />
           ))}
         </div>
       </div>
