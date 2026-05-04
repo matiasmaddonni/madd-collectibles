@@ -1,3 +1,5 @@
+import { waLink } from "@/lib/contact";
+
 function SearchIcon({ size = 18 }: { size?: number }) {
   return (
     <svg
@@ -17,7 +19,7 @@ function SearchIcon({ size = 18 }: { size?: number }) {
   );
 }
 
-function HeartIcon({ size = 18 }: { size?: number }) {
+function BagPlusIcon({ size = 18 }: { size?: number }) {
   return (
     <svg
       width={size}
@@ -30,7 +32,11 @@ function HeartIcon({ size = 18 }: { size?: number }) {
       strokeLinejoin="round"
       aria-hidden
     >
-      <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z" />
+      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+      <path d="M3 6h18" />
+      <path d="M16 10a4 4 0 0 1-8 0" />
+      <path d="M12 14v6" />
+      <path d="M9 17h6" />
     </svg>
   );
 }
@@ -73,7 +79,7 @@ const STEPS = [
     n: "02",
     title: "Armá tu Lista",
     body: "Guardá tus elegidos. Los combos suelen convenir.",
-    Icon: HeartIcon,
+    Icon: BagPlusIcon,
   },
   {
     n: "03",
@@ -137,7 +143,7 @@ export function HowToBuy() {
             </p>
           </div>
           <a
-            href="https://wa.me/"
+            href={waLink()}
             className="cta-primary inline-flex items-center gap-2 px-5 h-11 rounded-md font-body text-sm font-medium text-text-primary"
           >
             <WhatsAppIcon size={16} color="#25D366" />

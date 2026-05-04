@@ -1,3 +1,5 @@
+import { waLink } from "@/lib/contact";
+
 function WhatsAppIcon({ size = 14, color = "currentColor" }: { size?: number; color?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill={color} aria-hidden>
@@ -55,7 +57,7 @@ export function Footer() {
 
           <div className="flex md:justify-end items-center gap-3 flex-wrap">
             <a
-              href="https://wa.me/"
+              href={waLink()}
               className="cta-primary inline-flex items-center gap-2 px-4 h-10 rounded-md font-body text-[13px] font-medium text-text-primary"
             >
               <WhatsAppIcon size={14} color="#25D366" />

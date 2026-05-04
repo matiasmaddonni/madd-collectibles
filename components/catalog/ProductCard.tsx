@@ -2,6 +2,8 @@ import Image from "next/image";
 import { formatPrice } from "@/lib/format";
 import type { HomeProductCard } from "@/lib/queries";
 import type { ProductStatus } from "@/lib/supabase/types";
+import { AddToCartButton } from "@/components/cart/AddToCartButton";
+import { CardImageCarousel } from "@/components/catalog/CardImageCarousel";
 
 const statusDotClass: Record<ProductStatus, string> = {
   available: "bg-green-500 dot-pulse",
@@ -31,14 +33,22 @@ export function ProductCard({ card }: { card: HomeProductCard }) {
         <div
           className={`absolute inset-0 ${caseClassMap[card.caseGradient]} silhouette-figure`}
         />
-        {card.imageUrl && (
-          <Image
-            src={card.imageUrl}
+        {card.images.length > 1 ? (
+          <CardImageCarousel
+            images={card.images}
             alt={card.name}
-            fill
             sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-            className="object-cover product-img-zoom"
           />
+        ) : (
+          card.imageUrl && (
+            <Image
+              src={card.imageUrl}
+              alt={card.name}
+              fill
+              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+              className="object-cover product-img-zoom"
+            />
+          )
         )}
 
         <span className="absolute top-3 left-3 z-10 font-mono text-[10px] tracked-wide uppercase px-2 py-1 bg-bg-deep/70 backdrop-blur-sm border border-border-subtle text-text-secondary">
@@ -47,6 +57,18 @@ export function ProductCard({ card }: { card: HomeProductCard }) {
         <span className="absolute top-3 right-3 z-10 font-mono text-[10px] tracked-wide uppercase px-2 py-1 bg-bg-deep/70 backdrop-blur-sm border border-border-subtle text-text-secondary">
           {card.conditionLabel}
         </span>
+
+        <AddToCartButton
+          disabled={card.status !== "available"}
+          item={{
+            id: card.id,
+            name: card.name,
+            lineName: card.lineName,
+            price: card.price,
+            currency: card.currency,
+            imageUrl: card.imageUrl,
+          }}
+        />
       </div>
 
       <div className="flex flex-col gap-2 p-4 flex-1">

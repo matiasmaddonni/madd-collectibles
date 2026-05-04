@@ -28,7 +28,7 @@ function PreviewCard({ p, idx }: { p: HomeProductCard; idx: number }) {
             alt={p.name}
             fill
             sizes="(min-width: 1024px) 16vw, 33vw"
-            className="object-cover"
+            className="object-cover product-img-zoom"
           />
         )}
       </div>
@@ -70,13 +70,13 @@ export async function Hero() {
             Coleccionista a coleccionista
           </span>
           <h1 className="font-display text-5xl md:text-6xl lg:text-7xl xl:text-8xl leading-[0.95] tracked-mid text-text-primary">
-            Piezas seleccionadas.
+            CADA COLECCIÓN TIENE SU HISTORIA.
             <br />
-            <span className="text-accent">Historia</span> en cada caja.
+            LA <span className="text-accent">TUYA</span> EMPIEZA ACÁ.
           </h1>
           <p className="max-w-md font-body text-base text-text-secondary leading-relaxed">
-            Curaduría obsesiva de Myth Cloth, Myth Cloth EX y S.H.Figuarts. Cada
-            pieza, verificada y fotografiada por nosotros.
+            Fotos reales, atención personalizada y el conocimiento de quien las coleccionó, 
+            para que encuentres exactamente lo que buscás, o descubras lo que todavía no sabías que querías.
           </p>
           <div className="flex items-center gap-6">
             <a

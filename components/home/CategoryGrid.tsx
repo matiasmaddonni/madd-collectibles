@@ -30,7 +30,7 @@ export async function CategoryGrid() {
             <a
               key={c.slug}
               href={`#${c.slug}`}
-              className={`group relative aspect-[4/3] noise-bg border border-border-subtle rounded-sm overflow-hidden ${caseClassMap[c.caseGradient]}`}
+              className={`group relative aspect-[4/3] border border-border-subtle rounded-sm overflow-hidden ${caseClassMap[c.caseGradient]}`}
             >
               <span className="top-accent" aria-hidden />
               <div className="absolute inset-0 silhouette-figure" />
@@ -41,15 +41,15 @@ export async function CategoryGrid() {
                   alt={c.name}
                   fill
                   sizes="(min-width: 768px) 50vw, 100vw"
-                  className="object-cover opacity-70 group-hover:opacity-90 transition-opacity"
+                  className="object-cover opacity-70 group-hover:opacity-90 transition-opacity product-img-zoom"
                 />
               )}
 
-              <div className="absolute inset-0 bg-gradient-to-t from-bg-deep/95 via-bg-deep/40 to-transparent" />
+              <div className="absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-t from-bg-deep via-bg-deep/85 to-transparent" />
 
               <div className="relative h-full flex flex-col justify-end p-6 md:p-8">
                 <span className="font-mono text-[10px] uppercase tracked-wide text-text-secondary">
-                  {c.productCount} piezas
+                  {c.productCount} figuras
                 </span>
                 <h3 className="font-display text-3xl md:text-4xl tracked-mid text-text-primary mt-1">
                   {c.name}

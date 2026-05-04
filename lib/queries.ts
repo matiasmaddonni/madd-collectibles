@@ -1,11 +1,14 @@
 import "server-only";
 import { cache } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { createClient as createServerClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import type {
   ProductCondition,
   ProductStatus,
   Currency,
 } from "@/lib/supabase/types";
+
+const createClient = createServerClient;
 
 export type CaseGradient = "gold" | "crimson" | "mixed" | "cool";
 
@@ -22,6 +25,7 @@ export type HomeProductCard = {
   price: number;
   currency: Currency;
   imageUrl: string | null;
+  images: string[];
 };
 
 export type HomeCategory = {
@@ -33,11 +37,11 @@ export type HomeCategory = {
 };
 
 const CONDITION_LABEL: Record<ProductCondition, string> = {
-  mint_sealed: "MISB",
-  mint_open: "Open Box",
+  mint_sealed: "Sellado",
+  mint_open: "Como Nuevo",
   near_mint: "Loose",
   good: "Used",
-  fair: "Used",
+  fair: "Detalles",
 };
 
 const STATUS_LABEL: Record<ProductStatus, string> = {
@@ -66,9 +70,10 @@ type Row = {
   currency: Currency;
   condition: ProductCondition;
   status: ProductStatus;
+  is_featured: boolean;
   product_line: RelOne<{ slug: string; name: string }>;
   series: RelOne<{ slug: string; name: string }>;
-  images: RelOne<{ url: string; is_primary: boolean }>;
+  images: RelOne<{ url: string; is_primary: boolean; sort_order: number }>;
 };
 
 function asArray<T>(v: RelOne<T>): T[] {
@@ -82,7 +87,11 @@ function asOne<T>(v: RelOne<T>): T | null {
 
 function toCard(row: Row): HomeProductCard {
   const images = asArray(row.images);
-  const primary = images.find((i) => i.is_primary) ?? images[0] ?? null;
+  const sorted = [...images].sort((a, b) => {
+    if (a.is_primary !== b.is_primary) return a.is_primary ? -1 : 1;
+    return (a.sort_order ?? 0) - (b.sort_order ?? 0);
+  });
+  const urls = sorted.map((i) => i.url);
   const productLine = asOne(row.product_line);
   const series = asOne(row.series);
   return {
@@ -98,15 +107,16 @@ function toCard(row: Row): HomeProductCard {
     statusLabel: STATUS_LABEL[row.status],
     price: Number(row.price),
     currency: row.currency,
-    imageUrl: primary?.url ?? null,
+    imageUrl: urls[0] ?? null,
+    images: urls,
   };
 }
 
 const SELECT = `
-  id, slug, name, price, currency, condition, status, created_at,
+  id, slug, name, price, currency, condition, status, is_featured, created_at,
   product_line:product_lines!inner ( slug, name ),
   series:series ( slug, name ),
-  images:product_images ( url, is_primary )
+  images:product_images ( url, is_primary, sort_order )
 `;
 
 export async function getFeaturedProducts(
@@ -114,33 +124,31 @@ export async function getFeaturedProducts(
 ): Promise<HomeProductCard[]> {
   const supabase = await createClient();
 
-  const withImages = await supabase
+  const featuredRes = await supabase
     .from("products")
     .select(SELECT)
     .eq("status", "available")
-    .not("product_images", "is", null)
-    .order("created_at", { ascending: false })
-    .limit(limit * 3);
-
-  const rows = (withImages.data ?? []) as unknown as Row[];
-  const filtered = rows.filter((r) => asArray(r.images).length > 0).slice(0, limit);
-
-  if (filtered.length >= limit) return filtered.map(toCard);
-
-  const fallback = await supabase
-    .from("products")
-    .select(SELECT)
-    .eq("status", "available")
+    .eq("is_featured", true)
     .order("created_at", { ascending: false })
     .limit(limit);
 
-  const fbRows = (fallback.data ?? []) as unknown as Row[];
-  const seen = new Set(filtered.map((r) => r.id));
-  const merged = [
-    ...filtered,
-    ...fbRows.filter((r) => !seen.has(r.id)),
-  ].slice(0, limit);
-  return merged.map(toCard);
+  const featured = (featuredRes.data ?? []) as unknown as Row[];
+  if (featured.length >= limit) return featured.map(toCard);
+
+  const remaining = limit - featured.length;
+  const seen = new Set(featured.map((r) => r.id));
+
+  const newestRes = await supabase
+    .from("products")
+    .select(SELECT)
+    .eq("status", "available")
+    .order("created_at", { ascending: false })
+    .limit(remaining + featured.length);
+
+  const newest = (newestRes.data ?? []) as unknown as Row[];
+  const fill = newest.filter((r) => !seen.has(r.id)).slice(0, remaining);
+
+  return [...featured, ...fill].map(toCard);
 }
 
 export async function getHeroPreviewProducts(
@@ -153,8 +161,8 @@ export async function getHeroPreviewProducts(
     .from("products")
     .select(SELECT)
     .eq("status", "available")
-    .order("created_at", { ascending: false })
-    .limit(limit + excludeIds.length + 4);
+    .order("updated_at", { ascending: false })
+    .limit(limit + excludeIds.length);
 
   if (excludeIds.length > 0) {
     q = q.not("id", "in", `(${excludeIds.join(",")})`);
@@ -198,64 +206,85 @@ const CATEGORY_DEFS: Array<{
   name: string;
   caseGradient: CaseGradient;
   lineSlugs: string[];
-  imageFile: string;
+  matchTokens: string[];
 }> = [
   {
     slug: "myth-cloth",
     name: "Myth Cloth",
     caseGradient: "gold",
     lineSlugs: ["myth-cloth", "myth-cloth-ex", "myth-cloth-ex-metal"],
-    imageFile: "myth-cloth.jpg",
+    matchTokens: ["myth-cloth", "myth_cloth", "mythcloth"],
   },
   {
     slug: "sh-figuarts",
     name: "S.H.Figuarts",
     caseGradient: "crimson",
     lineSlugs: ["sh-figuarts", "figuarts-zero"],
-    imageFile: "sh-figuarts.jpg",
+    matchTokens: ["sh-figuarts", "shfiguarts", "sh_figuarts", "figuarts"],
   },
   {
     slug: "popup-parade",
     name: "Pop Up Parade",
     caseGradient: "mixed",
     lineSlugs: ["popup-parade"],
-    imageFile: "popup-parade.jpg",
+    matchTokens: ["popup-parade", "pop-up-parade", "popupparade", "pop_up_parade"],
   },
   {
     slug: "otros",
     name: "Otros",
     caseGradient: "cool",
     lineSlugs: ["variable-action-heroes", "otros"],
-    imageFile: "otros.jpg",
+    matchTokens: ["otros", "varios"],
   },
 ];
 
-async function categoryImageExists(file: string): Promise<boolean> {
-  const supabase = await createClient();
-  const { data } = await supabase.storage
+const listCategoryImages = cache(async (): Promise<string[]> => {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceKey) return [];
+  const admin = createSupabaseClient(url, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { data } = await admin.storage
     .from("category-images")
-    .list("", { search: file });
-  return Boolean(data?.some((f) => f.name === file));
+    .list("", { limit: 100 });
+  return (data ?? []).map((f) => f.name);
+});
+
+function findCategoryImage(
+  files: string[],
+  tokens: string[],
+): string | null {
+  const lower = files.map((f) => ({ name: f, l: f.toLowerCase() }));
+  for (const t of tokens) {
+    const tl = t.toLowerCase();
+    const hit = lower.find((f) => f.l.includes(tl));
+    if (hit) return hit.name;
+  }
+  return null;
 }
 
 export async function getHomeCategories(): Promise<HomeCategory[]> {
-  const { lineIdBySlug } = await lookupRefs();
+  const [{ lineIdBySlug }, files] = await Promise.all([
+    lookupRefs(),
+    listCategoryImages(),
+  ]);
 
   const results = await Promise.all(
     CATEGORY_DEFS.map(async (def) => {
       const ids = def.lineSlugs
         .map((s) => lineIdBySlug[s])
         .filter((id): id is string => Boolean(id));
-      const [count, hasImage] = await Promise.all([
-        countByLineIds(ids),
-        categoryImageExists(def.imageFile),
-      ]);
+      const count = await countByLineIds(ids);
+      const matchedFile = findCategoryImage(files, def.matchTokens);
       return {
         slug: def.slug,
         name: def.name,
         caseGradient: def.caseGradient,
         productCount: count,
-        imageUrl: hasImage ? `${CATEGORY_IMAGE_BASE}/${def.imageFile}` : null,
+        imageUrl: matchedFile
+          ? `${CATEGORY_IMAGE_BASE}/${encodeURIComponent(matchedFile)}`
+          : null,
       };
     }),
   );
