@@ -1,6 +1,5 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { unstable_noStore } from "next/cache";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { ProductCard } from "@/components/catalog/ProductCard";
@@ -19,8 +18,6 @@ import {
   CatalogResultsArea,
   PendingLink,
 } from "./CatalogClient";
-
-export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Catálogo — MADD.",
@@ -89,7 +86,6 @@ function parseFilters(sp: SearchParams): CatalogFilters {
 type PageProps = { searchParams: Promise<SearchParams> };
 
 export default async function CatalogPage({ searchParams }: PageProps) {
-  unstable_noStore();
   const sp = await searchParams;
   const filters = parseFilters(sp);
 
