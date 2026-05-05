@@ -36,7 +36,7 @@ export function CardImageCarousel({ images, alt, sizes }: Props) {
               alt={alt}
               fill
               sizes={sizes}
-              className="object-cover product-img-zoom"
+              className={`object-cover ${i === idx ? "product-img-zoom" : ""}`}
               priority={i === 0}
             />
           </div>
@@ -45,6 +45,11 @@ export function CardImageCarousel({ images, alt, sizes }: Props) {
 
       {total > 1 && (
         <>
+          <div
+            aria-hidden
+            className="absolute inset-x-0 bottom-0 h-12 z-10 pointer-events-none bg-gradient-to-t from-bg-deep/70 via-bg-deep/30 to-transparent"
+          />
+
           <button
             type="button"
             aria-label="Imagen anterior"

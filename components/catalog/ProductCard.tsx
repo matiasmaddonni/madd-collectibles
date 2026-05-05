@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { formatPrice } from "@/lib/format";
 import type { HomeProductCard } from "@/lib/queries";
 import type { ProductStatus } from "@/lib/supabase/types";
@@ -51,10 +52,16 @@ export function ProductCard({ card }: { card: HomeProductCard }) {
           )
         )}
 
-        <span className="absolute top-3 left-3 z-10 font-mono text-[10px] tracked-wide uppercase px-2 py-1 bg-bg-deep/70 backdrop-blur-sm border border-border-subtle text-text-secondary">
+        <Link
+          href={`/products/${card.slug}`}
+          aria-label={card.name}
+          className="absolute inset-0 z-[1]"
+        />
+
+        <span className="absolute top-3 left-3 z-10 pointer-events-none font-mono text-[10px] tracked-wide uppercase px-2 py-1 bg-bg-deep/70 backdrop-blur-sm border border-border-subtle text-text-secondary">
           {card.lineName}
         </span>
-        <span className="absolute top-3 right-3 z-10 font-mono text-[10px] tracked-wide uppercase px-2 py-1 bg-bg-deep/70 backdrop-blur-sm border border-border-subtle text-text-secondary">
+        <span className="absolute top-3 right-3 z-10 pointer-events-none font-mono text-[10px] tracked-wide uppercase px-2 py-1 bg-bg-deep/70 backdrop-blur-sm border border-border-subtle text-text-secondary">
           {card.conditionLabel}
         </span>
 
@@ -71,8 +78,11 @@ export function ProductCard({ card }: { card: HomeProductCard }) {
         />
       </div>
 
-      <div className="flex flex-col gap-2 p-4 flex-1">
-        <h3 className="font-body font-semibold text-text-primary leading-snug">
+      <Link
+        href={`/products/${card.slug}`}
+        className="flex flex-col gap-2 p-4 flex-1 hover:text-accent transition-colors"
+      >
+        <h3 className="font-body font-semibold text-text-primary leading-snug group-hover:text-accent transition-colors">
           {card.name}
         </h3>
         <p className="font-body text-sm text-text-secondary">
@@ -93,7 +103,7 @@ export function ProductCard({ card }: { card: HomeProductCard }) {
             </span>
           </span>
         </div>
-      </div>
+      </Link>
     </article>
   );
 }

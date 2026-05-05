@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { getHeroPreviewProducts, type HomeProductCard } from "@/lib/queries";
 import { formatPrice } from "@/lib/format";
 
@@ -17,7 +18,8 @@ const stagger = [
 
 function PreviewCard({ p, idx }: { p: HomeProductCard; idx: number }) {
   return (
-    <div
+    <Link
+      href={`/products/${p.slug}`}
       className={`group relative bg-bg-surface border border-border-subtle rounded-sm overflow-hidden anim-fade-up ${stagger[idx]}`}
     >
       <span className="top-accent" aria-hidden />
@@ -36,14 +38,14 @@ function PreviewCard({ p, idx }: { p: HomeProductCard; idx: number }) {
         <span className="font-mono text-[9px] uppercase tracked-wide text-text-secondary">
           {p.lineName}
         </span>
-        <span className="font-body text-xs font-semibold text-text-primary truncate">
+        <span className="font-body text-xs font-semibold text-text-primary truncate group-hover:text-accent transition-colors">
           {p.name}
         </span>
         <span className="font-display text-base tracked-mid text-text-primary">
           {formatPrice(p.price, p.currency)}
         </span>
       </div>
-    </div>
+    </Link>
   );
 }
 

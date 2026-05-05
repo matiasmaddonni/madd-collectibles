@@ -28,6 +28,16 @@ export type HomeProductCard = {
   images: string[];
 };
 
+export type ProductDetail = HomeProductCard & {
+  description: string | null;
+  sku: string | null;
+  releaseYear: number | null;
+  tags: string[];
+  stockQty: number;
+  productLineSlug: string;
+  seriesSlug: string | null;
+};
+
 export type HomeCategory = {
   slug: string;
   name: string;
@@ -71,6 +81,11 @@ type Row = {
   condition: ProductCondition;
   status: ProductStatus;
   is_featured: boolean;
+  description?: string | null;
+  sku?: string | null;
+  release_year?: number | null;
+  tags?: string[];
+  stock_qty?: number;
   product_line: RelOne<{ slug: string; name: string }>;
   series: RelOne<{ slug: string; name: string }>;
   images: RelOne<{ url: string; is_primary: boolean; sort_order: number }>;
@@ -171,6 +186,61 @@ export async function getHeroPreviewProducts(
   const { data } = await q;
   const rows = (data ?? []) as unknown as Row[];
   return rows.slice(0, limit).map(toCard);
+}
+
+const DETAIL_SELECT = `
+  id, slug, name, price, currency, condition, status, is_featured, created_at,
+  description, sku, release_year, tags, stock_qty,
+  product_line:product_lines!inner ( slug, name ),
+  series:series ( slug, name ),
+  images:product_images ( url, is_primary, sort_order )
+`;
+
+function toDetail(row: Row): ProductDetail {
+  const base = toCard(row);
+  const productLine = asOne(row.product_line);
+  const series = asOne(row.series);
+  return {
+    ...base,
+    description: row.description ?? null,
+    sku: row.sku ?? null,
+    releaseYear: row.release_year ?? null,
+    tags: Array.isArray(row.tags) ? row.tags : [],
+    stockQty: typeof row.stock_qty === "number" ? row.stock_qty : 0,
+    productLineSlug: productLine?.slug ?? "",
+    seriesSlug: series?.slug ?? null,
+  };
+}
+
+export async function getRelatedProducts(
+  productLineSlug: string,
+  excludeId: string,
+  limit = 4,
+): Promise<HomeProductCard[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("products")
+    .select(SELECT)
+    .eq("status", "available")
+    .eq("product_lines.slug", productLineSlug)
+    .neq("id", excludeId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  const rows = (data ?? []) as unknown as Row[];
+  return rows.map(toCard);
+}
+
+export async function getProductBySlug(
+  slug: string,
+): Promise<ProductDetail | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select(DETAIL_SELECT)
+    .eq("slug", slug)
+    .maybeSingle();
+  if (error || !data) return null;
+  return toDetail(data as unknown as Row);
 }
 
 type SlugId = { id: string; slug: string };
