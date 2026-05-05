@@ -44,6 +44,7 @@ export type HomeCategory = {
   caseGradient: CaseGradient;
   productCount: number;
   imageUrl: string | null;
+  href: string;
 };
 
 const CONDITION_LABEL: Record<ProductCondition, string> = {
@@ -212,6 +213,136 @@ function toDetail(row: Row): ProductDetail {
   };
 }
 
+export type CatalogFilters = {
+  lineSlugs?: string[];
+  excludeLineSlugs?: string[];
+  conditions?: ProductCondition[];
+  minPrice?: number;
+  maxPrice?: number;
+  q?: string;
+  sort?: "newest" | "price-asc" | "price-desc";
+  page?: number;
+  perPage?: number;
+};
+
+const SLUG_RE = /^[a-z0-9-]+$/;
+function safeSlugs(slugs: string[] | undefined): string[] {
+  if (!slugs) return [];
+  return slugs.filter((s) => SLUG_RE.test(s));
+}
+
+export type CatalogResult = {
+  items: HomeProductCard[];
+  total: number;
+  page: number;
+  perPage: number;
+  pageCount: number;
+};
+
+export async function getCatalogProducts(
+  f: CatalogFilters = {},
+): Promise<CatalogResult> {
+  const perPage = Math.max(1, Math.min(48, f.perPage ?? 12));
+  const page = Math.max(1, f.page ?? 1);
+  const from = (page - 1) * perPage;
+  const to = from + perPage - 1;
+
+  const supabase = await createClient();
+
+  let q = supabase
+    .from("products")
+    .select(SELECT, { count: "exact" });
+
+  const includeLines = safeSlugs(f.lineSlugs);
+  if (includeLines.length > 0) {
+    q = q.in("product_lines.slug", includeLines);
+  }
+  const excludeLines = safeSlugs(f.excludeLineSlugs);
+  if (excludeLines.length > 0) {
+    q = q.not(
+      "product_lines.slug",
+      "in",
+      `(${excludeLines.join(",")})`,
+    );
+  }
+  if (f.conditions && f.conditions.length > 0) {
+    q = q.in("condition", f.conditions);
+  }
+  if (typeof f.minPrice === "number" && Number.isFinite(f.minPrice)) {
+    q = q.gte("price", f.minPrice);
+  }
+  if (typeof f.maxPrice === "number" && Number.isFinite(f.maxPrice)) {
+    q = q.lte("price", f.maxPrice);
+  }
+  if (f.q && f.q.trim().length > 0) {
+    const term = f.q.trim().replace(/[%,]/g, " ");
+    q = q.ilike("name", `%${term}%`);
+  }
+
+  switch (f.sort) {
+    case "price-asc":
+      q = q.order("price", { ascending: true });
+      break;
+    case "price-desc":
+      q = q.order("price", { ascending: false });
+      break;
+    case "newest":
+    default:
+      q = q.order("created_at", { ascending: false });
+      break;
+  }
+
+  q = q.range(from, to);
+
+  const { data, count } = await q;
+  const rows = (data ?? []) as unknown as Row[];
+  const total = count ?? 0;
+  return {
+    items: rows.map(toCard),
+    total,
+    page,
+    perPage,
+    pageCount: Math.max(1, Math.ceil(total / perPage)),
+  };
+}
+
+export async function getCatalogFacets(): Promise<{
+  lines: { slug: string; name: string; count: number }[];
+  conditions: { value: ProductCondition; label: string; count: number }[];
+}> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("products")
+    .select("condition, product_line:product_lines!inner ( slug, name )");
+  const rows = (data ?? []) as unknown as Array<{
+    condition: ProductCondition;
+    product_line: RelOne<{ slug: string; name: string }>;
+  }>;
+
+  const lineMap = new Map<string, { slug: string; name: string; count: number }>();
+  const condMap = new Map<ProductCondition, number>();
+  for (const r of rows) {
+    const pl = asOne(r.product_line);
+    if (pl) {
+      const cur = lineMap.get(pl.slug);
+      if (cur) cur.count++;
+      else lineMap.set(pl.slug, { slug: pl.slug, name: pl.name, count: 1 });
+    }
+    condMap.set(r.condition, (condMap.get(r.condition) ?? 0) + 1);
+  }
+
+  const lines = [...lineMap.values()].sort((a, b) => a.name.localeCompare(b.name));
+  const conditions = [...condMap.entries()]
+    .map(([value, count]) => ({
+      value,
+      label: CONDITION_LABEL[value],
+      count,
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+
+  return { lines, conditions };
+}
+
 export async function getRelatedProducts(
   productLineSlug: string,
   excludeId: string,
@@ -334,6 +465,20 @@ function findCategoryImage(
   return null;
 }
 
+function buildCategoryHref(slug: string): string {
+  if (slug === "otros") {
+    const exclude = CATEGORY_DEFS.filter((d) => d.slug !== "otros").flatMap(
+      (d) => d.lineSlugs,
+    );
+    const unique = [...new Set(exclude)];
+    if (unique.length === 0) return "/catalogo";
+    return `/catalogo?excluir=${encodeURIComponent(unique.join(","))}`;
+  }
+  const def = CATEGORY_DEFS.find((d) => d.slug === slug);
+  if (!def || def.lineSlugs.length === 0) return "/catalogo";
+  return `/catalogo?linea=${encodeURIComponent(def.lineSlugs.join(","))}`;
+}
+
 export async function getHomeCategories(): Promise<HomeCategory[]> {
   const [{ lineIdBySlug }, files] = await Promise.all([
     lookupRefs(),
@@ -355,6 +500,7 @@ export async function getHomeCategories(): Promise<HomeCategory[]> {
         imageUrl: matchedFile
           ? `${CATEGORY_IMAGE_BASE}/${encodeURIComponent(matchedFile)}`
           : null,
+        href: buildCategoryHref(def.slug),
       };
     }),
   );

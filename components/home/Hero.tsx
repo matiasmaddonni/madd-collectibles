@@ -81,12 +81,12 @@ export async function Hero() {
             para que encuentres exactamente lo que buscás, o descubras lo que todavía no sabías que querías.
           </p>
           <div className="flex items-center gap-6">
-            <a
-              href="#catalogo"
+            <Link
+              href="/catalogo"
               className="cta-primary font-mono uppercase tracked-wide text-sm px-6 py-3 text-text-primary inline-flex items-center"
             >
               Ver catálogo
-            </a>
+            </Link>
             <a
               href="#how"
               className="font-body text-sm text-text-secondary hover:text-text-primary transition-colors"

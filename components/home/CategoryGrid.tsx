@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { getHomeCategories } from "@/lib/queries";
 
 const caseClassMap = {
@@ -27,9 +28,9 @@ export async function CategoryGrid() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {categories.map((c) => (
-            <a
+            <Link
               key={c.slug}
-              href={`#${c.slug}`}
+              href={c.href}
               className={`group relative aspect-[4/3] border border-border-subtle rounded-sm overflow-hidden ${caseClassMap[c.caseGradient]}`}
             >
               <span className="top-accent" aria-hidden />
@@ -58,7 +59,7 @@ export async function CategoryGrid() {
                   Ver línea →
                 </span>
               </div>
-            </a>
+            </Link>
           ))}
         </div>
       </div>
