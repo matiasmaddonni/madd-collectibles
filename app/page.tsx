@@ -4,6 +4,7 @@ import { Hero } from "@/components/home/Hero";
 import { CategoryGrid } from "@/components/home/CategoryGrid";
 import { FeaturedProducts } from "@/components/home/FeaturedProducts";
 import { HowToBuy } from "@/components/home/HowToBuy";
+import { AboutMadd } from "@/components/home/AboutMadd";
 
 export default function HomePage() {
   return (
@@ -14,6 +15,7 @@ export default function HomePage() {
         <CategoryGrid />
         <FeaturedProducts />
         <HowToBuy />
+        <AboutMadd />
       </main>
       <Footer />
     </>

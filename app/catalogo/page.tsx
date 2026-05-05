@@ -1,8 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import type { Metadata } from "next";
-
-export const dynamic = "force-dynamic";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { ProductCard } from "@/components/catalog/ProductCard";
@@ -21,6 +19,8 @@ import {
   CatalogResultsArea,
   PendingLink,
 } from "./CatalogClient";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Catálogo — MADD.",

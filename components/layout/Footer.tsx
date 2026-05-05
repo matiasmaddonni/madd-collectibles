@@ -27,7 +27,13 @@ function MailIcon({ size = 14 }: { size?: number }) {
   );
 }
 
-const NAV_LINKS = ["Inicio", "Myth Cloth", "S.H.Figuarts", "Sobre mí", "Cómo Comprar"];
+const NAV_LINKS: { label: string; href: string }[] = [
+  { label: "Inicio", href: "/" },
+  { label: "Myth Cloth", href: "/catalogo?linea=myth-cloth,myth-cloth-ex,myth-cloth-ex-metal" },
+  { label: "S.H.Figuarts", href: "/catalogo?linea=sh-figuarts,figuarts-zero" },
+  { label: "Sobre mí", href: "/#sobre-mi" },
+  { label: "Cómo Comprar", href: "/#how" },
+];
 
 export function Footer() {
   return (
@@ -46,11 +52,11 @@ export function Footer() {
           <nav className="flex flex-wrap gap-x-7 gap-y-3 md:justify-center">
             {NAV_LINKS.map((l) => (
               <a
-                key={l}
-                href="#"
+                key={l.label}
+                href={l.href}
                 className="font-body text-[13px] text-text-secondary hover:text-accent transition-colors"
               >
-                {l}
+                {l.label}
               </a>
             ))}
           </nav>

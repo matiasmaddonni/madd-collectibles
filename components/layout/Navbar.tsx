@@ -14,7 +14,7 @@ export function Navbar() {
           MADD<span className="text-accent">.</span>
         </a>
 
-        <Suspense fallback={<div className="flex-1 max-w-xl mx-8 hidden md:block" />}>
+        <Suspense fallback={<div className="hidden md:block flex-1 max-w-xl mx-auto h-10" />}>
           <NavbarSearch />
         </Suspense>
 
@@ -22,11 +22,11 @@ export function Navbar() {
           <Link href="/catalogo" className="hover:text-text-primary transition-colors">
             Catálogo
           </Link>
-          <a href="/#categorias" className="hover:text-text-primary transition-colors">
-            Líneas
-          </a>
           <a href="/#how" className="hover:text-text-primary transition-colors">
-            Sobre MADD.
+            Cómo comprar
+          </a>
+          <a href="/#sobre-mi" className="hover:text-text-primary transition-colors">
+            Sobre mí
           </a>
         </nav>
 
