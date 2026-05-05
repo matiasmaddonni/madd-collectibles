@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { CartButton } from "@/components/cart/CartButton";
 import { NavbarSearch } from "@/components/layout/NavbarSearch";
@@ -13,7 +14,9 @@ export function Navbar() {
           MADD<span className="text-accent">.</span>
         </a>
 
-        <NavbarSearch />
+        <Suspense fallback={<div className="flex-1 max-w-xl mx-8 hidden md:block" />}>
+          <NavbarSearch />
+        </Suspense>
 
         <nav className="hidden lg:flex items-center gap-6 font-body text-sm text-text-secondary">
           <Link href="/catalogo" className="hover:text-text-primary transition-colors">

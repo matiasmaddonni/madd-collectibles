@@ -1,5 +1,8 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import type { Metadata } from "next";
+
+export const dynamic = "force-dynamic";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { ProductCard } from "@/components/catalog/ProductCard";
@@ -108,57 +111,59 @@ export default async function CatalogPage({ searchParams }: PageProps) {
             </h1>
           </header>
 
-          <CatalogPendingProvider>
-          <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-10">
-            <aside className="hidden md:block">
-              <CatalogSidebar
-                lines={facets.lines}
-                conditions={facets.conditions}
-              />
-            </aside>
+          <Suspense fallback={null}>
+            <CatalogPendingProvider>
+            <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-10">
+              <aside className="hidden md:block">
+                <CatalogSidebar
+                  lines={facets.lines}
+                  conditions={facets.conditions}
+                />
+              </aside>
 
-            <div className="flex flex-col gap-6">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <span className="font-mono text-xs uppercase tracked-wide text-text-secondary">
-                  {total} {total === 1 ? "figura encontrada" : "figuras encontradas"}
-                </span>
-                <div className="flex items-center gap-3">
-                  <MobileFilterTrigger
-                    lines={facets.lines}
-                    conditions={facets.conditions}
-                  />
-                  <CatalogSort />
-                </div>
-              </div>
-
-              <CatalogActiveChips
-                lines={facets.lines}
-                conditions={facets.conditions}
-              />
-
-              <CatalogResultsArea>
-              {items.length === 0 ? (
-                <EmptyState />
-              ) : (
-                <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {items.map((c) => (
-                      <ProductCard key={c.id} card={c} />
-                    ))}
-                  </div>
-                  {pageCount > 1 && (
-                    <Pagination
-                      page={page}
-                      pageCount={pageCount}
-                      currentParams={sp}
+              <div className="flex flex-col gap-6">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <span className="font-mono text-xs uppercase tracked-wide text-text-secondary">
+                    {total} {total === 1 ? "figura encontrada" : "figuras encontradas"}
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <MobileFilterTrigger
+                      lines={facets.lines}
+                      conditions={facets.conditions}
                     />
-                  )}
-                </>
-              )}
-              </CatalogResultsArea>
+                    <CatalogSort />
+                  </div>
+                </div>
+
+                <CatalogActiveChips
+                  lines={facets.lines}
+                  conditions={facets.conditions}
+                />
+
+                <CatalogResultsArea>
+                {items.length === 0 ? (
+                  <EmptyState />
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {items.map((c) => (
+                        <ProductCard key={c.id} card={c} />
+                      ))}
+                    </div>
+                    {pageCount > 1 && (
+                      <Pagination
+                        page={page}
+                        pageCount={pageCount}
+                        currentParams={sp}
+                      />
+                    )}
+                  </>
+                )}
+                </CatalogResultsArea>
+              </div>
             </div>
-          </div>
-          </CatalogPendingProvider>
+            </CatalogPendingProvider>
+          </Suspense>
         </section>
       </main>
       <Footer />
