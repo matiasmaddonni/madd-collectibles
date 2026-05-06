@@ -220,7 +220,13 @@ export type CatalogFilters = {
   minPrice?: number;
   maxPrice?: number;
   q?: string;
-  sort?: "newest" | "price-asc" | "price-desc";
+  sort?:
+    | "newest"
+    | "oldest"
+    | "price-asc"
+    | "price-desc"
+    | "name-asc"
+    | "name-desc";
   page?: number;
   perPage?: number;
 };
@@ -285,6 +291,15 @@ export async function getCatalogProducts(
       break;
     case "price-desc":
       q = q.order("price", { ascending: false });
+      break;
+    case "name-asc":
+      q = q.order("name", { ascending: true });
+      break;
+    case "name-desc":
+      q = q.order("name", { ascending: false });
+      break;
+    case "oldest":
+      q = q.order("created_at", { ascending: true });
       break;
     case "newest":
     default:

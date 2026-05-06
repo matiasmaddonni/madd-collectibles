@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Props = {
   images: string[];
@@ -9,9 +9,48 @@ type Props = {
   sizes?: string;
 };
 
+const SWIPE_THRESHOLD = 40;
+
 export function CardImageCarousel({ images, alt, sizes }: Props) {
   const [idx, setIdx] = useState(0);
   const total = images.length;
+  const anchorRef = useRef<HTMLSpanElement | null>(null);
+
+  useEffect(() => {
+    if (total <= 1) return;
+    const parent = anchorRef.current?.parentElement;
+    if (!parent) return;
+
+    let startX: number | null = null;
+    let startY: number | null = null;
+
+    const onStart = (e: TouchEvent) => {
+      const t = e.touches[0];
+      startX = t.clientX;
+      startY = t.clientY;
+    };
+    const onEnd = (e: TouchEvent) => {
+      if (startX == null || startY == null) return;
+      const t = e.changedTouches[0];
+      const dx = t.clientX - startX;
+      const dy = t.clientY - startY;
+      startX = null;
+      startY = null;
+      if (Math.abs(dx) < SWIPE_THRESHOLD) return;
+      if (Math.abs(dx) < Math.abs(dy)) return;
+      setIdx((cur) => {
+        const next = dx < 0 ? cur + 1 : cur - 1;
+        return ((next % total) + total) % total;
+      });
+    };
+
+    parent.addEventListener("touchstart", onStart, { passive: true });
+    parent.addEventListener("touchend", onEnd, { passive: true });
+    return () => {
+      parent.removeEventListener("touchstart", onStart);
+      parent.removeEventListener("touchend", onEnd);
+    };
+  }, [total]);
 
   if (total === 0) return null;
 
@@ -22,6 +61,8 @@ export function CardImageCarousel({ images, alt, sizes }: Props) {
 
   return (
     <>
+      <span ref={anchorRef} className="hidden" aria-hidden />
+
       {images.map((src, i) => {
         const offset = (i - idx) * 100;
         return (
@@ -58,7 +99,7 @@ export function CardImageCarousel({ images, alt, sizes }: Props) {
               e.stopPropagation();
               go(idx - 1);
             }}
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 flex items-center justify-center bg-bg-deep/70 backdrop-blur-sm border border-border-subtle text-text-primary opacity-0 group-hover:opacity-100 transition-opacity hover:text-accent"
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 flex items-center justify-center bg-bg-deep/70 backdrop-blur-sm border border-border-subtle text-text-primary opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:text-accent"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="m15 18-6-6 6-6" />
@@ -73,7 +114,7 @@ export function CardImageCarousel({ images, alt, sizes }: Props) {
               e.stopPropagation();
               go(idx + 1);
             }}
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 flex items-center justify-center bg-bg-deep/70 backdrop-blur-sm border border-border-subtle text-text-primary opacity-0 group-hover:opacity-100 transition-opacity hover:text-accent"
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 flex items-center justify-center bg-bg-deep/70 backdrop-blur-sm border border-border-subtle text-text-primary opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:text-accent"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="m9 18 6-6-6-6" />

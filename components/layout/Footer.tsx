@@ -27,6 +27,57 @@ function MailIcon({ size = 14 }: { size?: number }) {
   );
 }
 
+function InstagramIcon({ size = 18 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="2" y="2" width="20" height="20" rx="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37Z" />
+      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+    </svg>
+  );
+}
+
+function TikTokIcon({ size = 18 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden
+    >
+      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5.8 20.1a6.34 6.34 0 0 0 10.86-4.43V8.83a8.16 8.16 0 0 0 4.77 1.52V6.91a4.85 4.85 0 0 1-1.84-.22Z" />
+    </svg>
+  );
+}
+
+const SOCIAL_LINKS: {
+  label: string;
+  href: string;
+  Icon: (p: { size?: number }) => React.JSX.Element;
+}[] = [
+  {
+    label: "Instagram",
+    href: "https://instagram.com/madd.collector",
+    Icon: InstagramIcon,
+  },
+  {
+    label: "TikTok",
+    href: "https://www.tiktok.com/@madd.collector",
+    Icon: TikTokIcon,
+  },
+];
+
 const NAV_LINKS: { label: string; href: string }[] = [
   { label: "Inicio", href: "/" },
   { label: "Myth Cloth", href: "/catalogo?linea=myth-cloth,myth-cloth-ex,myth-cloth-ex-metal" },
@@ -79,7 +130,22 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 pt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border-subtle">
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+          {SOCIAL_LINKS.map(({ label, href, Icon }) => (
+            <a
+              key={label}
+              href={href}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={label}
+              className="grid place-items-center w-10 h-10 rounded-md border border-border-subtle text-text-secondary hover:text-accent hover:border-accent transition-colors"
+            >
+              <Icon size={18} />
+            </a>
+          ))}
+        </div>
+
+        <div className="mt-10 pt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border-subtle">
           <p className="font-body text-xs text-text-secondary">
             © 2025 MADD. Todas las figuras son productos originales de Tamashii
             Nations.

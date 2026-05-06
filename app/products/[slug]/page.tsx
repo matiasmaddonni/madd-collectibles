@@ -9,6 +9,11 @@ import { ProductDetailCTA } from "./ProductDetailCTA";
 import { BackButton } from "./BackButton";
 import { getProductBySlug, getRelatedProducts } from "@/lib/queries";
 import { formatPrice } from "@/lib/format";
+import {
+  convertArsToUsd,
+  convertUsdToArs,
+  getUsdToArsRate,
+} from "@/lib/currency";
 import type { ProductStatus } from "@/lib/supabase/types";
 
 const caseClassMap = {
@@ -55,9 +60,23 @@ export default async function ProductDetailPage({ params }: PageProps) {
   if (!product) notFound();
 
   const isAvailable = product.status === "available" && product.stockQty > 0;
-  const related = product.productLineSlug
-    ? await getRelatedProducts(product.productLineSlug, product.id, 4)
-    : [];
+  const [related, usdToArs] = await Promise.all([
+    product.productLineSlug
+      ? getRelatedProducts(product.productLineSlug, product.id, 4)
+      : Promise.resolve([]),
+    getUsdToArsRate(),
+  ]);
+
+  const altCurrency =
+    product.currency === "USD"
+      ? {
+          amount: convertUsdToArs(product.price, usdToArs),
+          currency: "ARS" as const,
+        }
+      : {
+          amount: convertArsToUsd(product.price, usdToArs),
+          currency: "USD" as const,
+        };
 
   return (
     <>
@@ -116,9 +135,14 @@ export default async function ProductDetailPage({ params }: PageProps) {
               </div>
 
               <div className="flex items-end justify-between gap-4 border-t border-b border-border-subtle py-5">
-                <span className="font-display text-4xl tracked-mid text-text-primary">
-                  {formatPrice(product.price, product.currency)}
-                </span>
+                <div className="flex flex-col gap-1">
+                  <span className="font-display text-4xl tracked-mid text-text-primary">
+                    {formatPrice(product.price, product.currency)}
+                  </span>
+                  <span className="font-mono text-[11px] uppercase tracked-wide text-text-secondary">
+                    ≈ {formatPrice(altCurrency.amount, altCurrency.currency)}
+                  </span>
+                </div>
                 <span className="flex items-center gap-2 font-mono text-[11px] uppercase tracked-wide">
                   <span
                     aria-hidden

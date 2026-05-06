@@ -62,12 +62,16 @@ function str(v: string | string[] | undefined): string | undefined {
 
 function parseFilters(sp: SearchParams): CatalogFilters {
   const sortRaw = str(sp.orden);
+  const sortMap: Record<string, NonNullable<CatalogFilters["sort"]>> = {
+    "precio-asc": "price-asc",
+    "precio-desc": "price-desc",
+    "nombre-asc": "name-asc",
+    "nombre-desc": "name-desc",
+    antiguo: "oldest",
+    reciente: "newest",
+  };
   const sort: CatalogFilters["sort"] =
-    sortRaw === "precio-asc"
-      ? "price-asc"
-      : sortRaw === "precio-desc"
-        ? "price-desc"
-        : "newest";
+    (sortRaw ? sortMap[sortRaw] : undefined) ?? "newest";
 
   const conds = csv(sp.condicion).filter((c): c is ProductCondition =>
     VALID_CONDITIONS.includes(c as ProductCondition),

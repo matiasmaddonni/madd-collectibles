@@ -68,8 +68,11 @@ export type ConditionFacet = { value: string; label: string; count: number };
 
 const SORT_OPTIONS: { value: string; label: string }[] = [
   { value: "reciente", label: "Más reciente" },
+  { value: "antiguo", label: "Más antiguo" },
   { value: "precio-asc", label: "Precio ↑" },
   { value: "precio-desc", label: "Precio ↓" },
+  { value: "nombre-asc", label: "Nombre A–Z" },
+  { value: "nombre-desc", label: "Nombre Z–A" },
 ];
 
 function buildHref(

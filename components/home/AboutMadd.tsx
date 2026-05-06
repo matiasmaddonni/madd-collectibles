@@ -277,37 +277,23 @@ export function AboutMadd() {
           </div>
 
           <div className="relative aspect-[4/5] md:aspect-[5/4] bg-bg-surface border border-border-subtle rounded-sm overflow-hidden">
-            {/* Simplified decorative Argentina silhouette */}
-            <svg
-              viewBox="0 0 200 400"
-              className="absolute inset-0 w-full h-full"
-              preserveAspectRatio="xMidYMid meet"
+            <Image
+              src="/map_background.png"
+              alt=""
+              fill
+              sizes="(min-width: 768px) 60vw, 100vw"
+              className="object-cover opacity-90"
+              priority={false}
+            />
+            <div
               aria-hidden
-            >
-              <path
-                d="M100 20
-                   C 120 25, 140 50, 145 80
-                   C 150 110, 140 130, 150 150
-                   C 160 170, 165 190, 155 210
-                   C 145 230, 150 250, 140 275
-                   C 130 300, 130 320, 120 340
-                   C 110 360, 100 380, 92 388
-                   C 86 380, 84 370, 80 360
-                   C 74 340, 72 320, 75 300
-                   C 78 275, 70 255, 65 230
-                   C 60 205, 65 185, 60 165
-                   C 55 145, 60 125, 60 100
-                   C 60 70, 75 45, 100 20 Z"
-                fill="none"
-                stroke="rgba(240,237,232,0.18)"
-                strokeWidth="1.5"
-              />
-            </svg>
+              className="absolute inset-0 bg-gradient-to-tr from-bg-deep/40 via-transparent to-bg-deep/20"
+            />
 
             {/* Tandil pin: ~62% from left, ~65% from top */}
             <div
               className="absolute"
-              style={{ left: "62%", top: "65%", transform: "translate(-50%, -50%)" }}
+              style={{ left: "61%", top: "72%", transform: "translate(-50%, -50%)" }}
             >
               <span
                 aria-hidden
