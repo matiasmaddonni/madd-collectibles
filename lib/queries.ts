@@ -216,6 +216,7 @@ function toDetail(row: Row): ProductDetail {
 export type CatalogFilters = {
   lineSlugs?: string[];
   excludeLineSlugs?: string[];
+  seriesSlugs?: string[];
   conditions?: ProductCondition[];
   minPrice?: number;
   maxPrice?: number;
@@ -271,6 +272,18 @@ export async function getCatalogProducts(
       `(${excludeLines.join(",")})`,
     );
   }
+  const includeSeries = safeSlugs(f.seriesSlugs);
+  if (includeSeries.length > 0) {
+    const { seriesIdBySlug } = await lookupRefs();
+    const ids = includeSeries
+      .map((s) => seriesIdBySlug[s])
+      .filter((id): id is string => Boolean(id));
+    if (ids.length > 0) {
+      q = q.in("series_id", ids);
+    } else {
+      q = q.eq("id", "00000000-0000-0000-0000-000000000000");
+    }
+  }
   if (f.conditions && f.conditions.length > 0) {
     q = q.in("condition", f.conditions);
   }
@@ -281,8 +294,38 @@ export async function getCatalogProducts(
     q = q.lte("price", f.maxPrice);
   }
   if (f.q && f.q.trim().length > 0) {
-    const term = f.q.trim().replace(/[%,]/g, " ");
-    q = q.ilike("name", `%${term}%`);
+    const term = f.q.trim().replace(/[%,()]/g, " ");
+    const ilikeTerm = `%${term}%`;
+    const lower = term.toLowerCase();
+
+    const [linesRes, seriesRes] = await Promise.all([
+      supabase.from("product_lines").select("id").ilike("name", ilikeTerm),
+      supabase.from("series").select("id").ilike("name", ilikeTerm),
+    ]);
+    const lineIds = ((linesRes.data ?? []) as Array<{ id: string }>).map(
+      (r) => r.id,
+    );
+    const seriesIds = ((seriesRes.data ?? []) as Array<{ id: string }>).map(
+      (r) => r.id,
+    );
+
+    const conditionMatches = (
+      Object.entries(CONDITION_LABEL) as [ProductCondition, string][]
+    )
+      .filter(([, label]) => label.toLowerCase().includes(lower))
+      .map(([k]) => k);
+
+    const orParts: string[] = [`name.ilike.${ilikeTerm}`];
+    if (lineIds.length > 0) {
+      orParts.push(`product_line_id.in.(${lineIds.join(",")})`);
+    }
+    if (seriesIds.length > 0) {
+      orParts.push(`series_id.in.(${seriesIds.join(",")})`);
+    }
+    if (conditionMatches.length > 0) {
+      orParts.push(`condition.in.(${conditionMatches.join(",")})`);
+    }
+    q = q.or(orParts.join(","));
   }
 
   switch (f.sort) {
@@ -323,18 +366,23 @@ export async function getCatalogProducts(
 
 export async function getCatalogFacets(): Promise<{
   lines: { slug: string; name: string; count: number }[];
+  series: { slug: string; name: string; count: number }[];
   conditions: { value: ProductCondition; label: string; count: number }[];
 }> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("products")
-    .select("condition, product_line:product_lines!inner ( slug, name )");
+    .select(
+      "condition, product_line:product_lines!inner ( slug, name ), series:series ( slug, name )",
+    );
   const rows = (data ?? []) as unknown as Array<{
     condition: ProductCondition;
     product_line: RelOne<{ slug: string; name: string }>;
+    series: RelOne<{ slug: string; name: string }>;
   }>;
 
   const lineMap = new Map<string, { slug: string; name: string; count: number }>();
+  const seriesMap = new Map<string, { slug: string; name: string; count: number }>();
   const condMap = new Map<ProductCondition, number>();
   for (const r of rows) {
     const pl = asOne(r.product_line);
@@ -343,10 +391,19 @@ export async function getCatalogFacets(): Promise<{
       if (cur) cur.count++;
       else lineMap.set(pl.slug, { slug: pl.slug, name: pl.name, count: 1 });
     }
+    const ser = asOne(r.series);
+    if (ser) {
+      const cur = seriesMap.get(ser.slug);
+      if (cur) cur.count++;
+      else seriesMap.set(ser.slug, { slug: ser.slug, name: ser.name, count: 1 });
+    }
     condMap.set(r.condition, (condMap.get(r.condition) ?? 0) + 1);
   }
 
   const lines = [...lineMap.values()].sort((a, b) => a.name.localeCompare(b.name));
+  const series = [...seriesMap.values()].sort((a, b) =>
+    a.name.localeCompare(b.name),
+  );
   const conditions = [...condMap.entries()]
     .map(([value, count]) => ({
       value,
@@ -355,7 +412,7 @@ export async function getCatalogFacets(): Promise<{
     }))
     .sort((a, b) => a.label.localeCompare(b.label));
 
-  return { lines, conditions };
+  return { lines, series, conditions };
 }
 
 export async function getRelatedProducts(
@@ -374,6 +431,21 @@ export async function getRelatedProducts(
     .limit(limit);
   const rows = (data ?? []) as unknown as Row[];
   return rows.map(toCard);
+}
+
+export async function getAllProductSlugs(): Promise<
+  { slug: string; updatedAt: string | null }[]
+> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("products")
+    .select("slug, updated_at")
+    .order("updated_at", { ascending: false });
+  const rows = (data ?? []) as Array<{
+    slug: string;
+    updated_at: string | null;
+  }>;
+  return rows.map((r) => ({ slug: r.slug, updatedAt: r.updated_at }));
 }
 
 export async function getProductBySlug(

@@ -21,10 +21,29 @@ const dmMono = DM_Mono({
   variable: "--font-mono",
 });
 
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://madd-collectibles.vercel.app";
+const SITE_DESCRIPTION =
+  "Figuras Tamashii Nations originales. Myth Cloth EX, S.H.Figuarts y más. De coleccionista a coleccionista.";
+
 export const metadata: Metadata = {
-  title: "MADD. — Curated collectibles. Collector to collector.",
-  description:
-    "Tu sitio de compras para Myth Cloth, Myth Cloth EX y S.H.Figuarts. Cada figura, verificada y fotografiada por nosotros.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "MADD.",
+    template: "%s | MADD.",
+  },
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    siteName: "MADD.",
+    url: SITE_URL,
+    type: "website",
+    locale: "es_AR",
+    description: SITE_DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
+    description: SITE_DESCRIPTION,
+  },
 };
 
 export default function RootLayout({

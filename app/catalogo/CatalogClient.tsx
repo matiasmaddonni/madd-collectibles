@@ -64,6 +64,7 @@ export function CatalogResultsArea({
 }
 
 export type LineFacet = { slug: string; name: string; count: number };
+export type SeriesFacet = { slug: string; name: string; count: number };
 export type ConditionFacet = { value: string; label: string; count: number };
 
 const SORT_OPTIONS: { value: string; label: string }[] = [
@@ -111,17 +112,19 @@ function csvList(value: string | null | undefined): string[] {
 
 type PanelProps = {
   lines: LineFacet[];
+  series: SeriesFacet[];
   conditions: ConditionFacet[];
   pathname: string;
 };
 
-function FilterPanel({ lines, conditions, pathname }: PanelProps) {
+function FilterPanel({ lines, series, conditions, pathname }: PanelProps) {
   const router = useRouter();
   const params = useSearchParams();
   const [isPending, startTransition] = useTransition();
   usePublishPending(isPending);
 
   const selectedLines = csvList(params.get("linea"));
+  const selectedSeries = csvList(params.get("serie"));
   const selectedConditions = csvList(params.get("condicion"));
   const min = params.get("min") ?? "";
   const max = params.get("max") ?? "";
@@ -142,6 +145,10 @@ function FilterPanel({ lines, conditions, pathname }: PanelProps) {
   const onToggleLine = (slug: string) => {
     const next = toggleCsv(params.get("linea") ?? "", slug);
     push({ linea: next || null });
+  };
+  const onToggleSeries = (slug: string) => {
+    const next = toggleCsv(params.get("serie") ?? "", slug);
+    push({ serie: next || null });
   };
   const onToggleCondition = (value: string) => {
     const next = toggleCsv(params.get("condicion") ?? "", value);
@@ -184,6 +191,21 @@ function FilterPanel({ lines, conditions, pathname }: PanelProps) {
           />
         ))}
         {lines.length === 0 && (
+          <span className="font-body text-xs text-text-secondary">—</span>
+        )}
+      </FilterGroup>
+
+      <FilterGroup label="Serie">
+        {series.map((s) => (
+          <CheckRow
+            key={s.slug}
+            checked={selectedSeries.includes(s.slug)}
+            onChange={() => onToggleSeries(s.slug)}
+            label={s.name}
+            count={s.count}
+          />
+        ))}
+        {series.length === 0 && (
           <span className="font-body text-xs text-text-secondary">—</span>
         )}
       </FilterGroup>
@@ -284,20 +306,31 @@ function CheckRow({
 
 export function CatalogSidebar({
   lines,
+  series,
   conditions,
 }: {
   lines: LineFacet[];
+  series: SeriesFacet[];
   conditions: ConditionFacet[];
 }) {
   const pathname = usePathname();
-  return <FilterPanel lines={lines} conditions={conditions} pathname={pathname} />;
+  return (
+    <FilterPanel
+      lines={lines}
+      series={series}
+      conditions={conditions}
+      pathname={pathname}
+    />
+  );
 }
 
 export function CatalogActiveChips({
   lines,
+  series,
   conditions,
 }: {
   lines: LineFacet[];
+  series: SeriesFacet[];
   conditions: ConditionFacet[];
 }) {
   const router = useRouter();
@@ -307,6 +340,7 @@ export function CatalogActiveChips({
   usePublishPending(isPending);
 
   const lineMap = new Map(lines.map((l) => [l.slug, l.name]));
+  const seriesMap = new Map(series.map((s) => [s.slug, s.name]));
   const condMap = new Map(conditions.map((c) => [c.value, c.label]));
 
   const chips: { key: string; label: string; remove: () => void }[] = [];
@@ -318,6 +352,17 @@ export function CatalogActiveChips({
       remove: () => {
         const next = toggleCsv(params.get("linea") ?? "", slug);
         const href = pathname + buildHref(params, { linea: next || null });
+        startTransition(() => router.push(href, { scroll: false }));
+      },
+    });
+  });
+  csvList(params.get("serie")).forEach((slug) => {
+    chips.push({
+      key: `serie:${slug}`,
+      label: seriesMap.get(slug) ?? slug,
+      remove: () => {
+        const next = toggleCsv(params.get("serie") ?? "", slug);
+        const href = pathname + buildHref(params, { serie: next || null });
         startTransition(() => router.push(href, { scroll: false }));
       },
     });
@@ -460,9 +505,11 @@ export function PendingLink({
 
 export function MobileFilterTrigger({
   lines,
+  series,
   conditions,
 }: {
   lines: LineFacet[];
+  series: SeriesFacet[];
   conditions: ConditionFacet[];
 }) {
   const [open, setOpen] = useState(false);
@@ -540,7 +587,12 @@ export function MobileFilterTrigger({
           </button>
         </header>
         <div className="px-6 py-6 overflow-y-auto">
-          <FilterPanel lines={lines} conditions={conditions} pathname={pathname} />
+          <FilterPanel
+            lines={lines}
+            series={series}
+            conditions={conditions}
+            pathname={pathname}
+          />
         </div>
         <footer className="border-t border-border-subtle px-6 py-4">
           <button

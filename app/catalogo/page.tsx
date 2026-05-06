@@ -23,7 +23,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Catálogo — MADD.",
+  title: "Catálogo — Figuras disponibles",
   description:
     "Figuras Bandai originales: Myth Cloth, Myth Cloth EX, S.H.Figuarts y más. Filtrá por línea, condición y precio.",
 };
@@ -80,6 +80,7 @@ function parseFilters(sp: SearchParams): CatalogFilters {
   return {
     lineSlugs: csv(sp.linea),
     excludeLineSlugs: csv(sp.excluir),
+    seriesSlugs: csv(sp.serie),
     conditions: conds,
     minPrice: num(sp.min),
     maxPrice: num(sp.max),
@@ -121,6 +122,7 @@ export default async function CatalogPage({ searchParams }: PageProps) {
               <aside className="hidden md:block">
                 <CatalogSidebar
                   lines={facets.lines}
+                  series={facets.series}
                   conditions={facets.conditions}
                 />
               </aside>
@@ -133,6 +135,7 @@ export default async function CatalogPage({ searchParams }: PageProps) {
                   <div className="flex items-center gap-3">
                     <MobileFilterTrigger
                       lines={facets.lines}
+                      series={facets.series}
                       conditions={facets.conditions}
                     />
                     <CatalogSort />
@@ -141,6 +144,7 @@ export default async function CatalogPage({ searchParams }: PageProps) {
 
                 <CatalogActiveChips
                   lines={facets.lines}
+                  series={facets.series}
                   conditions={facets.conditions}
                 />
 

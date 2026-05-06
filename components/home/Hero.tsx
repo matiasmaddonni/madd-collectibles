@@ -11,16 +11,16 @@ const caseClassMap = {
 } as const;
 
 const stagger = [
-  "lg:translate-y-0 lg:rotate-[-2deg] delay-1",
-  "lg:translate-y-12 lg:rotate-[1.5deg] delay-2",
-  "lg:translate-y-4 lg:-translate-x-6 lg:rotate-[-0.5deg] delay-3",
+  "lg:translate-y-2 lg:rotate-[-3deg] lg:scale-[1.1] lg:z-10 delay-1",
+  "lg:translate-y-20 lg:-translate-x-6 lg:rotate-[2deg] lg:scale-[1.18] lg:z-20 delay-2",
+  "lg:translate-y-0 lg:-translate-x-12 lg:rotate-[-1deg] lg:scale-[1.1] lg:z-10 delay-3",
 ];
 
 function PreviewCard({ p, idx }: { p: HomeProductCard; idx: number }) {
   return (
     <Link
       href={`/products/${p.slug}`}
-      className={`group relative bg-bg-surface border border-border-subtle rounded-sm overflow-hidden anim-fade-up ${stagger[idx]}`}
+      className={`group relative bg-bg-surface border border-border-subtle rounded-sm overflow-hidden anim-fade-up transition-transform duration-300 hover:!z-30 hover:!translate-y-0 hover:!rotate-0 ${stagger[idx]}`}
     >
       <span className="top-accent" aria-hidden />
       <div className={`relative aspect-[3/4] overflow-hidden ${caseClassMap[p.caseGradient]} silhouette-figure`}>
@@ -29,19 +29,19 @@ function PreviewCard({ p, idx }: { p: HomeProductCard; idx: number }) {
             src={p.imageUrl}
             alt={p.name}
             fill
-            sizes="(min-width: 1024px) 16vw, 33vw"
+            sizes="(min-width: 1280px) 22vw, (min-width: 1024px) 25vw, 33vw"
             className="object-cover product-img-zoom"
           />
         )}
       </div>
-      <div className="p-3 flex flex-col gap-1">
-        <span className="font-mono text-[9px] uppercase tracked-wide text-text-secondary">
+      <div className="p-3 lg:p-4 flex flex-col gap-1">
+        <span className="font-mono text-[9px] lg:text-[10px] uppercase tracked-wide text-text-secondary">
           {p.lineName}
         </span>
-        <span className="font-body text-xs font-semibold text-text-primary truncate group-hover:text-accent transition-colors">
+        <span className="font-body text-xs lg:text-sm font-semibold text-text-primary truncate group-hover:text-accent transition-colors">
           {p.name}
         </span>
-        <span className="font-display text-base tracked-mid text-text-primary">
+        <span className="font-display text-base lg:text-lg tracked-mid text-text-primary">
           {formatPrice(p.price, p.currency)}
         </span>
       </div>
@@ -66,8 +66,8 @@ export async function Hero() {
 
   return (
     <section className="relative overflow-hidden noise-bg hero-glow diag-lines border-b border-border-subtle">
-      <div className="max-w-7xl mx-auto px-6 py-24 md:py-32 grid lg:grid-cols-2 gap-12 items-center">
-        <div className="flex flex-col gap-8 anim-fade-up">
+      <div className="max-w-7xl xl:max-w-[1500px] mx-auto px-6 py-24 md:py-32 grid lg:grid-cols-[5fr_7fr] gap-8 lg:gap-4 xl:gap-8 items-center">
+        <div className="flex flex-col gap-8 anim-fade-up lg:max-w-xl">
           <span className="font-mono text-xs uppercase tracked-wide text-text-secondary">
             Coleccionista a coleccionista
           </span>
@@ -96,7 +96,7 @@ export async function Hero() {
           </div>
         </div>
 
-        <div className="relative grid grid-cols-3 gap-4 lg:gap-6 lg:pl-12">
+        <div className="relative grid grid-cols-3 gap-4 lg:gap-0 lg:pl-0 lg:pr-8">
           {slots.map((p, i) =>
             p ? (
               <PreviewCard key={p.id} p={p} idx={i} />

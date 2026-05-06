@@ -80,10 +80,9 @@ const SOCIAL_LINKS: {
 
 const NAV_LINKS: { label: string; href: string }[] = [
   { label: "Inicio", href: "/" },
-  { label: "Myth Cloth", href: "/catalogo?linea=myth-cloth,myth-cloth-ex,myth-cloth-ex-metal" },
-  { label: "S.H.Figuarts", href: "/catalogo?linea=sh-figuarts,figuarts-zero" },
-  { label: "Sobre mí", href: "/#sobre-mi" },
+  { label: "Catálogo", href: "/catalogo" },
   { label: "Cómo Comprar", href: "/#how" },
+  { label: "Sobre mí", href: "/#sobre-mi" },
 ];
 
 export function Footer() {

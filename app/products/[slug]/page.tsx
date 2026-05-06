@@ -6,7 +6,8 @@ import { Footer } from "@/components/layout/Footer";
 import { CardImageCarousel } from "@/components/catalog/CardImageCarousel";
 import { ProductCard } from "@/components/catalog/ProductCard";
 import { ProductDetailCTA } from "./ProductDetailCTA";
-import { BackButton } from "./BackButton";
+import { ShareButton } from "@/components/product/ShareButton";
+import Link from "next/link";
 import { getProductBySlug, getRelatedProducts } from "@/lib/queries";
 import { formatPrice } from "@/lib/format";
 import {
@@ -42,15 +43,19 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
-  if (!product) return { title: "Producto no encontrado — MADD." };
+  if (!product) return { title: "Producto no encontrado" };
+  const description = `${product.name} — ${product.lineName} en perfecto estado. Precio: ${product.price} ${product.currency}.`;
   return {
-    title: `${product.name} — MADD.`,
-    description:
-      product.description ??
-      `${product.name} — ${product.lineName}. ${formatPrice(product.price, product.currency)}`,
-    openGraph: product.imageUrl
-      ? { images: [{ url: product.imageUrl }] }
-      : undefined,
+    title: product.name,
+    description,
+    openGraph: {
+      type: "website",
+      title: product.name,
+      description,
+      images: product.imageUrl
+        ? [{ url: product.imageUrl, width: 1200, height: 630 }]
+        : undefined,
+    },
   };
 }
 
@@ -83,9 +88,44 @@ export default async function ProductDetailPage({ params }: PageProps) {
       <Navbar />
       <main className="flex-1">
         <article className="max-w-7xl mx-auto px-6 py-12 md:py-16">
-          <div className="mb-8">
-            <BackButton />
-          </div>
+          <nav aria-label="Breadcrumb" className="mb-8">
+            <ol className="flex items-center font-mono text-xs uppercase tracked-wide whitespace-nowrap overflow-hidden">
+              <li className="shrink-0">
+                <Link
+                  href="/catalogo"
+                  className="text-text-secondary hover:text-accent transition-colors"
+                >
+                  Catálogo
+                </Link>
+              </li>
+              <li
+                aria-hidden
+                className="shrink-0 px-2 text-text-secondary"
+              >
+                ›
+              </li>
+              <li className="shrink-0">
+                <Link
+                  href={`/catalogo?linea=${encodeURIComponent(product.productLineSlug)}`}
+                  className="text-text-secondary hover:text-accent transition-colors"
+                >
+                  {product.lineName}
+                </Link>
+              </li>
+              <li
+                aria-hidden
+                className="shrink-0 px-2 text-text-secondary"
+              >
+                ›
+              </li>
+              <li
+                aria-current="page"
+                className="min-w-0 truncate text-text-primary"
+              >
+                {product.name}
+              </li>
+            </ol>
+          </nav>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-8 md:gap-12">
             <div className="md:col-span-3">
               <div
@@ -152,6 +192,10 @@ export default async function ProductDetailPage({ params }: PageProps) {
                     {product.statusLabel}
                   </span>
                 </span>
+              </div>
+
+              <div>
+                <ShareButton productName={product.name} slug={product.slug} />
               </div>
 
               {product.description && (

@@ -89,12 +89,12 @@ export function HowToBuy() {
                 key={s.n}
                 className="group relative p-7 rounded-md bg-bg-deep border border-border-subtle"
               >
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-3 mb-8">
                   <span className="font-display text-[44px] leading-none tracked-mid text-accent opacity-85">
                     {s.n}
                   </span>
                   <div className="w-11 h-11 grid place-items-center rounded-md bg-bg-elevated border border-border-medium text-text-primary">
-                    <Icon size={18} />
+                    <Icon size={26} />
                   </div>
                 </div>
                 <h3 className="font-display text-2xl tracked-mid mb-3 leading-none text-text-primary">
