@@ -1,6 +1,6 @@
 import "server-only";
 import { cache } from "react";
-import { createClient as createServerClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import type {
   ProductCondition,
@@ -8,7 +8,10 @@ import type {
   Currency,
 } from "@/lib/supabase/types";
 
-const createClient = createServerClient;
+// Storefront queries are session-agnostic. Using the cookie-less public client
+// keeps `cookies()` out of the render path so pages can opt into ISR /
+// revalidate without being forced into dynamic rendering.
+const createClient = async () => createPublicClient();
 
 export type CaseGradient = "gold" | "crimson" | "mixed" | "cool";
 
