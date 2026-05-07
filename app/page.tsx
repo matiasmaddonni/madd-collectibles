@@ -13,6 +13,10 @@ export const metadata: Metadata = {
   },
 };
 
+// Cache rendered HTML at Vercel's edge for 5 minutes. Catalog/product mutations
+// trigger revalidation explicitly via revalidatePath in admin actions.
+export const revalidate = 300;
+
 export default function HomePage() {
   return (
     <>

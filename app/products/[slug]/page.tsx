@@ -36,6 +36,10 @@ const statusTextClass: Record<ProductStatus, string> = {
   sold: "text-zinc-500",
 };
 
+// Cache rendered product detail HTML at Vercel's edge for 10 minutes.
+// Mutations through admin actions call revalidatePath() to invalidate.
+export const revalidate = 600;
+
 type PageProps = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({

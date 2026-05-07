@@ -96,6 +96,8 @@ export async function createProduct(fd: FormData) {
   if (error) throw error;
   revalidatePath("/admin/products");
   revalidatePath("/");
+  revalidatePath("/catalogo");
+  if (payload.slug) revalidatePath(`/products/${payload.slug}`);
   redirect(`/admin/products/${(data as { id: string }).id}`);
 }
 
@@ -113,6 +115,8 @@ export async function updateProduct(fd: FormData) {
   revalidatePath("/admin/products");
   revalidatePath(`/admin/products/${id}`);
   revalidatePath("/");
+  revalidatePath("/catalogo");
+  if (payload.slug) revalidatePath(`/products/${payload.slug}`);
 }
 
 export async function deleteProduct(fd: FormData) {
@@ -135,10 +139,20 @@ export async function deleteProduct(fd: FormData) {
     }
   }
 
+  // Capture slug before delete so we can revalidate the public detail page.
+  const { data: prod } = await admin
+    .from("products")
+    .select("slug")
+    .eq("id", id)
+    .maybeSingle();
+  const slug = (prod as { slug?: string } | null)?.slug;
+
   const { error } = await admin.from("products").delete().eq("id", id);
   if (error) throw error;
   revalidatePath("/admin/products");
   revalidatePath("/");
+  revalidatePath("/catalogo");
+  if (slug) revalidatePath(`/products/${slug}`);
 }
 
 // ---------- product images ----------
@@ -250,6 +264,18 @@ export async function uploadProductImage(fd: FormData) {
 
   revalidatePath(`/admin/products/${productId}`);
   revalidatePath("/");
+  revalidatePath("/catalogo");
+  if (productSlug) revalidatePath(`/products/${productSlug}`);
+}
+
+async function slugForProduct(productId: string): Promise<string | null> {
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("products")
+    .select("slug")
+    .eq("id", productId)
+    .maybeSingle();
+  return (data as { slug?: string } | null)?.slug ?? null;
 }
 
 export async function setPrimaryImage(input: {
@@ -269,6 +295,9 @@ export async function setPrimaryImage(input: {
   if (error) throw error;
   revalidatePath(`/admin/products/${input.productId}`);
   revalidatePath("/");
+  revalidatePath("/catalogo");
+  const slug = await slugForProduct(input.productId);
+  if (slug) revalidatePath(`/products/${slug}`);
 }
 
 export async function deleteProductImage(input: {
@@ -287,6 +316,9 @@ export async function deleteProductImage(input: {
   if (error) throw error;
   revalidatePath(`/admin/products/${input.productId}`);
   revalidatePath("/");
+  revalidatePath("/catalogo");
+  const slug = await slugForProduct(input.productId);
+  if (slug) revalidatePath(`/products/${slug}`);
 }
 
 // ---------- brands ----------
