@@ -12,6 +12,7 @@ import type { SupportedCurrency } from "@/lib/format";
 
 export type CartItem = {
   id: string;
+  slug: string;
   name: string;
   lineName: string;
   price: number;
@@ -34,7 +35,8 @@ type CartContextValue = {
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
-const STORAGE_KEY = "madd:cart:v1";
+// v2 bump: CartItem now requires `slug`. Old v1 entries (no slug) get dropped.
+const STORAGE_KEY = "madd:cart:v2";
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);

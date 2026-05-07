@@ -60,7 +60,10 @@ function PlaceholderCard({ idx }: { idx: number }) {
   );
 }
 
-export async function Hero() {
+// Lifetime curated-stock claim. Bump when total stock grows meaningfully.
+const INVENTORY_TOTAL = 250;
+
+export async function Hero({ availableCount }: { availableCount: number }) {
   const previews = await getHeroPreviewProducts(3);
   const slots = Array.from({ length: 3 }, (_, i) => previews[i] ?? null);
 
@@ -68,17 +71,23 @@ export async function Hero() {
     <section className="relative overflow-hidden noise-bg hero-glow diag-lines border-b border-border-subtle">
       <div className="max-w-7xl xl:max-w-[1500px] mx-auto px-6 py-24 md:py-32 grid lg:grid-cols-[5fr_7fr] gap-8 lg:gap-4 xl:gap-8 items-center">
         <div className="flex flex-col gap-8 anim-fade-up lg:max-w-xl">
-          <span className="font-mono text-xs uppercase tracked-wide text-text-secondary">
-            Coleccionista a coleccionista
-          </span>
+          <p className="font-mono text-xs uppercase tracked-wide text-text-secondary">
+            <span className="text-text-primary">+{INVENTORY_TOTAL}</span>{" "}
+            figuras curadas
+            <span aria-hidden className="text-border-medium px-2">
+              ·
+            </span>
+            <span className="text-text-primary">{availableCount}</span>{" "}
+            disponibles ahora
+          </p>
           <h1 className="font-display text-5xl md:text-6xl lg:text-7xl xl:text-8xl leading-[0.95] tracked-mid text-text-primary">
             CADA COLECCIÓN TIENE SU HISTORIA.
             <br />
             LA <span className="text-accent">TUYA</span> EMPIEZA ACÁ.
           </h1>
           <p className="max-w-md font-body text-base text-text-secondary leading-relaxed">
-            Fotos reales, atención personalizada y el conocimiento de quien las coleccionó, 
-            para que encuentres exactamente lo que buscás, o descubras lo que todavía no sabías que querías.
+            Fotos reales, atención personalizada, stock curado. Encontrá la
+            pieza que faltaba.
           </p>
           <div className="flex items-center gap-6">
             <Link

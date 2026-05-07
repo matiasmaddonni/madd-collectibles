@@ -69,8 +69,17 @@ export function CartDrawer() {
   }, {});
 
   const onCheckout = () => {
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL ?? "https://madd-collectibles.vercel.app";
+    // Each line: header (name × qty — price), then product URL on next line so
+    // Matias can click straight to the figure being asked about. Skip the URL
+    // line if a legacy cart entry from before the slug migration is missing it.
     const lines = items
-      .map((i) => `• ${i.name} ×${i.qty} — ${formatPrice(i.price, i.currency)}`)
+      .map((i) => {
+        const head = `• ${i.name} ×${i.qty} — ${formatPrice(i.price, i.currency)}`;
+        const url = i.slug ? `\n  ${siteUrl}/products/${i.slug}` : "";
+        return `${head}${url}`;
+      })
       .join("\n");
     const totals = Object.entries(totalsByCurrency)
       .map(([cur, amt]) => formatPrice(amt, cur as "ARS" | "USD"))
@@ -80,7 +89,7 @@ export function CartDrawer() {
     // Fire conversion analytics first; never block the WhatsApp redirect.
     const itemCount = items.reduce((n, it) => n + it.qty, 0);
     const totalUSD = Math.round((totalsByCurrency.USD ?? 0) * 100) / 100;
-    const slugs = items.map((it) => it.id);
+    const slugs = items.map((it) => it.slug || it.id);
     trackEvent("whatsapp_click_cart", { itemCount, totalUSD, slugs });
     trackMetaEvent("InitiateCheckout", {
       content_ids: slugs,
@@ -93,6 +102,7 @@ export function CartDrawer() {
     void recordCheckoutIntent({
       items: items.map((i) => ({
         id: i.id,
+        slug: i.slug,
         name: i.name,
         lineName: i.lineName,
         price: i.price,

@@ -6,6 +6,7 @@ import { CategoryGrid } from "@/components/home/CategoryGrid";
 import { FeaturedProducts } from "@/components/home/FeaturedProducts";
 import { HowToBuy } from "@/components/home/HowToBuy";
 import { AboutMadd } from "@/components/home/AboutMadd";
+import { getAvailableProductsCount } from "@/lib/queries";
 
 export const metadata: Metadata = {
   title: {
@@ -17,12 +18,13 @@ export const metadata: Metadata = {
 // trigger revalidation explicitly via revalidatePath in admin actions.
 export const revalidate = 300;
 
-export default function HomePage() {
+export default async function HomePage() {
+  const availableCount = await getAvailableProductsCount();
   return (
     <>
       <Navbar />
       <main className="flex-1">
-        <Hero />
+        <Hero availableCount={availableCount} />
         <CategoryGrid />
         <FeaturedProducts />
         <HowToBuy />

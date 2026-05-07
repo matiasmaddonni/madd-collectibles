@@ -7,6 +7,7 @@ import { formatPrice } from "@/lib/format";
 
 type IntentItem = {
   id: string;
+  slug: string | null;
   name: string;
   lineName: string;
   price: number;
@@ -59,6 +60,7 @@ function sanitize(input: unknown): IntentInput | null {
     if (!raw || typeof raw !== "object") return null;
     const r = raw as Record<string, unknown>;
     const id = typeof r.id === "string" ? r.id.slice(0, 64) : null;
+    const slug = typeof r.slug === "string" ? r.slug.slice(0, 200) : null;
     const name = typeof r.name === "string" ? r.name.slice(0, MAX_NAME) : null;
     const lineName = typeof r.lineName === "string" ? r.lineName.slice(0, MAX_NAME) : "";
     const price = typeof r.price === "number" && isFinite(r.price) ? r.price : null;
@@ -68,7 +70,7 @@ function sanitize(input: unknown): IntentInput | null {
         ? r.qty
         : null;
     if (!id || !name || price == null || !currency || qty == null) return null;
-    cleanItems.push({ id, name, lineName, price, currency, qty });
+    cleanItems.push({ id, slug, name, lineName, price, currency, qty });
   }
 
   const cleanTotals: Record<string, number> = {};

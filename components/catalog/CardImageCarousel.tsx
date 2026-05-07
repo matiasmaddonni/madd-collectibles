@@ -2,19 +2,110 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { ZoomIn, X } from "lucide-react";
+
+// Fullscreen image overlay with click-to-toggle 1x/2x zoom on desktop and
+// native pinch-zoom on mobile. Click outside the image OR the X button OR
+// pressing Escape closes. The X button sits at z-30 so it always receives
+// taps even when the image fills the dialog.
+function ZoomOverlay({
+  src,
+  alt,
+  onClose,
+}: {
+  src: string;
+  alt: string;
+  onClose: () => void;
+}) {
+  const [scale, setScale] = useState(1);
+  const toggleScale = () => setScale((s) => (s === 1 ? 2 : 1));
+
+  return (
+    <div
+      role="dialog"
+      aria-label="Imagen ampliada"
+      aria-modal="true"
+      onClick={onClose}
+      className="fixed inset-0 z-[200] bg-bg-deep/95 backdrop-blur-sm flex items-center justify-center p-4 cursor-zoom-out overflow-auto"
+    >
+      <button
+        type="button"
+        aria-label="Cerrar"
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
+        className="fixed top-4 right-4 z-[210] w-11 h-11 grid place-items-center rounded-sm border border-border-subtle text-text-primary hover:text-accent hover:border-accent transition-colors bg-bg-deep/80"
+        style={{ touchAction: "manipulation" }}
+      >
+        <X size={20} aria-hidden />
+      </button>
+      <div
+        onClick={(e) => {
+          e.stopPropagation();
+          toggleScale();
+        }}
+        className={`relative max-w-5xl max-h-full transition-transform duration-200 ${
+          scale === 1 ? "cursor-zoom-in" : "cursor-zoom-out"
+        }`}
+        style={{
+          transform: `scale(${scale})`,
+          transformOrigin: "center center",
+          touchAction: "pinch-zoom",
+        }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={src}
+          alt={alt}
+          className="max-w-full max-h-[90vh] object-contain select-none"
+          draggable={false}
+        />
+      </div>
+    </div>
+  );
+}
 
 type Props = {
   images: string[];
   alt: string;
   sizes?: string;
+  // Enable tap-to-zoom fullscreen overlay. Off on storefront cards (whole
+  // card is a navigation link), on for product detail page.
+  enableZoom?: boolean;
+  // Mark the first slide as priority + eager-loaded so it can be the LCP
+  // image when this carousel is above the fold (product detail hero, first
+  // featured / hero card on home).
+  priority?: boolean;
 };
 
 const SWIPE_THRESHOLD = 40;
 
-export function CardImageCarousel({ images, alt, sizes }: Props) {
+export function CardImageCarousel({
+  images,
+  alt,
+  sizes,
+  enableZoom = false,
+  priority = false,
+}: Props) {
   const [idx, setIdx] = useState(0);
+  const [zoomed, setZoomed] = useState(false);
   const total = images.length;
   const anchorRef = useRef<HTMLSpanElement | null>(null);
+
+  // Lock body scroll while zoom overlay is open + close on Escape.
+  useEffect(() => {
+    if (!zoomed) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setZoomed(false);
+    };
+    document.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [zoomed]);
 
   useEffect(() => {
     if (total <= 1) return;
@@ -78,7 +169,8 @@ export function CardImageCarousel({ images, alt, sizes }: Props) {
               fill
               sizes={sizes}
               className={`object-cover ${i === idx ? "product-img-zoom" : ""}`}
-              priority={i === 0}
+              priority={priority && i === 0}
+              loading={priority && i === 0 ? "eager" : "lazy"}
             />
           </div>
         );
@@ -139,6 +231,29 @@ export function CardImageCarousel({ images, alt, sizes }: Props) {
             ))}
           </div>
         </>
+      )}
+
+      {enableZoom && (
+        <button
+          type="button"
+          aria-label="Ver imagen ampliada"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setZoomed(true);
+          }}
+          className="absolute bottom-3 right-3 z-20 w-9 h-9 grid place-items-center rounded-sm bg-bg-deep/80 backdrop-blur-sm border border-border-subtle text-text-primary hover:text-accent hover:border-accent transition-colors"
+        >
+          <ZoomIn size={16} aria-hidden />
+        </button>
+      )}
+
+      {enableZoom && zoomed && (
+        <ZoomOverlay
+          src={images[idx]}
+          alt={alt}
+          onClose={() => setZoomed(false)}
+        />
       )}
     </>
   );

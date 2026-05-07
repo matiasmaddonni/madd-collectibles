@@ -92,6 +92,7 @@ export function HowToBuy() {
                 <div className="flex items-center gap-3 mb-8">
                   <span className="font-display text-[44px] leading-none tracked-mid text-accent opacity-85">
                     {s.n}
+                    <span className="text-accent">.</span>
                   </span>
                   <div className="w-11 h-11 grid place-items-center rounded-md bg-bg-elevated border border-border-medium text-text-primary">
                     <Icon size={26} />

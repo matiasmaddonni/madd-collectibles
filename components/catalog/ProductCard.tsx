@@ -25,10 +25,32 @@ const caseClassMap = {
   cool: "case-gradient-cool",
 } as const;
 
-export function ProductCard({ card }: { card: HomeProductCard }) {
+export function ProductCard({
+  card,
+  priority = false,
+}: {
+  card: HomeProductCard;
+  // Set on the first card of an above-the-fold grid so its image is eagerly
+  // loaded — fixes Next.js LCP warning on home / product detail.
+  priority?: boolean;
+}) {
+  const href = `/products/${card.slug}`;
   return (
     <article className="group relative bg-bg-surface border border-border-subtle rounded-sm overflow-hidden flex flex-col">
       <span className="top-accent" aria-hidden />
+
+      {/*
+        Single tap target for navigation: a stretched link covering the entire
+        card sits at z-[1]. Carousel arrows / dots / AddToCart button are
+        siblings positioned absolutely above the link via higher z-index, and
+        each calls e.stopPropagation() so they remain interactive without
+        triggering navigation.
+      */}
+      <Link
+        href={href}
+        aria-label={card.name}
+        className="absolute inset-0 z-[1]"
+      />
 
       <div className="relative aspect-square overflow-hidden">
         <div
@@ -39,6 +61,7 @@ export function ProductCard({ card }: { card: HomeProductCard }) {
             images={card.images}
             alt={card.name}
             sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+            priority={priority}
           />
         ) : (
           card.imageUrl && (
@@ -48,15 +71,11 @@ export function ProductCard({ card }: { card: HomeProductCard }) {
               fill
               sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
               className="object-cover product-img-zoom"
+              priority={priority}
+              loading={priority ? "eager" : "lazy"}
             />
           )
         )}
-
-        <Link
-          href={`/products/${card.slug}`}
-          aria-label={card.name}
-          className="absolute inset-0 z-[1]"
-        />
 
         <span className="absolute top-3 left-3 z-10 pointer-events-none font-mono text-[10px] tracked-wide uppercase px-2 py-1 bg-bg-deep/70 backdrop-blur-sm border border-border-subtle text-text-secondary">
           {card.lineName}
@@ -69,6 +88,7 @@ export function ProductCard({ card }: { card: HomeProductCard }) {
           disabled={card.status !== "available"}
           item={{
             id: card.id,
+            slug: card.slug,
             name: card.name,
             lineName: card.lineName,
             price: card.price,
@@ -78,10 +98,7 @@ export function ProductCard({ card }: { card: HomeProductCard }) {
         />
       </div>
 
-      <Link
-        href={`/products/${card.slug}`}
-        className="flex flex-col gap-2 p-4 flex-1 hover:text-accent transition-colors"
-      >
+      <div className="flex flex-col gap-2 p-4 flex-1 group-hover:text-accent transition-colors">
         <h3 className="font-body font-semibold text-text-primary leading-snug group-hover:text-accent transition-colors">
           {card.name}
         </h3>
@@ -103,7 +120,7 @@ export function ProductCard({ card }: { card: HomeProductCard }) {
             </span>
           </span>
         </div>
-      </Link>
+      </div>
     </article>
   );
 }

@@ -1,4 +1,5 @@
 import { waLink } from "@/lib/contact";
+import { SOCIAL_FOLLOWERS } from "@/lib/social";
 
 function WhatsAppIcon({ size = 14, color = "currentColor" }: { size?: number; color?: string }) {
   return (
@@ -144,10 +145,15 @@ export function Footer() {
           ))}
         </div>
 
+        <p className="mt-3 text-center font-mono text-[11px] text-text-secondary">
+          {SOCIAL_FOLLOWERS.instagram} en Instagram ·{" "}
+          {SOCIAL_FOLLOWERS.tiktok} en TikTok
+        </p>
+
         <div className="mt-10 pt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border-subtle">
           <p className="font-body text-xs text-text-secondary">
-            © 2025 MADD. Todas las figuras son productos originales de Tamashii
-            Nations.
+            © 2025 MADD<span className="text-accent">.</span> Todas las figuras
+            son productos originales de Tamashii Nations.
           </p>
           <p className="font-body text-xs text-text-secondary">
             Hecho por un coleccionista. Vendido por un coleccionista.

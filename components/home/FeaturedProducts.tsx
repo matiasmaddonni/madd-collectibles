@@ -18,7 +18,7 @@ export async function FeaturedProducts() {
             </h2>
           </div>
           <a
-            href="#"
+            href="/catalogo?orden=reciente"
             className="font-body text-sm text-text-secondary hover:text-accent transition-colors"
           >
             Ver todo →
@@ -26,8 +26,8 @@ export async function FeaturedProducts() {
         </header>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {cards.map((c) => (
-            <ProductCard key={c.id} card={c} />
+          {cards.map((c, i) => (
+            <ProductCard key={c.id} card={c} priority={i === 0} />
           ))}
         </div>
       </div>

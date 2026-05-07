@@ -1,7 +1,6 @@
 import Image from "next/image";
 import { waLink } from "@/lib/contact";
-import { profile } from "console";
-import { publicEncrypt } from "crypto";
+import { SOCIAL_FOLLOWERS } from "@/lib/social";
 
 function WhatsAppIcon({ size = 16, color = "currentColor" }: { size?: number; color?: string }) {
   return (
@@ -169,6 +168,10 @@ export function AboutMadd() {
             </h3>
             <span className="font-mono text-sm text-accent">
               @madd.collector
+            </span>
+            <span className="font-mono text-[11px] text-text-secondary mt-1">
+              {SOCIAL_FOLLOWERS.instagram} en Instagram ·{" "}
+              {SOCIAL_FOLLOWERS.tiktok} en TikTok
             </span>
           </div>
 

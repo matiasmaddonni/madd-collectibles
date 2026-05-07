@@ -6,10 +6,12 @@ import { Footer } from "@/components/layout/Footer";
 import { CardImageCarousel } from "@/components/catalog/CardImageCarousel";
 import { ProductCard } from "@/components/catalog/ProductCard";
 import { ProductDetailCTA } from "./ProductDetailCTA";
+import { StickyMobileCta } from "./StickyMobileCta";
 import { ShareButton } from "@/components/product/ShareButton";
 import Link from "next/link";
 import { getProductBySlug, getRelatedProducts } from "@/lib/queries";
 import { formatPrice } from "@/lib/format";
+import { formatShortDate } from "@/lib/date";
 import {
   convertArsToUsd,
   convertUsdToArs,
@@ -143,6 +145,8 @@ export default async function ProductDetailPage({ params }: PageProps) {
                     images={product.images}
                     alt={product.name}
                     sizes="(min-width: 768px) 60vw, 100vw"
+                    enableZoom
+                    priority
                   />
                 ) : (
                   product.imageUrl && (
@@ -185,6 +189,9 @@ export default async function ProductDetailPage({ params }: PageProps) {
                   </span>
                   <span className="font-mono text-[11px] uppercase tracked-wide text-text-secondary">
                     ≈ {formatPrice(altCurrency.amount, altCurrency.currency)}
+                    <span className="text-text-secondary/70">
+                      {" "}(al {formatShortDate()}, Dólar Blue)
+                    </span>
                   </span>
                 </div>
                 <span className="flex items-center gap-2 font-mono text-[11px] uppercase tracked-wide">
@@ -213,6 +220,21 @@ export default async function ProductDetailPage({ params }: PageProps) {
                 slug={product.slug}
                 item={{
                   id: product.id,
+                  slug: product.slug,
+                  name: product.name,
+                  lineName: product.lineName,
+                  price: product.price,
+                  currency: product.currency,
+                  imageUrl: product.imageUrl,
+                }}
+              />
+
+              <StickyMobileCta
+                disabled={!isAvailable}
+                slug={product.slug}
+                item={{
+                  id: product.id,
+                  slug: product.slug,
                   name: product.name,
                   lineName: product.lineName,
                   price: product.price,
