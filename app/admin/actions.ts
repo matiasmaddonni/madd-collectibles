@@ -189,8 +189,19 @@ export async function uploadProductImage(fd: FormData) {
   const isPrimary = fd.get("isPrimary") === "true";
   const file = fd.get("file") as File | null;
   if (!productId || !file) throw new Error("productId + file required");
-  if (!file.type.match(/^image\/(jpeg|png|webp)$/)) {
-    throw new Error("Only JPEG / PNG / WEBP images allowed");
+  if (file.size === 0) throw new Error("Empty file");
+  if (file.size > 15 * 1024 * 1024) throw new Error("File over 15 MB");
+  // HEIC / HEIF (default iPhone camera format) is not renderable in most
+  // browsers — surface a clear, actionable error instead of a generic one.
+  if (/^image\/(heic|heif)$/i.test(file.type)) {
+    throw new Error(
+      "HEIC images can't be displayed on the web. On iPhone go to Settings → Cámara → Formatos → Más compatible, or convert the photo to JPEG before uploading.",
+    );
+  }
+  if (!/^image\/(jpeg|png|webp|avif)$/i.test(file.type)) {
+    throw new Error(
+      `Unsupported image type "${file.type || "unknown"}". Use JPEG, PNG, WEBP, or AVIF.`,
+    );
   }
 
   const admin = createAdminClient();

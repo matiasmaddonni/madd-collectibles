@@ -1,18 +1,34 @@
 "use client";
 
 import { useCart, type CartItem } from "@/components/cart/CartProvider";
+import { trackEvent, trackMetaEvent } from "@/lib/analytics";
 
 type Props = {
   item: Omit<CartItem, "qty">;
+  slug: string;
   disabled?: boolean;
 };
 
-export function ProductDetailCTA({ item, disabled }: Props) {
+export function ProductDetailCTA({ item, slug, disabled }: Props) {
   const { add, has, open } = useCart();
   const inCart = has(item.id);
 
   const onClick = () => {
     if (disabled) return;
+    // Fire conversion-intent analytics first; never block the cart action.
+    trackEvent("whatsapp_click_product", {
+      slug,
+      productName: item.name,
+      price: item.price,
+      currency: item.currency,
+      line: item.lineName,
+    });
+    trackMetaEvent("Lead", {
+      content_ids: [slug],
+      content_type: "product",
+      value: item.price,
+      currency: item.currency,
+    });
     if (inCart) {
       open();
       return;

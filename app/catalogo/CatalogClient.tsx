@@ -6,10 +6,12 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useTransition,
 } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { trackEvent } from "@/lib/analytics";
 
 type PendingCtx = { pending: boolean; setPending: (v: boolean) => void };
 const CatalogPendingContext = createContext<PendingCtx>({
@@ -24,10 +26,34 @@ export function CatalogPendingProvider({
 }) {
   const [pending, setPending] = useState(false);
   const params = useSearchParams();
+  const filterDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isFirstRunRef = useRef(true);
 
   // Reset pending whenever params actually change (server response landed)
   useEffect(() => {
     setPending(false);
+  }, [params]);
+
+  // Debounced filter analytics — coalesce rapid filter toggles into one event.
+  useEffect(() => {
+    if (isFirstRunRef.current) {
+      isFirstRunRef.current = false;
+      return;
+    }
+    if (filterDebounceRef.current) {
+      clearTimeout(filterDebounceRef.current);
+    }
+    filterDebounceRef.current = setTimeout(() => {
+      const line = params.get("linea") ?? undefined;
+      const series = params.get("serie") ?? undefined;
+      const availability = params.get("condicion") ?? undefined;
+      // Skip empty no-op events (no filters at all).
+      if (!line && !series && !availability) return;
+      trackEvent("catalog_filter_apply", { line, series, availability });
+    }, 500);
+    return () => {
+      if (filterDebounceRef.current) clearTimeout(filterDebounceRef.current);
+    };
   }, [params]);
 
   const value = useMemo(() => ({ pending, setPending }), [pending]);

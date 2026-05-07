@@ -206,6 +206,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
               <ProductDetailCTA
                 disabled={!isAvailable}
+                slug={product.slug}
                 item={{
                   id: product.id,
                   name: product.name,

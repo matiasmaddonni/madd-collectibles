@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { Share2, CheckCircle2 } from "lucide-react";
+import { trackEvent } from "@/lib/analytics";
 
 type Props = {
   productName: string;
   slug: string;
 };
 
-export function ShareButton({ productName }: Props) {
+export function ShareButton({ productName, slug }: Props) {
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMounted, setToastMounted] = useState(false);
 
@@ -42,6 +43,7 @@ export function ShareButton({ productName }: Props) {
     if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
       try {
         await navigator.share(shareData);
+        trackEvent("share_click", { slug, productName, method: "native" });
         return;
       } catch (err) {
         // User cancelled or share failed — fall through to clipboard.
@@ -51,6 +53,7 @@ export function ShareButton({ productName }: Props) {
 
     try {
       await navigator.clipboard.writeText(url);
+      trackEvent("share_click", { slug, productName, method: "copy" });
       showToast();
     } catch {
       // Clipboard blocked. No toast — silent failure.

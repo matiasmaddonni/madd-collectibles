@@ -21,6 +21,30 @@ type IntentInput = {
 
 const MAX_ITEMS = 50;
 const MAX_NAME = 200;
+// Per-IP rate limit: max RATE_LIMIT_MAX intents per RATE_LIMIT_WINDOW_MS.
+// In-memory only — survives within a single warm serverless instance, resets
+// on cold start. Best-effort defense against script abuse, not a hard guarantee.
+const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const ipBuckets = new Map<string, { count: number; resetAt: number }>();
+
+function rateLimitOk(ip: string): boolean {
+  const now = Date.now();
+  const bucket = ipBuckets.get(ip);
+  if (!bucket || bucket.resetAt <= now) {
+    ipBuckets.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  if (bucket.count >= RATE_LIMIT_MAX) return false;
+  bucket.count += 1;
+  return true;
+}
+
+function clientIp(h: Headers): string {
+  const xff = h.get("x-forwarded-for");
+  if (xff) return xff.split(",")[0]!.trim();
+  return h.get("x-real-ip") ?? "unknown";
+}
 
 function sanitize(input: unknown): IntentInput | null {
   if (!input || typeof input !== "object") return null;
@@ -105,6 +129,10 @@ export async function recordCheckoutIntent(
   if (!data) return { ok: false, error: "invalid payload" };
 
   const h = await headers();
+  const ip = clientIp(h);
+  if (!rateLimitOk(ip)) {
+    return { ok: false, error: "rate limited" };
+  }
   const userAgent = h.get("user-agent")?.slice(0, 500) ?? null;
   const referrer = h.get("referer")?.slice(0, 500) ?? null;
 

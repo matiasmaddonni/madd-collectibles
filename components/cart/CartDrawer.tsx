@@ -6,6 +6,7 @@ import { useCart } from "./CartProvider";
 import { formatPrice } from "@/lib/format";
 import { waLink } from "@/lib/contact";
 import { recordCheckoutIntent } from "@/app/checkout/actions";
+import { trackEvent, trackMetaEvent } from "@/lib/analytics";
 
 function CloseIcon() {
   return (
@@ -75,6 +76,19 @@ export function CartDrawer() {
       .map(([cur, amt]) => formatPrice(amt, cur as "ARS" | "USD"))
       .join(" + ");
     const msg = `Hola MADD! Quiero coordinar la compra de:\n\n${lines}\n\nTotal: ${totals}`;
+
+    // Fire conversion analytics first; never block the WhatsApp redirect.
+    const itemCount = items.reduce((n, it) => n + it.qty, 0);
+    const totalUSD = Math.round((totalsByCurrency.USD ?? 0) * 100) / 100;
+    const slugs = items.map((it) => it.id);
+    trackEvent("whatsapp_click_cart", { itemCount, totalUSD, slugs });
+    trackMetaEvent("InitiateCheckout", {
+      content_ids: slugs,
+      content_type: "product",
+      value: totalUSD,
+      currency: "USD",
+      num_items: itemCount,
+    });
 
     void recordCheckoutIntent({
       items: items.map((i) => ({

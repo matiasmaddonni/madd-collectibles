@@ -27,7 +27,16 @@ function LoginForm() {
       return;
     }
     const next = search.get("next") ?? "/admin";
-    router.push(next);
+    // Allow only same-origin paths starting with a single "/". Reject schemes
+    // (https:), protocol-relative URLs (//evil.com), and backslash variants.
+    const safeNext =
+      typeof next === "string" &&
+      next.startsWith("/") &&
+      !next.startsWith("//") &&
+      !next.startsWith("/\\")
+        ? next
+        : "/admin";
+    router.push(safeNext);
     router.refresh();
   }
 
