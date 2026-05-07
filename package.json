@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "update:saint-seiya": "tsx scripts/update-saint-seiya.ts",
-    "update:saint-seiya:apply": "tsx scripts/update-saint-seiya.ts --apply"
+    "update:saint-seiya:apply": "tsx scripts/update-saint-seiya.ts --apply",
+    "n8n": "bash scripts/start-n8n.sh"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.2",
