@@ -10,6 +10,16 @@
   --color-border-subtle: rgba(240, 237, 232, 0.08);
   --color-border-medium: rgba(240, 237, 232, 0.14);
 
+  /* Opiniones (chat-style testimonial cards) — not used elsewhere. */
+  --color-ink-3: #6f6c67;
+  --color-crimson-2: #d44a3b;
+  --color-chat-bg: #0a1410;
+  --color-bubble-them: #1f2c2a;
+  --color-bubble-me: #1d3a32;
+  --color-bubble-ink: #e8eae6;
+  --color-bubble-ink-dim: #93a39c;
+  --color-check: #4fa3c7;
+
   --font-display: var(--font-display), "Bebas Neue", sans-serif;
   --font-body: var(--font-body), system-ui, sans-serif;
   --font-mono: var(--font-mono), ui-monospace, monospace;
@@ -189,3 +199,27 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: #303036; }
 
 input:focus { outline: none; }
+
+/* Hide scrollbar on horizontal snap rails (Opiniones, etc). */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* Subtle diagonal-stripe wallpaper for chat bodies + image placeholders. */
+.chat-stripe {
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.012) 0,
+    rgba(255, 255, 255, 0.012) 2px,
+    transparent 2px,
+    transparent 8px
+  );
+}
+.foto-stripe {
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.05) 0,
+    rgba(255, 255, 255, 0.05) 2px,
+    transparent 2px,
+    transparent 10px
+  );
+}

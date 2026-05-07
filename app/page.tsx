@@ -4,6 +4,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Hero } from "@/components/home/Hero";
 import { CategoryGrid } from "@/components/home/CategoryGrid";
 import { FeaturedProducts } from "@/components/home/FeaturedProducts";
+import { Opiniones } from "@/components/home/Opiniones";
 import { HowToBuy } from "@/components/home/HowToBuy";
 import { AboutMadd } from "@/components/home/AboutMadd";
 import { getAvailableProductsCount } from "@/lib/queries";
@@ -27,6 +28,7 @@ export default async function HomePage() {
         <Hero availableCount={availableCount} />
         <CategoryGrid />
         <FeaturedProducts />
+        <Opiniones />
         <HowToBuy />
         <AboutMadd />
       </main>

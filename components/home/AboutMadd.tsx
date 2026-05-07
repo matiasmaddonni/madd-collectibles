@@ -133,7 +133,7 @@ export function AboutMadd() {
     >
       {/* PAGE HEADER */}
       <div className="max-w-7xl mx-auto px-6 pt-20 md:pt-28">
-        <header className="flex flex-col gap-2 mb-2">
+        <header className="flex flex-col gap-2 mb-10">
           <span
             id="sobre-mi-title"
             className="font-mono text-xs uppercase tracked-wide text-text-secondary"
@@ -141,13 +141,13 @@ export function AboutMadd() {
             De coleccionista a coleccionista
           </span>
           <h2 className="font-display text-4xl md:text-5xl tracked-mid text-text-primary">
-            Sobre MADD<span className="text-accent">.</span>
+            Sobre MADD
           </h2>
         </header>
       </div>
 
       {/* PROFILE */}
-      <div className="max-w-7xl mx-auto px-6 py-14 md:py-20 grid grid-cols-1 md:grid-cols-12 gap-10">
+      <div className="max-w-7xl mx-auto px-6 pb-20 md:pb-28 grid grid-cols-1 md:grid-cols-12 gap-10">
         <div className="md:col-span-4 flex flex-col items-center md:items-start gap-6">
           <div
             className="w-full max-w-[420px] aspect-square rounded-full bg-bg-elevated border-2 border-accent overflow-hidden silhouette-figure"
