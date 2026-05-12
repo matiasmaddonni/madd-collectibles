@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { signOut } from "./actions";
 
 export default async function AdminLayout({
@@ -11,6 +12,32 @@ export default async function AdminLayout({
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Badge counts unique products with pending review work (field
+  // proposals OR crawler-uploaded images), matching the list view's
+  // grouped-by-product cards.
+  let pendingProposals = 0;
+  if (user) {
+    const admin = createAdminClient();
+    const [propRes, imgRes] = await Promise.all([
+      admin
+        .from("crawl_proposals")
+        .select("product_id")
+        .eq("status", "pending"),
+      admin
+        .from("product_images")
+        .select("product_id")
+        .not("proposed_by_source", "is", null),
+    ]);
+    const productIds = new Set<string>();
+    for (const r of (propRes.data ?? []) as Array<{ product_id: string }>) {
+      productIds.add(r.product_id);
+    }
+    for (const r of (imgRes.data ?? []) as Array<{ product_id: string }>) {
+      productIds.add(r.product_id);
+    }
+    pendingProposals = productIds.size;
+  }
 
   return (
     <>
@@ -32,6 +59,9 @@ export default async function AdminLayout({
           <Link href="/admin/brands" className="hover:underline">Brands</Link>
           <Link href="/admin/product-lines" className="hover:underline">Lines</Link>
           <Link href="/admin/series" className="hover:underline">Series</Link>
+          <Link href="/admin/proposals" className="hover:underline">
+            Proposals{pendingProposals > 0 ? ` (${pendingProposals})` : ""}
+          </Link>
           <span className="text-zinc-600 sm:ml-auto break-all max-w-[40ch]">{user.email}</span>
           <form action={signOut}>
             <button

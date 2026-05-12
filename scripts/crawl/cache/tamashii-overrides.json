@@ -1,0 +1,96 @@
+{
+  "_doc": [
+    "Map storefront product slugs → Tamashii Web item IDs.",
+    "When a slug appears here, the Tamashii adapter fetches",
+    "https://tamashiiweb.com/item/<id>/?wovn=en and extracts the full",
+    "gallery (8-10 high-res photos) + release year + EN title.",
+    "",
+    "Two override shapes:",
+    "  Existing product (slug already in `products` table):",
+    "    \"unicorn-cloth\": \"12345\"",
+    "",
+    "  New product to be created as draft (slug NOT in `products`):",
+    "    \"medical-machine\": {",
+    "      \"id\": \"14999\",",
+    "      \"line\": \"myth-cloth-ex\",  /* required: product_lines slug */",
+    "      \"name\": \"Override name\"   /* optional: defaults to Tamashii title */",
+    "    }",
+    "",
+    "Draft products are inserted with status='draft' and hidden from the",
+    "storefront. After the proposals are approved + price/condition set",
+    "in /admin/products/<id>, flip status to 'available' to publish.",
+    "",
+    "Older products with no live Tamashii page: leave them out; the",
+    "Fandom + eBay adapters still work via name search.",
+    "",
+    "------------------------------------------------------------",
+    "_batches groups slugs so you can run a focused crawl:",
+    "  npm run crawl:apply -- --batch=dbs-super-hero",
+    "Pure metadata — entries are still resolved through the flat",
+    "`overrides` map. Add new batches as you import new lines."
+  ],
+
+  "_batches": {
+    "saint-seiya-mcex-metal": [
+      "garuda-aiacos"
+    ],
+    "dbs-super-hero": [
+      "medical-machine",
+      "vegeta-super-hero",
+      "son-goku-super-hero",
+      "ultimate-gohan-super-hero",
+      "piccolo-super-hero",
+      "pan-super-hero",
+      "broly-super-hero",
+      "orange-piccolo",
+      "gamma-1",
+      "gamma-2"
+    ]
+  },
+
+  "overrides": {
+
+    "_comment_saint_seiya": "── Saint Seiya · Myth Cloth EX Metal ──────────────────",
+    "garuda-aiacos": "13912",
+
+    "_comment_dbs_super_hero": "── Dragon Ball Super: Super Hero (SH Figuarts) ────────",
+    "medical-machine": {
+      "id": "15080",
+      "line": "sh-figuarts",
+      "name": "Medical Machine"
+    },
+    "vegeta-super-hero": "13832",
+    "son-goku-super-hero": "13831",
+    "ultimate-gohan-super-hero": "13833",
+    "piccolo-super-hero": {
+      "id": "13830",
+      "line": "sh-figuarts",
+      "name": "Piccolo Super Hero"
+    },
+    "pan-super-hero": {
+      "id": "14233",
+      "line": "sh-figuarts",
+      "name": "Pan Super Hero"
+    },
+    "broly-super-hero": {
+      "id": "14293",
+      "line": "sh-figuarts",
+      "name": "Broly Super Hero"
+    },
+    "orange-piccolo": {
+      "id": "14361",
+      "line": "sh-figuarts",
+      "name": "Orange Piccolo"
+    },
+    "gamma-1": {
+      "id": "14046",
+      "line": "sh-figuarts",
+      "name": "Gamma 1"
+    },
+    "gamma-2": {
+      "id": "14047",
+      "line": "sh-figuarts",
+      "name": "Gamma 2"
+    }
+  }
+}

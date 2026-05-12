@@ -7,8 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "update:saint-seiya": "tsx scripts/update-saint-seiya.ts",
-    "update:saint-seiya:apply": "tsx scripts/update-saint-seiya.ts --apply",
+    "crawl": "tsx scripts/crawl.ts",
+    "crawl:apply": "tsx scripts/crawl.ts --apply",
     "n8n": "bash scripts/start-n8n.sh"
   },
   "dependencies": {
