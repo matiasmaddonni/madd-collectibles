@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { EMAIL_FROM, EMAIL_TO, getResend } from "@/lib/email";
 import { formatPrice } from "@/lib/format";
+import { SITE_URL } from "@/lib/env";
 
 type IntentItem = {
   id: string;
@@ -22,29 +23,43 @@ type IntentInput = {
 
 const MAX_ITEMS = 50;
 const MAX_NAME = 200;
-// Per-IP rate limit: max RATE_LIMIT_MAX intents per RATE_LIMIT_WINDOW_MS.
-// In-memory only — survives within a single warm serverless instance, resets
-// on cold start. Best-effort defense against script abuse, not a hard guarantee.
+// 5 intents per IP per 60s. Backed by the rate_limit_check Postgres RPC so the
+// limit is consistent across serverless instances (in-process Maps reset on
+// every cold start and don't share state across regions).
 const RATE_LIMIT_MAX = 5;
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const ipBuckets = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_WINDOW_SECONDS = 60;
 
-function rateLimitOk(ip: string): boolean {
-  const now = Date.now();
-  const bucket = ipBuckets.get(ip);
-  if (!bucket || bucket.resetAt <= now) {
-    ipBuckets.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+async function rateLimitOk(ip: string): Promise<boolean> {
+  const admin = createAdminClient();
+  const { data, error } = await admin.rpc("rate_limit_check", {
+    p_bucket: "checkout_intent",
+    p_key: ip,
+    p_window_seconds: RATE_LIMIT_WINDOW_SECONDS,
+    p_max: RATE_LIMIT_MAX,
+  });
+  if (error) {
+    console.error("rate_limit_check failed; failing open", error);
     return true;
   }
-  if (bucket.count >= RATE_LIMIT_MAX) return false;
-  bucket.count += 1;
-  return true;
+  return data === true;
 }
 
 function clientIp(h: Headers): string {
   const xff = h.get("x-forwarded-for");
   if (xff) return xff.split(",")[0]!.trim();
   return h.get("x-real-ip") ?? "unknown";
+}
+
+function originAllowed(h: Headers): boolean {
+  // Server Actions add an `origin` header. Block calls from any other origin —
+  // defends the action from being driven by a foreign site or a curl client.
+  const origin = h.get("origin");
+  if (!origin) return false;
+  try {
+    return new URL(origin).origin === new URL(SITE_URL).origin;
+  } catch {
+    return false;
+  }
 }
 
 function sanitize(input: unknown): IntentInput | null {
@@ -131,8 +146,11 @@ export async function recordCheckoutIntent(
   if (!data) return { ok: false, error: "invalid payload" };
 
   const h = await headers();
+  if (!originAllowed(h)) {
+    return { ok: false, error: "forbidden origin" };
+  }
   const ip = clientIp(h);
-  if (!rateLimitOk(ip)) {
+  if (!(await rateLimitOk(ip))) {
     return { ok: false, error: "rate limited" };
   }
   const userAgent = h.get("user-agent")?.slice(0, 500) ?? null;

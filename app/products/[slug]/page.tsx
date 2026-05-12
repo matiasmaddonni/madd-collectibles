@@ -17,6 +17,7 @@ import {
   convertUsdToArs,
   getUsdToArsRate,
 } from "@/lib/currency";
+import { SITE_URL } from "@/lib/env";
 import type { ProductStatus } from "@/lib/supabase/types";
 
 const caseClassMap = {
@@ -54,6 +55,7 @@ export async function generateMetadata({
   return {
     title: product.name,
     description,
+    alternates: { canonical: `/products/${product.slug}` },
     openGraph: {
       type: "website",
       title: product.name,
@@ -64,6 +66,12 @@ export async function generateMetadata({
     },
   };
 }
+
+const SCHEMA_AVAILABILITY: Record<ProductStatus, string> = {
+  available: "https://schema.org/InStock",
+  reserved: "https://schema.org/PreOrder",
+  sold: "https://schema.org/OutOfStock",
+};
 
 export default async function ProductDetailPage({ params }: PageProps) {
   const { slug } = await params;
@@ -89,8 +97,35 @@ export default async function ProductDetailPage({ params }: PageProps) {
           currency: "USD" as const,
         };
 
+  const productUrl = `${SITE_URL}/products/${product.slug}`;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: product.description ?? `${product.name} — ${product.lineName}`,
+    sku: product.sku ?? product.id,
+    brand: { "@type": "Brand", name: product.lineName },
+    category: product.lineName,
+    image: product.images.length > 0 ? product.images : undefined,
+    offers: {
+      "@type": "Offer",
+      url: productUrl,
+      price: product.price,
+      priceCurrency: product.currency,
+      availability: SCHEMA_AVAILABILITY[product.status],
+      itemCondition:
+        product.conditionLabel === "Sellado"
+          ? "https://schema.org/NewCondition"
+          : "https://schema.org/UsedCondition",
+    },
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Navbar />
       <main className="flex-1">
         <article className="max-w-7xl mx-auto px-6 py-12 md:py-16">

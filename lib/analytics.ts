@@ -51,7 +51,6 @@ export function trackEvent<E extends TrackEventName>(
 ): void {
   try {
     if (process.env.NODE_ENV === "development") {
-      // eslint-disable-next-line no-console
       console.log("[analytics]", event, props);
     }
     // Vercel Analytics rejects undefined values; strip them.

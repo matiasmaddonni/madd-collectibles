@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { signIn } from "../actions";
 
 function LoginForm() {
   const router = useRouter();
@@ -16,27 +16,17 @@ function LoginForm() {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const fd = new FormData();
+    fd.set("email", email);
+    fd.set("password", password);
+    fd.set("next", search.get("next") ?? "/admin");
+    const result = await signIn(fd);
     setLoading(false);
-    if (error) {
-      setError(error.message);
+    if (!result.ok) {
+      setError(result.error);
       return;
     }
-    const next = search.get("next") ?? "/admin";
-    // Allow only same-origin paths starting with a single "/". Reject schemes
-    // (https:), protocol-relative URLs (//evil.com), and backslash variants.
-    const safeNext =
-      typeof next === "string" &&
-      next.startsWith("/") &&
-      !next.startsWith("//") &&
-      !next.startsWith("/\\")
-        ? next
-        : "/admin";
-    router.push(safeNext);
+    router.push(result.next);
     router.refresh();
   }
 
@@ -49,6 +39,7 @@ function LoginForm() {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          autoComplete="username"
           className="border border-zinc-400 px-2 py-1"
         />
       </label>
@@ -59,6 +50,7 @@ function LoginForm() {
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          autoComplete="current-password"
           className="border border-zinc-400 px-2 py-1"
         />
       </label>

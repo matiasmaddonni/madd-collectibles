@@ -200,6 +200,19 @@ body {
 
 input:focus { outline: none; }
 
+/* Global keyboard-focus ring. Mouse/touch users see nothing; keyboard users
+   get a visible accent outline on every interactive element. Anchors, buttons
+   and form controls all participate. */
+:where(a, button, [role="button"], summary):focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+:where(input, textarea, select):focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
 /* Hide scrollbar on horizontal snap rails (Opiniones, etc). */
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }

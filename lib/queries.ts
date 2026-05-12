@@ -170,21 +170,29 @@ export async function getFeaturedProducts(
   return [...featured, ...fill].map(toCard);
 }
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function getHeroPreviewProducts(
   limit = 3,
   excludeIds: string[] = [],
 ): Promise<HomeProductCard[]> {
   const supabase = await createClient();
 
+  // Filter out anything that isn't a UUID before string-interpolating into the
+  // PostgREST filter. Defensive only — values come from server-side rows
+  // today, but a stray string would otherwise be embedded verbatim.
+  const safeExcludeIds = excludeIds.filter((id) => UUID_RE.test(id));
+
   let q = supabase
     .from("products")
     .select(SELECT)
     .eq("status", "available")
     .order("updated_at", { ascending: false })
-    .limit(limit + excludeIds.length);
+    .limit(limit + safeExcludeIds.length);
 
-  if (excludeIds.length > 0) {
-    q = q.not("id", "in", `(${excludeIds.join(",")})`);
+  if (safeExcludeIds.length > 0) {
+    q = q.not("id", "in", `(${safeExcludeIds.join(",")})`);
   }
 
   const { data } = await q;
@@ -488,15 +496,23 @@ const lookupRefs = cache(async () => {
   return { lineIdBySlug, seriesIdBySlug };
 });
 
-async function countByLineIds(lineIds: string[]) {
-  if (lineIds.length === 0) return 0;
-  const supabase = await createClient();
-  const { count } = await supabase
-    .from("products")
-    .select("*", { count: "exact", head: true })
-    .in("product_line_id", lineIds);
-  return count ?? 0;
-}
+// Single query that returns count per product_line_id. Replaces the previous
+// N COUNT(*) queries (one per category) on the home page.
+const getCountsByLineId = cache(
+  async (): Promise<Record<string, number>> => {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("products")
+      .select("product_line_id");
+    const counts: Record<string, number> = {};
+    for (const row of (data ?? []) as Array<{ product_line_id: string | null }>) {
+      const id = row.product_line_id;
+      if (!id) continue;
+      counts[id] = (counts[id] ?? 0) + 1;
+    }
+    return counts;
+  },
+);
 
 const CATEGORY_IMAGE_BASE =
   "https://idkikvkdijmifaskobeh.supabase.co/storage/v1/object/public/category-images";
@@ -579,30 +595,27 @@ function buildCategoryHref(slug: string): string {
 }
 
 export async function getHomeCategories(): Promise<HomeCategory[]> {
-  const [{ lineIdBySlug }, files] = await Promise.all([
+  const [{ lineIdBySlug }, files, countsByLineId] = await Promise.all([
     lookupRefs(),
     listCategoryImages(),
+    getCountsByLineId(),
   ]);
 
-  const results = await Promise.all(
-    CATEGORY_DEFS.map(async (def) => {
-      const ids = def.lineSlugs
-        .map((s) => lineIdBySlug[s])
-        .filter((id): id is string => Boolean(id));
-      const count = await countByLineIds(ids);
-      const matchedFile = findCategoryImage(files, def.matchTokens);
-      return {
-        slug: def.slug,
-        name: def.name,
-        caseGradient: def.caseGradient,
-        productCount: count,
-        imageUrl: matchedFile
-          ? `${CATEGORY_IMAGE_BASE}/${encodeURIComponent(matchedFile)}`
-          : null,
-        href: buildCategoryHref(def.slug),
-      };
-    }),
-  );
-
-  return results;
+  return CATEGORY_DEFS.map((def) => {
+    const ids = def.lineSlugs
+      .map((s) => lineIdBySlug[s])
+      .filter((id): id is string => Boolean(id));
+    const count = ids.reduce((sum, id) => sum + (countsByLineId[id] ?? 0), 0);
+    const matchedFile = findCategoryImage(files, def.matchTokens);
+    return {
+      slug: def.slug,
+      name: def.name,
+      caseGradient: def.caseGradient,
+      productCount: count,
+      imageUrl: matchedFile
+        ? `${CATEGORY_IMAGE_BASE}/${encodeURIComponent(matchedFile)}`
+        : null,
+      href: buildCategoryHref(def.slug),
+    };
+  });
 }

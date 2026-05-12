@@ -31,7 +31,10 @@ export function NavbarSearch() {
     pathname === "/catalogo" ? (params.get("q") ?? "") : "";
   const [term, setTerm] = useState(initial);
 
+  // Mirror the URL `q` param into the input when navigating between routes,
+  // so the search box stays in sync with the catalog query.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (pathname === "/catalogo") setTerm(params.get("q") ?? "");
   }, [pathname, params]);
 

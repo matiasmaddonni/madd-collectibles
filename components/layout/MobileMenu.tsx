@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useBodyScrollLock } from "@/components/hooks/useBodyScrollLock";
 
 function MenuIcon() {
   return (
@@ -63,26 +64,25 @@ export function MobileMenu() {
 
   // Only portal once we're on the client; SSR has no document.body.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
   // Close drawer on route change (e.g. after clicking a link).
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setOpen(false);
   }, [pathname]);
 
-  // Lock body scroll + close on Escape while open.
+  // Lock body scroll on iOS-safe pattern via shared hook.
+  useBodyScrollLock(open);
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
     };
     document.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
-    };
+    return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
   const drawer = (

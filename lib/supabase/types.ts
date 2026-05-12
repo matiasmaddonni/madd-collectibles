@@ -61,7 +61,7 @@ export interface ProductImage {
   sort_order: number
 }
 
-export interface PublicProduct extends Omit<Product, 'cost_price'> {}
+export type PublicProduct = Omit<Product, 'cost_price'>
 
 export interface Database {
   public: {

@@ -4,20 +4,29 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export default async function AdminDashboard() {
   const admin = createAdminClient();
 
-  const counts = await Promise.all([
-    admin.from("products").select("*", { count: "exact", head: true }),
-    admin.from("products").select("*", { count: "exact", head: true }).eq("status", "available"),
-    admin.from("products").select("*", { count: "exact", head: true }).eq("status", "reserved"),
-    admin.from("products").select("*", { count: "exact", head: true }).eq("status", "sold"),
+  // Single query for status breakdown; we tally client-side rather than
+  // firing 4 COUNT(*) queries.
+  const [statusRes, recentRes] = await Promise.all([
+    admin.from("products").select("status"),
+    admin
+      .from("products")
+      .select("id, name, slug, price, currency, status, created_at")
+      .order("created_at", { ascending: false })
+      .limit(5),
   ]);
 
-  const [total, available, reserved, sold] = counts.map((r) => r.count ?? 0);
-
-  const { data: recent } = await admin
-    .from("products")
-    .select("id, name, slug, price, currency, status, created_at")
-    .order("created_at", { ascending: false })
-    .limit(5);
+  const statusRows = (statusRes.data ?? []) as Array<{ status: string }>;
+  let total = 0;
+  let available = 0;
+  let reserved = 0;
+  let sold = 0;
+  for (const row of statusRows) {
+    total++;
+    if (row.status === "available") available++;
+    else if (row.status === "reserved") reserved++;
+    else if (row.status === "sold") sold++;
+  }
+  const recent = recentRes.data;
 
   return (
     <div className="flex flex-col gap-6">

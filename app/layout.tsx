@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { Bebas_Neue, DM_Sans, DM_Mono } from "next/font/google";
 import Script from "next/script";
+import { headers } from "next/headers";
 import { Analytics } from "@vercel/analytics/react";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { CartDrawer } from "@/components/cart/CartDrawer";
+import { META_PIXEL_ID, SITE_URL as ENV_SITE_URL } from "@/lib/env";
 import "./globals.css";
 
 const bebas = Bebas_Neue({
@@ -23,8 +25,7 @@ const dmMono = DM_Mono({
   variable: "--font-mono",
 });
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://madd-collectibles.vercel.app";
+const SITE_URL = ENV_SITE_URL;
 const SITE_DESCRIPTION =
   "Figuras Tamashii Nations originales. Myth Cloth EX, S.H.Figuarts y más. De coleccionista a coleccionista.";
 
@@ -48,12 +49,18 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+const PIXEL_ID_RE = /^[0-9]{6,32}$/;
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const metaPixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
+  // Pixel ID only allowed if numeric — defends inline-script injection through
+  // env misconfiguration. proxy.ts seeds a per-request nonce we thread here.
+  const safePixelId =
+    META_PIXEL_ID && PIXEL_ID_RE.test(META_PIXEL_ID) ? META_PIXEL_ID : null;
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html
       lang="es-AR"
@@ -65,11 +72,12 @@ export default function RootLayout({
           <CartDrawer />
         </CartProvider>
         <Analytics />
-        {metaPixelId && (
+        {safePixelId && (
           <>
             <Script
               id="meta-pixel"
               strategy="afterInteractive"
+              nonce={nonce}
               dangerouslySetInnerHTML={{
                 __html: `
 !function(f,b,e,v,n,t,s)
@@ -80,7 +88,7 @@ n.queue=[];t=b.createElement(e);t.async=!0;
 t.src=v;s=b.getElementsByTagName(e)[0];
 s.parentNode.insertBefore(t,s)}(window, document,'script',
 'https://connect.facebook.net/en_US/fbevents.js');
-fbq('init', '${metaPixelId}');
+fbq('init', '${safePixelId}');
 fbq('track', 'PageView');
                 `.trim(),
               }}
@@ -91,7 +99,7 @@ fbq('track', 'PageView');
                 height="1"
                 width="1"
                 style={{ display: "none" }}
-                src={`https://www.facebook.com/tr?id=${metaPixelId}&ev=PageView&noscript=1`}
+                src={`https://www.facebook.com/tr?id=${safePixelId}&ev=PageView&noscript=1`}
                 alt=""
               />
             </noscript>

@@ -2,7 +2,6 @@
 
 import {
   createContext,
-  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -29,8 +28,11 @@ export function CatalogPendingProvider({
   const filterDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isFirstRunRef = useRef(true);
 
-  // Reset pending whenever params actually change (server response landed)
+  // Reset pending whenever params actually change (server response landed).
+  // Syncing local state to an external system (the URL) — the React rule
+  // permits this exact pattern; the linter doesn't recognise it.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPending(false);
   }, [params]);
 
@@ -158,7 +160,10 @@ function FilterPanel({ lines, series, conditions, pathname }: PanelProps) {
   const [minVal, setMinVal] = useState(min);
   const [maxVal, setMaxVal] = useState(max);
 
+  // Re-sync the controlled inputs when the URL changes externally (e.g. when
+  // another component pushes new params). Standard prop-to-state mirror.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMinVal(min);
     setMaxVal(max);
   }, [min, max]);

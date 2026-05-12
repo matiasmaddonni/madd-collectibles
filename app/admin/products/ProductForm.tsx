@@ -30,13 +30,13 @@ export type ProductInitial = {
 };
 
 const CONDITIONS = ["mint_sealed", "mint_open", "near_mint", "good", "fair"];
-const STATUSES = ["available", "reserved", "sold"];
+const STATUSES = ["draft", "available", "reserved", "sold"];
 
 function slugify(s: string) {
   return s
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)+/g, "");
 }

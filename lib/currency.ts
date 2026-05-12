@@ -25,10 +25,11 @@ export async function getUsdToArsRate(): Promise<number> {
 }
 
 export function convertUsdToArs(amountUsd: number, rate: number): number {
+  if (!Number.isFinite(rate) || rate <= 0) return 0;
   return Math.round(amountUsd * rate);
 }
 
 export function convertArsToUsd(amountArs: number, rate: number): number {
-  if (rate <= 0) return amountArs;
+  if (!Number.isFinite(rate) || rate <= 0) return 0;
   return Math.round((amountArs / rate) * 100) / 100;
 }

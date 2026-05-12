@@ -22,10 +22,14 @@ import {
 
 export const dynamic = "force-dynamic";
 
+// Canonicalise every filter combination back to /catalogo so search engines
+// pick one representative URL and don't index every facet permutation as
+// duplicate content.
 export const metadata: Metadata = {
   title: "Catálogo — Figuras disponibles",
   description:
     "Figuras Bandai originales: Myth Cloth, Myth Cloth EX, S.H.Figuarts y más. Filtrá por línea, condición y precio.",
+  alternates: { canonical: "/catalogo" },
 };
 
 const VALID_CONDITIONS: ProductCondition[] = [

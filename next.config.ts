@@ -1,32 +1,13 @@
 import type { NextConfig } from "next";
 
-// Content-Security-Policy. Allowlist:
-// - 'self' for own assets
-// - inline scripts/styles required for Next.js hydration + Meta Pixel snippet
-// - Vercel Analytics, Meta Pixel script + image beacon
-// - Supabase Storage (product + category images), data: URIs (Next/Image blur),
-//   blob: (next/image processing)
-// - WhatsApp wa.me / api.whatsapp.com for outbound deeplinks (form-action)
-const csp = [
-  "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://connect.facebook.net",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' data: https://fonts.gstatic.com",
-  "img-src 'self' data: blob: https://*.supabase.co https://www.facebook.com",
-  "connect-src 'self' https://*.supabase.co https://api.exchangerate.host https://va.vercel-scripts.com https://vitals.vercel-insights.com https://www.facebook.com",
-  "frame-src 'self'",
-  "form-action 'self' https://api.whatsapp.com https://wa.me",
-  "base-uri 'self'",
-  "object-src 'none'",
-  "frame-ancestors 'none'",
-].join("; ");
-
+// CSP is generated per-request in proxy.ts with a fresh nonce, so it isn't
+// listed here. Other security headers are static and live in next.config.
 const securityHeaders = [
-  { key: "Content-Security-Policy", value: csp },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "Permissions-Policy", value: "geolocation=(), microphone=(), camera=()" },
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
 ];
 
 const nextConfig: NextConfig = {

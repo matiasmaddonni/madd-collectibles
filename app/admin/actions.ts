@@ -1,23 +1,64 @@
 "use server";
 
+import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-
-async function requireUser() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Unauthorized");
-  return user;
-}
+import { isAdminEmail, requireAdmin } from "@/lib/auth";
 
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/admin/login");
+}
+
+// Server-side admin sign-in. Goes through Postgres rate limit so brute-force
+// attempts share state across serverless instances, and the email is checked
+// against ADMIN_EMAILS before the session is allowed to persist. If the user
+// is authenticated but not an admin, signs them out immediately.
+export type SignInResult = { ok: true; next: string } | { ok: false; error: string };
+
+export async function signIn(formData: FormData): Promise<SignInResult> {
+  const email = (formData.get("email") as string | null)?.trim() ?? "";
+  const password = (formData.get("password") as string | null) ?? "";
+  const nextRaw = (formData.get("next") as string | null) ?? "/admin";
+
+  if (!email || !password) return { ok: false, error: "Email + password required" };
+
+  const h = await headers();
+  const xff = h.get("x-forwarded-for");
+  const ip = xff ? xff.split(",")[0]!.trim() : h.get("x-real-ip") ?? "unknown";
+
+  const admin = createAdminClient();
+  const { data: allowed, error: rlErr } = await admin.rpc("rate_limit_check", {
+    p_bucket: "admin_signin",
+    p_key: ip,
+    p_window_seconds: 300,
+    p_max: 10,
+  });
+  if (rlErr) console.error("rate_limit_check failed; failing open", rlErr);
+  if (allowed === false) {
+    return { ok: false, error: "Too many attempts. Try again in a few minutes." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) return { ok: false, error: error.message };
+
+  if (!isAdminEmail(email)) {
+    await supabase.auth.signOut();
+    return { ok: false, error: "This account is not authorised." };
+  }
+
+  const safeNext =
+    nextRaw.startsWith("/") &&
+    !nextRaw.startsWith("//") &&
+    !nextRaw.startsWith("/\\")
+      ? nextRaw
+      : "/admin";
+
+  return { ok: true, next: safeNext };
 }
 
 // ---------- products ----------
@@ -41,16 +82,35 @@ type ProductPayload = {
   tags: string[];
 };
 
+const SLUG_RE = /^[a-z0-9-]+$/;
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const CONDITIONS = new Set([
+  "mint_sealed",
+  "mint_open",
+  "near_mint",
+  "good",
+  "fair",
+]);
+const STATUSES = new Set(["draft", "available", "reserved", "sold"]);
+
 function parseProductForm(fd: FormData): ProductPayload {
-  const num = (k: string) => {
+  const num = (k: string): number | null => {
     const v = fd.get(k);
     if (v == null || v === "") return null;
-    return Number(v);
+    const n = Number(v);
+    if (!Number.isFinite(n)) return null;
+    return n;
   };
-  const numReq = (k: string) => {
+  const numReq = (k: string): number => {
     const n = num(k);
     if (n == null) throw new Error(`${k} required`);
     return n;
+  };
+  const intMin = (k: string, min: number, fallback: number): number => {
+    const n = num(k);
+    if (n == null) return fallback;
+    return Math.max(min, Math.floor(n));
   };
   const str = (k: string) => {
     const v = fd.get(k);
@@ -60,30 +120,55 @@ function parseProductForm(fd: FormData): ProductPayload {
   const tags = tagsRaw
     .split(",")
     .map((t) => t.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .slice(0, 20);
+
+  const slug = (fd.get("slug") as string | null) ?? "";
+  if (!SLUG_RE.test(slug)) throw new Error("Invalid slug");
+
+  const productLineId = (fd.get("product_line_id") as string | null) ?? "";
+  if (!UUID_RE.test(productLineId)) throw new Error("Invalid product_line_id");
+
+  const seriesIdRaw = str("series_id");
+  if (seriesIdRaw != null && !UUID_RE.test(seriesIdRaw))
+    throw new Error("Invalid series_id");
+
+  const currency = (fd.get("currency") as string) || "ARS";
+  if (currency !== "ARS" && currency !== "USD")
+    throw new Error("Invalid currency");
+
+  const condition = (fd.get("condition") as string) ?? "";
+  if (!CONDITIONS.has(condition)) throw new Error("Invalid condition");
+
+  const status = (fd.get("status") as string) ?? "";
+  if (!STATUSES.has(status)) throw new Error("Invalid status");
+
+  const releaseYear = num("release_year");
+  if (releaseYear != null && (releaseYear < 1900 || releaseYear > 2100))
+    throw new Error("Invalid release_year");
 
   return {
     id: (fd.get("id") as string) || undefined,
-    name: fd.get("name") as string,
-    slug: fd.get("slug") as string,
+    name: (fd.get("name") as string) ?? "",
+    slug,
     sku: str("sku"),
-    product_line_id: fd.get("product_line_id") as string,
-    series_id: str("series_id"),
+    product_line_id: productLineId,
+    series_id: seriesIdRaw,
     price: numReq("price"),
     cost_price: num("cost_price"),
-    currency: ((fd.get("currency") as string) || "ARS") as "ARS" | "USD",
-    condition: fd.get("condition") as string,
-    status: fd.get("status") as string,
-    stock_qty: num("stock_qty") ?? 1,
+    currency,
+    condition,
+    status,
+    stock_qty: intMin("stock_qty", 0, 1),
     is_featured: fd.get("is_featured") === "on",
-    release_year: num("release_year"),
+    release_year: releaseYear == null ? null : Math.floor(releaseYear),
     description: str("description"),
     tags,
   };
 }
 
 export async function createProduct(fd: FormData) {
-  await requireUser();
+  await requireAdmin();
   const payload = parseProductForm(fd);
   const { id: _id, ...insert } = payload;
   void _id;
@@ -102,9 +187,9 @@ export async function createProduct(fd: FormData) {
 }
 
 export async function updateProduct(fd: FormData) {
-  await requireUser();
+  await requireAdmin();
   const payload = parseProductForm(fd);
-  if (!payload.id) throw new Error("Missing id");
+  if (!payload.id || !UUID_RE.test(payload.id)) throw new Error("Missing id");
   const { id, ...update } = payload;
   const admin = createAdminClient();
   const { error } = await admin
@@ -120,9 +205,9 @@ export async function updateProduct(fd: FormData) {
 }
 
 export async function deleteProduct(fd: FormData) {
-  await requireUser();
+  await requireAdmin();
   const id = fd.get("id") as string;
-  if (!id) throw new Error("Missing id");
+  if (!id || !UUID_RE.test(id)) throw new Error("Missing id");
   const admin = createAdminClient();
 
   const { data: imgs } = await admin
@@ -139,7 +224,6 @@ export async function deleteProduct(fd: FormData) {
     }
   }
 
-  // Capture slug before delete so we can revalidate the public detail page.
   const { data: prod } = await admin
     .from("products")
     .select("slug")
@@ -164,49 +248,45 @@ function urlToStoragePath(url: string): string | null {
   return url.slice(idx + marker.length);
 }
 
+const ALLOWED_IMAGE_EXTS = new Set(["jpg", "jpeg", "png", "webp", "avif"]);
+
+async function callAddImage(
+  productId: string,
+  url: string,
+  isPrimary: boolean,
+): Promise<string> {
+  const admin = createAdminClient();
+  const { data, error } = await admin.rpc("add_product_image", {
+    p_product_id: productId,
+    p_url: url,
+    p_is_primary: isPrimary,
+  });
+  if (error) throw error;
+  return data as string;
+}
+
 export async function recordProductImage(input: {
   productId: string;
   url: string;
   isPrimary: boolean;
 }) {
-  await requireUser();
-  const admin = createAdminClient();
-  if (input.isPrimary) {
-    await admin
-      .from("product_images")
-      .update({ is_primary: false })
-      .eq("product_id", input.productId);
-  }
-  const { data: existing } = await admin
-    .from("product_images")
-    .select("sort_order")
-    .eq("product_id", input.productId)
-    .order("sort_order", { ascending: false })
-    .limit(1);
-  const existingRows = (existing ?? []) as unknown as { sort_order: number }[];
-  const nextSort = existingRows.length > 0 ? existingRows[0].sort_order + 1 : 0;
-  const { error } = await admin.from("product_images").insert({
-    product_id: input.productId,
-    url: input.url,
-    is_primary: input.isPrimary,
-    sort_order: nextSort,
-  });
-  if (error) throw error;
+  await requireAdmin();
+  if (!UUID_RE.test(input.productId)) throw new Error("Invalid productId");
+  await callAddImage(input.productId, input.url, input.isPrimary);
   revalidatePath(`/admin/products/${input.productId}`);
   revalidatePath("/");
 }
 
 export async function uploadProductImage(fd: FormData) {
-  await requireUser();
+  await requireAdmin();
   const productId = fd.get("productId") as string;
   const productSlug = fd.get("productSlug") as string;
   const isPrimary = fd.get("isPrimary") === "true";
   const file = fd.get("file") as File | null;
   if (!productId || !file) throw new Error("productId + file required");
+  if (!UUID_RE.test(productId)) throw new Error("Invalid productId");
   if (file.size === 0) throw new Error("Empty file");
   if (file.size > 15 * 1024 * 1024) throw new Error("File over 15 MB");
-  // HEIC / HEIF (default iPhone camera format) is not renderable in most
-  // browsers — surface a clear, actionable error instead of a generic one.
   if (/^image\/(heic|heif)$/i.test(file.type)) {
     throw new Error(
       "HEIC images can't be displayed on the web. On iPhone go to Settings → Cámara → Formatos → Más compatible, or convert the photo to JPEG before uploading.",
@@ -219,8 +299,13 @@ export async function uploadProductImage(fd: FormData) {
   }
 
   const admin = createAdminClient();
-  const folder = productSlug || productId;
-  const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+  // productSlug used only as a human-friendly folder name. Validate it
+  // strictly so an attacker can't traverse out of the bucket prefix
+  // (e.g. "../other-product"). If invalid, fall back to productId.
+  const folder =
+    productSlug && SLUG_RE.test(productSlug) ? productSlug : productId;
+  const rawExt = file.name.split(".").pop()?.toLowerCase() ?? "";
+  const ext = ALLOWED_IMAGE_EXTS.has(rawExt) ? rawExt : "jpg";
   const safeName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
   const path = `${folder}/${safeName}`;
 
@@ -239,33 +324,13 @@ export async function uploadProductImage(fd: FormData) {
     .from("product-images")
     .getPublicUrl(path);
 
-  if (isPrimary) {
-    await admin
-      .from("product_images")
-      .update({ is_primary: false })
-      .eq("product_id", productId);
-  }
-  const { data: existing } = await admin
-    .from("product_images")
-    .select("sort_order")
-    .eq("product_id", productId)
-    .order("sort_order", { ascending: false })
-    .limit(1);
-  const existingRows = (existing ?? []) as unknown as { sort_order: number }[];
-  const nextSort = existingRows.length > 0 ? existingRows[0].sort_order + 1 : 0;
-
-  const { error: insErr } = await admin.from("product_images").insert({
-    product_id: productId,
-    url: pub.publicUrl,
-    is_primary: isPrimary,
-    sort_order: nextSort,
-  });
-  if (insErr) throw insErr;
+  await callAddImage(productId, pub.publicUrl, isPrimary);
 
   revalidatePath(`/admin/products/${productId}`);
   revalidatePath("/");
   revalidatePath("/catalogo");
-  if (productSlug) revalidatePath(`/products/${productSlug}`);
+  if (productSlug && SLUG_RE.test(productSlug))
+    revalidatePath(`/products/${productSlug}`);
 }
 
 async function slugForProduct(productId: string): Promise<string | null> {
@@ -282,16 +347,14 @@ export async function setPrimaryImage(input: {
   productId: string;
   imageId: string;
 }) {
-  await requireUser();
+  await requireAdmin();
+  if (!UUID_RE.test(input.productId) || !UUID_RE.test(input.imageId))
+    throw new Error("Invalid id");
   const admin = createAdminClient();
-  await admin
-    .from("product_images")
-    .update({ is_primary: false })
-    .eq("product_id", input.productId);
-  const { error } = await admin
-    .from("product_images")
-    .update({ is_primary: true })
-    .eq("id", input.imageId);
+  const { error } = await admin.rpc("set_primary_product_image", {
+    p_product_id: input.productId,
+    p_image_id: input.imageId,
+  });
   if (error) throw error;
   revalidatePath(`/admin/products/${input.productId}`);
   revalidatePath("/");
@@ -305,7 +368,9 @@ export async function deleteProductImage(input: {
   imageId: string;
   url: string;
 }) {
-  await requireUser();
+  await requireAdmin();
+  if (!UUID_RE.test(input.productId) || !UUID_RE.test(input.imageId))
+    throw new Error("Invalid id");
   const admin = createAdminClient();
   const path = urlToStoragePath(input.url);
   if (path) await admin.storage.from("product-images").remove([path]);
@@ -324,13 +389,15 @@ export async function deleteProductImage(input: {
 // ---------- brands ----------
 
 export async function upsertBrand(fd: FormData) {
-  await requireUser();
+  await requireAdmin();
   const id = (fd.get("id") as string) || null;
-  const name = fd.get("name") as string;
-  const slug = fd.get("slug") as string;
+  const name = (fd.get("name") as string) ?? "";
+  const slug = (fd.get("slug") as string) ?? "";
   if (!name || !slug) throw new Error("name + slug required");
+  if (!SLUG_RE.test(slug)) throw new Error("Invalid slug");
   const admin = createAdminClient();
   if (id) {
+    if (!UUID_RE.test(id)) throw new Error("Invalid id");
     const { error } = await admin.from("brands").update({ name, slug }).eq("id", id);
     if (error) throw error;
   } else {
@@ -341,8 +408,9 @@ export async function upsertBrand(fd: FormData) {
 }
 
 export async function deleteBrand(fd: FormData) {
-  await requireUser();
+  await requireAdmin();
   const id = fd.get("id") as string;
+  if (!id || !UUID_RE.test(id)) throw new Error("Invalid id");
   const admin = createAdminClient();
   const { error } = await admin.from("brands").delete().eq("id", id);
   if (error) throw error;
@@ -352,14 +420,17 @@ export async function deleteBrand(fd: FormData) {
 // ---------- product_lines ----------
 
 export async function upsertLine(fd: FormData) {
-  await requireUser();
+  await requireAdmin();
   const id = (fd.get("id") as string) || null;
-  const name = fd.get("name") as string;
-  const slug = fd.get("slug") as string;
-  const brand_id = fd.get("brand_id") as string;
+  const name = (fd.get("name") as string) ?? "";
+  const slug = (fd.get("slug") as string) ?? "";
+  const brand_id = (fd.get("brand_id") as string) ?? "";
   if (!name || !slug || !brand_id) throw new Error("name + slug + brand_id required");
+  if (!SLUG_RE.test(slug)) throw new Error("Invalid slug");
+  if (!UUID_RE.test(brand_id)) throw new Error("Invalid brand_id");
   const admin = createAdminClient();
   if (id) {
+    if (!UUID_RE.test(id)) throw new Error("Invalid id");
     const { error } = await admin.from("product_lines").update({ name, slug, brand_id }).eq("id", id);
     if (error) throw error;
   } else {
@@ -372,8 +443,9 @@ export async function upsertLine(fd: FormData) {
 }
 
 export async function deleteLine(fd: FormData) {
-  await requireUser();
+  await requireAdmin();
   const id = fd.get("id") as string;
+  if (!id || !UUID_RE.test(id)) throw new Error("Invalid id");
   const admin = createAdminClient();
   const { error } = await admin.from("product_lines").delete().eq("id", id);
   if (error) throw error;
@@ -383,15 +455,18 @@ export async function deleteLine(fd: FormData) {
 // ---------- series ----------
 
 export async function upsertSeries(fd: FormData) {
-  await requireUser();
+  await requireAdmin();
   const id = (fd.get("id") as string) || null;
-  const name = fd.get("name") as string;
-  const slug = fd.get("slug") as string;
-  const product_line_id = fd.get("product_line_id") as string;
+  const name = (fd.get("name") as string) ?? "";
+  const slug = (fd.get("slug") as string) ?? "";
+  const product_line_id = (fd.get("product_line_id") as string) ?? "";
   if (!name || !slug || !product_line_id)
     throw new Error("name + slug + product_line_id required");
+  if (!SLUG_RE.test(slug)) throw new Error("Invalid slug");
+  if (!UUID_RE.test(product_line_id)) throw new Error("Invalid product_line_id");
   const admin = createAdminClient();
   if (id) {
+    if (!UUID_RE.test(id)) throw new Error("Invalid id");
     const { error } = await admin
       .from("series")
       .update({ name, slug, product_line_id })
@@ -407,8 +482,9 @@ export async function upsertSeries(fd: FormData) {
 }
 
 export async function deleteSeries(fd: FormData) {
-  await requireUser();
+  await requireAdmin();
   const id = fd.get("id") as string;
+  if (!id || !UUID_RE.test(id)) throw new Error("Invalid id");
   const admin = createAdminClient();
   const { error } = await admin.from("series").delete().eq("id", id);
   if (error) throw error;

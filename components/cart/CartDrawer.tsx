@@ -7,6 +7,8 @@ import { formatPrice } from "@/lib/format";
 import { waLink } from "@/lib/contact";
 import { recordCheckoutIntent } from "@/app/checkout/actions";
 import { trackEvent, trackMetaEvent } from "@/lib/analytics";
+import { useBodyScrollLock } from "@/components/hooks/useBodyScrollLock";
+import { SITE_URL } from "@/lib/env";
 
 function CloseIcon() {
   return (
@@ -50,17 +52,14 @@ function TrashIcon() {
 export function CartDrawer() {
   const { items, isOpen, close, remove, clear } = useCart();
 
+  useBodyScrollLock(isOpen);
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") close();
     };
     document.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
-    };
+    return () => document.removeEventListener("keydown", onKey);
   }, [isOpen, close]);
 
   const totalsByCurrency = items.reduce<Record<string, number>>((acc, it) => {
@@ -69,8 +68,7 @@ export function CartDrawer() {
   }, {});
 
   const onCheckout = () => {
-    const siteUrl =
-      process.env.NEXT_PUBLIC_SITE_URL ?? "https://madd-collectibles.vercel.app";
+    const siteUrl = SITE_URL;
     // Each line: header (name × qty — price), then product URL on next line so
     // Matias can click straight to the figure being asked about. Skip the URL
     // line if a legacy cart entry from before the slug migration is missing it.
@@ -157,7 +155,7 @@ export function CartDrawer() {
           {items.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center gap-3 px-6 text-center">
               <p className="font-body text-text-secondary">
-                Todavía no agregaste niguna figura.
+                Todavía no agregaste ninguna figura.
               </p>
               <p className="font-body text-sm text-text-secondary">
                 Tocá el ícono de bolsa al pasar el mouse sobre una figura.

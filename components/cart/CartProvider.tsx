@@ -43,6 +43,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
+  // Initial state is empty so SSR + hydration match. After mount, we read
+  // the persisted cart from localStorage and replace the empty array.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -50,6 +53,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } catch {}
     setHydrated(true);
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     if (!hydrated) return;
