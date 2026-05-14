@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# claude code runtime artifacts (launch.json + skills/ stay tracked)
+.claude/*.lock
