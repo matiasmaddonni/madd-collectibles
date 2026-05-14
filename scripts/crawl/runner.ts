@@ -9,14 +9,19 @@ import type {
 import {
   fetchTamashiiBasics,
   loadOverrides,
+  seriesForOverride,
   slugsForBatch,
   tamashiiAdapter,
 } from "./sources/tamashii";
 import { fandomAdapter } from "./sources/fandom";
 import { ebayAdapter } from "./sources/ebay";
+import { goodsmileAdapter } from "./sources/goodsmile";
+import { megahouseAdapter } from "./sources/megahouse";
 
 const ALL_ADAPTERS: SourceAdapter[] = [
   tamashiiAdapter,
+  goodsmileAdapter,
+  megahouseAdapter,
   fandomAdapter,
   ebayAdapter,
 ];
@@ -24,7 +29,7 @@ const ALL_ADAPTERS: SourceAdapter[] = [
 // Per-run upload cap. Detail pages on Tamashii return 8-12 photos; we
 // don't want to flood storage with every variant. The user can promote
 // or reject in the review UI.
-const MAX_IMAGES_PER_PRODUCT = 6;
+const MAX_IMAGES_PER_PRODUCT = 4;
 
 export type RunnerOptions = {
   slug?: string;
@@ -110,6 +115,61 @@ async function previewDraftsForOverrides(
   return missing.map((m) => m.slug);
 }
 
+// Find-or-create a series row by NAME (line-agnostic per migration 010).
+// `productLineId` is still accepted as a hint for new rows but no longer
+// scopes the lookup — a single global row represents the franchise.
+async function ensureSeries(
+  productLineId: string | null,
+  seriesName: string,
+): Promise<string | null> {
+  const admin = adminClient();
+  const trimmed = seriesName.trim();
+  if (!trimmed) return null;
+  // Case-insensitive name match across the whole table.
+  const { data: existing } = await admin
+    .from("series")
+    .select("id")
+    .ilike("name", trimmed)
+    .maybeSingle();
+  if (existing) return (existing as { id: string }).id;
+
+  // Generate slug; auto-suffix on UNIQUE collision.
+  const baseSlug = trimmed
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+  let slug = baseSlug;
+  let suffix = 0;
+  while (true) {
+    const { data: clash } = await admin
+      .from("series")
+      .select("id")
+      .eq("slug", slug)
+      .maybeSingle();
+    if (!clash) break;
+    suffix++;
+    slug = `${baseSlug}-${suffix}`;
+    if (suffix > 50) return null;
+  }
+  const { data: inserted, error } = await admin
+    .from("series")
+    .insert({
+      product_line_id: productLineId, // hint only; column is nullable
+      slug,
+      name: trimmed,
+      sort_order: 0,
+    })
+    .select("id")
+    .single();
+  if (error) {
+    console.warn(`ensureSeries failed: ${error.message}`);
+    return null;
+  }
+  return (inserted as { id: string }).id;
+}
+
 async function ensureDraftsForOverrides(
   opts: RunnerOptions,
 ): Promise<number> {
@@ -147,10 +207,17 @@ async function ensureDraftsForOverrides(
       const basics = await fetchTamashiiBasics(m.id);
       name = basics?.title ?? slugToTitle(m.slug);
     }
+    // Resolve series via per-override field → batch default → null.
+    const seriesName = seriesForOverride(m.slug);
+    const seriesId = seriesName
+      ? await ensureSeries(lineId, seriesName)
+      : null;
+
     const { error } = await admin.from("products").insert({
       slug: m.slug,
       name,
       product_line_id: lineId,
+      series_id: seriesId,
       price: 0, // placeholder; admin sets the real price before publish
       currency: "USD",
       condition: "mint_sealed",
@@ -161,7 +228,8 @@ async function ensureDraftsForOverrides(
       console.warn(`Failed to create draft ${m.slug}: ${error.message}`);
       continue;
     }
-    console.log(`✓ Created draft product: ${m.slug} (${name})`);
+    const seriesNote = seriesName ? ` · series=${seriesName}` : "";
+    console.log(`✓ Created draft product: ${m.slug} (${name})${seriesNote}`);
     created++;
   }
   return created;
@@ -384,9 +452,10 @@ export async function run(opts: RunnerOptions): Promise<{
       }
       let result: AdapterResult | null = null;
       try {
-        // Tamashii uses a slug-keyed override file rather than name search.
+        // Override-file adapters (Tamashii, Good Smile, MegaHouse) map
+        // storefront slugs → source URLs/IDs and expose `fetchBySlug`.
+        // Search-based adapters (Fandom, eBay) use the generic `fetch`.
         const fetched =
-          adapter.name === "tamashii" &&
           "fetchBySlug" in adapter &&
           typeof (adapter as { fetchBySlug?: unknown }).fetchBySlug === "function"
             ? await (
@@ -415,7 +484,13 @@ export async function run(opts: RunnerOptions): Promise<{
         [keyof ProposalFields, unknown]
       >) {
         const current = getCurrentValue(product, field);
-        if (!shouldPropose(current, proposed)) continue;
+        // eBay price is always proposed as reference — the admin compares
+        // current to median in the proposal notes and decides whether to
+        // bump the storefront price. Other sources/fields stick to the
+        // fill-only-empty rule (never overwrite manual edits).
+        const isEbayPrice = result.source === "ebay" && field === "price";
+        if (!isEbayPrice && !shouldPropose(current, proposed)) continue;
+        if (isEbayPrice && proposed == null) continue;
         newFields.push([field, proposed]);
       }
 

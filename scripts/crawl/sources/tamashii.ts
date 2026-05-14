@@ -36,20 +36,29 @@ export type TamashiiOverride = {
   id: string;
   line?: string;
   name?: string;
+  series?: string;
 };
 
 type RawOverrideValue =
   | string
   | number
-  | { id?: string | number; line?: string; name?: string };
+  | {
+      id?: string | number;
+      line?: string;
+      name?: string;
+      series?: string;
+    };
 
 type Overrides = {
   overrides?: Record<string, RawOverrideValue>;
   _batches?: Record<string, string[]>;
+  _batch_series?: Record<string, string>;
 };
 
 let overridesCache: Record<string, TamashiiOverride> | null = null;
 let batchesCache: Record<string, string[]> | null = null;
+let batchSeriesCache: Record<string, string> | null = null;
+let slugToBatchCache: Record<string, string> | null = null;
 
 function readFile(): Overrides {
   if (!existsSync(OVERRIDES_PATH)) return {};
@@ -69,12 +78,19 @@ export function loadOverrides(): Record<string, TamashiiOverride> {
     // they aren't real overrides. Skip them so they don't churn the DB.
     if (slug.startsWith("_")) continue;
     if (typeof value === "string" || typeof value === "number") {
-      out[slug] = { id: String(value) };
+      // Empty-string IDs are scaffold placeholders: a slug has been
+      // added to the file but the Tamashii item ID hasn't been filled
+      // in yet. Treat as inert until the ID is supplied.
+      const id = String(value).trim();
+      if (id) out[slug] = { id };
     } else if (value && typeof value === "object" && value.id != null) {
+      const id = String(value.id).trim();
+      if (!id) continue;
       out[slug] = {
-        id: String(value.id),
+        id,
         line: value.line ? String(value.line) : undefined,
         name: value.name ? String(value.name) : undefined,
+        series: value.series ? String(value.series) : undefined,
       };
     }
   }
@@ -95,6 +111,39 @@ export function loadBatches(): Record<string, string[]> {
 export function slugsForBatch(batch: string): string[] {
   const batches = loadBatches();
   return batches[batch] ?? [];
+}
+
+function loadBatchSeries(): Record<string, string> {
+  if (batchSeriesCache) return batchSeriesCache;
+  const parsed = readFile();
+  batchSeriesCache = parsed._batch_series ?? {};
+  return batchSeriesCache;
+}
+
+function loadSlugToBatch(): Record<string, string> {
+  if (slugToBatchCache) return slugToBatchCache;
+  const batches = loadBatches();
+  const m: Record<string, string> = {};
+  for (const [batch, slugs] of Object.entries(batches)) {
+    for (const slug of slugs) m[slug] = batch;
+  }
+  slugToBatchCache = m;
+  return slugToBatchCache;
+}
+
+// Resolves the series NAME for a given override slug, in priority order:
+//   1. per-override `series` field (object form)
+//   2. `_batch_series[<batch the slug belongs to>]`
+//   3. null  (no series)
+// The runner finds-or-creates a row in `series` matching
+// (product_line_id, name) and uses its id when inserting drafts.
+export function seriesForOverride(slug: string): string | null {
+  const overrides = loadOverrides();
+  const own = overrides[slug]?.series;
+  if (own) return own;
+  const batch = loadSlugToBatch()[slug];
+  if (!batch) return null;
+  return loadBatchSeries()[batch] ?? null;
 }
 
 const ITEM_IMAGE_RE = /\/images\/item\/item_\d{6,}_[A-Za-z0-9]+_(\d+)\.(?:jpg|jpeg|png|webp)/i;
@@ -190,24 +239,14 @@ function spanishReleaseDate(rawDate: string | null): string | null {
   return `${EN_MONTH_TO_ES[monthMatch[1]]} ${year}`;
 }
 
-function parsePriceYen(raw: string | null): string | null {
-  if (!raw) return null;
-  // Pull the first "<n>,?<nnn> yen" value; prefer the with-tax figure if
-  // multiple are present (matches what shoppers actually paid).
-  const matches = [...raw.matchAll(/([\d,]+)\s*yen/gi)].map((m) =>
-    m[1].replace(/,/g, ""),
-  );
-  if (matches.length === 0) return null;
-  const value = Number(matches[0]);
-  if (!Number.isFinite(value)) return null;
-  return value.toLocaleString("es-AR");
-}
+// (parsePriceYen removed — yen retail price omitted from the generated
+// description per editorial preference. Admin sets storefront price
+// separately from the inline price form / Edit product page.)
 
 function buildSpecDescription(rows: SpecRow[]): string | null {
   const release = spanishReleaseDate(
     findSpec(rows, "release date", "発売日"),
   );
-  const priceYen = parsePriceYen(findSpec(rows, "price", "価格"));
   const saleType = findSpec(rows, "type of sale", "販売");
   const exclusive = saleType
     ? /web\s*shop|exclusive|限定|tamashii\s*web/i.test(saleType)
@@ -218,7 +257,6 @@ function buildSpecDescription(rows: SpecRow[]): string | null {
   else if (saleType) parts.push("Distribución general");
 
   if (release) parts.push(`Lanzamiento: ${release}`);
-  if (priceYen) parts.push(`Precio original al lanzamiento: ¥${priceYen}`);
 
   if (parts.length === 0) return null;
   return parts.join(". ") + ".";

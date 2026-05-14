@@ -3,32 +3,61 @@ import { fetchJson, fetchText } from "../http";
 import { searchQuery, similarity } from "../normalise";
 import type { AdapterInput, AdapterResult, SourceAdapter } from "./types";
 
-// Fandom wikis. Each product line maps to a specific wiki host. We use
-// the MediaWiki opensearch API to find candidate pages, then parse the
-// article for an infobox image + the first non-hatnote paragraph.
-
-// Each line maps to a wiki host + optional language path. Spanish ('/es')
-// returns es-MX/es-ES articles; falls back to default lang if Spanish
-// path missing for that wiki. Saint Seiya + Dragon Ball both have rich
-// /es paths; for general anime we use the dedicated es.anime sub-wiki.
+// Fandom wikis. Lookup is series-first, then line-fallback. We hit the
+// MediaWiki opensearch API, parse the chosen article for the lede.
+//
+// Why series-first: lines like `sh-figuarts` host many franchises
+// (Dragon Ball, Jujutsu Kaisen, Chainsaw Man, …). Keying on line alone
+// leaks Chainsaw Man queries into the Dragon Ball wiki and returns
+// nonsense matches. Series name is line-agnostic so we map directly:
+// "Chainsaw Man" → chainsawman.fandom.com regardless of line.
 type WikiTarget = { host: string; lang: string };
+
+// Series name (lower-cased) → wiki target. `lang: "es"` requests the
+// /es path of a single global wiki; not every fandom has one, so we
+// always retry with the default lang if the Spanish search returns
+// empty (handled in `search()`).
+const WIKI_BY_SERIES: Record<string, WikiTarget> = {
+  "saint seiya": { host: "saintseiya.fandom.com", lang: "es" },
+  "dragon ball z": { host: "dragonball.fandom.com", lang: "es" },
+  "dragon ball gt": { host: "dragonball.fandom.com", lang: "es" },
+  "dragon ball super": { host: "dragonball.fandom.com", lang: "es" },
+  "dragon ball super: super hero": { host: "dragonball.fandom.com", lang: "es" },
+  "dragon ball super: broly": { host: "dragonball.fandom.com", lang: "es" },
+  "jujutsu kaisen": { host: "jujutsu-kaisen.fandom.com", lang: "es" },
+  "one piece": { host: "onepiece.fandom.com", lang: "es" },
+  "chainsaw man": { host: "chainsaw-man.fandom.com", lang: "es" },
+  naruto: { host: "naruto.fandom.com", lang: "es" },
+  bleach: { host: "bleach.fandom.com", lang: "es" },
+  "demon slayer": { host: "kimetsu-no-yaiba.fandom.com", lang: "es" },
+  "spy × family": { host: "spy-x-family.fandom.com", lang: "es" },
+  "my hero academia": { host: "bokunoheroacademia.fandom.com", lang: "es" },
+};
+
+// Line fallback for legacy products without a series_id. Only the Saint
+// Seiya lines have a safe default — everything else stays empty so we
+// don't pollute results with wrong-wiki matches.
 const WIKI_BY_LINE: Record<string, WikiTarget> = {
   "myth-cloth": { host: "saintseiya.fandom.com", lang: "es" },
   "myth-cloth-ex": { host: "saintseiya.fandom.com", lang: "es" },
   "myth-cloth-ex-metal": { host: "saintseiya.fandom.com", lang: "es" },
-  "sh-figuarts": { host: "dragonball.fandom.com", lang: "es" },
-  "figuarts-zero": { host: "dragonball.fandom.com", lang: "es" },
-  "popup-parade": { host: "anime.fandom.com", lang: "es" },
-  "variable-action-heroes": { host: "anime.fandom.com", lang: "es" },
 };
+
+function pickWiki(input: AdapterInput): WikiTarget | null {
+  if (input.seriesName) {
+    const key = input.seriesName.trim().toLowerCase();
+    const hit = WIKI_BY_SERIES[key];
+    if (hit) return hit;
+  }
+  return WIKI_BY_LINE[input.lineSlug] ?? null;
+}
 
 type OpenSearchResponse = [string, string[], string[], string[]];
 
-async function search(
-  wiki: WikiTarget,
+async function searchAtBase(
+  base: string,
   query: string,
 ): Promise<{ title: string; url: string }[]> {
-  const base = `https://${wiki.host}/${wiki.lang}`;
   const url =
     `${base}/api.php?action=opensearch&limit=10&format=json` +
     `&search=${encodeURIComponent(query)}`;
@@ -37,6 +66,31 @@ async function search(
   const titles = json[1];
   const urls = json[3];
   return titles.map((t, i) => ({ title: t, url: urls[i]! }));
+}
+
+async function search(
+  wiki: WikiTarget,
+  query: string,
+): Promise<{ title: string; url: string }[]> {
+  // Try the requested lang first; fall back to the default (no lang
+  // prefix) when no results OR when the lang path doesn't exist
+  // (returns 404/403, surfaced as a thrown error by politeFetch).
+  if (wiki.lang) {
+    try {
+      const langHits = await searchAtBase(
+        `https://${wiki.host}/${wiki.lang}`,
+        query,
+      );
+      if (langHits.length > 0) return langHits;
+    } catch {
+      // fall through to default-lang
+    }
+  }
+  try {
+    return await searchAtBase(`https://${wiki.host}`, query);
+  } catch {
+    return [];
+  }
 }
 
 function isHatnote(text: string): boolean {
@@ -168,7 +222,7 @@ function parseLede($: cheerio.CheerioAPI): string | null {
 async function fetchAdapter(
   input: AdapterInput,
 ): Promise<AdapterResult | null> {
-  const wiki = WIKI_BY_LINE[input.lineSlug];
+  const wiki = pickWiki(input);
   if (!wiki) return null;
   const query = searchQuery(input.name);
   if (!query) return null;

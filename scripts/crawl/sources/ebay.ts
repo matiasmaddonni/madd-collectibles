@@ -38,6 +38,8 @@ const LINE_ALIASES: Record<string, string[]> = {
   "myth-cloth-ex-metal": ["Saint Cloth Myth EX", "Myth Cloth EX"],
   "sh-figuarts": ["S.H.Figuarts", "SH Figuarts"],
   "figuarts-zero": ["Figuarts Zero"],
+  proplica: ["PROPLICA"],
+  "imagination-works": ["Imagination Works"],
   "popup-parade": ["Pop Up Parade"],
   "variable-action-heroes": ["Variable Action Heroes"],
 };

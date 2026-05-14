@@ -1,0 +1,30 @@
+{
+  "_doc": [
+    "Map storefront product slugs → MegaHouse product-page URLs on the",
+    "official English storefront, en.megahobby.jp (a Shopify store).",
+    "The adapter appends `.json` to the URL to read Shopify's structured",
+    "product document: English body_html → description, the YYYY-MM tag",
+    "→ release year, images[] → figure gallery.",
+    "",
+    "Shape — one line per product:",
+    "  \"<slug>\": \"https://en.megahobby.jp/products/<handle>\"",
+    "",
+    "An empty string is a scaffold placeholder: the slug is staged but no",
+    "URL has been filled in yet. Empty entries are inert — the adapter",
+    "skips them.",
+    "",
+    "All mapped slugs are EXISTING storefront rows (status='available')",
+    "missing images / description, so there is no `line` field and no",
+    "draft creation — the adapter only proposes data for review.",
+    "",
+    "Run a crawl for the whole line once URLs are filled:",
+    "  npm run crawl:apply -- --line=variable-action-heroes --source=megahouse"
+  ],
+  "overrides": {
+    "_comment_variable_action_heroes": "── Variable Action Heroes (MegaHouse) ─────────────────",
+    "ace": "https://en.megahobby.jp/collections/variable-action-heroes/products/variable-action-heroes-one-piece-portgas-d-ace-resale-2",
+    "luffytaro-1": "https://en.megahobby.jp/collections/variable-action-heroes/products/variable-action-heroes-one-piece-luffytaro",
+    "sabo": "https://en.megahobby.jp/collections/variable-action-heroes/products/variable-action-heroes-one-piece-sabo-resale-1",
+    "zorojuro": "https://en.megahobby.jp/collections/variable-action-heroes/products/variable-action-heroes-one-piece-zorojuro"
+  }
+}
