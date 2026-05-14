@@ -269,6 +269,34 @@ export async function rejectImageProposal(imageId: string): Promise<void> {
   await revalidateProductPaths(img.product_id);
 }
 
+// Inline price setter used by the Publish panel. Lets the admin set
+// price + currency without leaving the proposal page.
+export async function setProductPrice(
+  productId: string,
+  price: number,
+  currency: "USD" | "ARS",
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  await requireAdmin();
+  assertUuid(productId, "product id");
+  if (!Number.isFinite(price) || price <= 0) {
+    return { ok: false, reason: "Price must be a positive number" };
+  }
+  if (price > 10_000_000) {
+    return { ok: false, reason: "Price unreasonably large" };
+  }
+  if (currency !== "USD" && currency !== "ARS") {
+    return { ok: false, reason: "Invalid currency" };
+  }
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("products")
+    .update({ price, currency })
+    .eq("id", productId);
+  if (error) return { ok: false, reason: error.message };
+  await revalidateProductPaths(productId);
+  return { ok: true };
+}
+
 // Publish a draft product to the storefront. Validates that the basics
 // are in place (real price, an approved primary image) before flipping
 // the status. Returns a structured result so the UI can surface the

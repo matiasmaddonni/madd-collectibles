@@ -57,9 +57,11 @@ export function ProductForm({
   const [lineId, setLineId] = useState(initial.product_line_id ?? "");
   const [seriesId, setSeriesId] = useState(initial.series_id ?? "");
 
-  const filteredSeries = lineId
-    ? series.filter((s) => s.product_line_id === lineId)
-    : [];
+  // Series are global since migration 010 (product_line_id is nullable).
+  // Show ALL series in the dropdown; only fall back to a line-scoped
+  // filter when the legacy column happens to be set AND matches the
+  // currently selected line (kept for backwards compat).
+  const filteredSeries = series;
 
   const action = isEdit ? updateProduct : createProduct;
 

@@ -70,6 +70,8 @@ const LINE_GRADIENT: Record<string, CaseGradient> = {
   "myth-cloth-ex-metal": "crimson",
   "sh-figuarts": "mixed",
   "figuarts-zero": "mixed",
+  proplica: "cool",
+  "imagination-works": "mixed",
   "popup-parade": "cool",
   "variable-action-heroes": "cool",
   otros: "cool",
@@ -446,9 +448,11 @@ export async function getRelatedProducts(
 
 export async function getAvailableProductsCount(): Promise<number> {
   const supabase = await createClient();
+  // Use an explicit column, not "*": with head:true + count:exact, PostgREST
+  // returns count:null when the projection is "*". "id" is reliable.
   const { count } = await supabase
     .from("products")
-    .select("*", { count: "exact", head: true })
+    .select("id", { count: "exact", head: true })
     .eq("status", "available");
   return count ?? 0;
 }
@@ -535,8 +539,15 @@ const CATEGORY_DEFS: Array<{
     slug: "sh-figuarts",
     name: "S.H.Figuarts",
     caseGradient: "crimson",
-    lineSlugs: ["sh-figuarts", "figuarts-zero"],
-    matchTokens: ["sh-figuarts", "shfiguarts", "sh_figuarts", "figuarts"],
+    lineSlugs: ["sh-figuarts"],
+    matchTokens: ["sh-figuarts", "shfiguarts", "sh_figuarts"],
+  },
+  {
+    slug: "figuarts-zero",
+    name: "Figuarts Zero",
+    caseGradient: "mixed",
+    lineSlugs: ["figuarts-zero"],
+    matchTokens: ["figuarts-zero", "figuartszero", "figuarts_zero"],
   },
   {
     slug: "popup-parade",
