@@ -63,144 +63,42 @@
       "garuda-aiacos"
     ],
     "dbs-super-hero": [],
-    "dbs-broly": [
-      "broly-super"
-    ],
-    "dbs": [
-      "son-goku-ultra-instinct-toyotaro",
-      "android-21-lab-coat",
-      "ssgss-son-goku-kaioken",
-      "super-saiyan-kefla"
-    ],
+    "dbs-broly": [],
+    "dbs": [],
     "dbgt": [],
-    "jujutsu-kaisen": [
-      "megumi-fushiguro-sh",
-      "nobara-kugisaki-sh",
-      "yuji-itadori-fz",
-      "sukuna-fz",
-      "satoru-gojo-fz",
-      "megumi-fushiguro",
-      "nobara-kugisaki-fz",
-      "suguru-geto-jjk0",
-      "satoru-gojo-high-school",
-      "suguru-geto-high-school"
-    ],
-    "one-piece": [
-      "yamato-sh"
-    ],
+    "jujutsu-kaisen": [],
+    "one-piece": [],
     "one-piece-fz": [],
-    "spy-x-family": [
-      "yor-forger"
-    ],
+    "spy-x-family": [],
     "chainsaw-man": [],
     "naruto": [],
-    "bleach": [
-      "ichigo-dualzangetsu"
-    ],
-    "my-hero-academia": [
-      "izuku-midoriya"
-    ],
+    "bleach": [],
+    "my-hero-academia": [],
     "demon-slayer-fz": [],
     "proplica": [],
-    "saint-seiya": [
-      "libra-dohko-revival",
-      "virgo-shaka-20th-revival",
-      "cancer-deathmask-revival",
-      "aries-mu-revival",
-      "aquarius-camus-revival",
-      "andromeda-shun-v2",
-      "limnades-casa",
-      "geminis-cloth-kanon"
-    ],
-    "touche-metallique": [
-      "touche-metallique-sagittarius-seiya"
-    ],
+    "saint-seiya": [],
+    "touche-metallique": [],
     "imagination-works": [],
     "dbz": [
-      "medical-machine",
-      "son-goku-saiyan-raised-on-earth",
-      "majin-buu-evil",
-      "piccolo-proud-namekian",
-      "bardock",
-      "super-saiyan-fullpower-son-goku",
-      "krillin-earths-strongest-man",
-      "dodoria",
-      "zarbon",
-      "shenron",
-      "android-16",
-      "super-saiyan-2-son-goku-exclusive",
-      "cell-first-form",
-      "krillin-battle-suit",
-      "porunga-dende-set",
-      "super-saiyan-goku-exclusive",
-      "super-saiyan-trunks",
-      "super-saiyan-vegeta-awakening-blood",
-      "majin-vegeta",
-      "raditz-son-gohan-childhood",
-      "super-saiyan-trunks-infinite",
-      "super-saiyan-son-goku-legendary",
-      "son-goku-kaioken-180000",
-      "metal-cooler",
-      "super-saiyan-son-gohan-surpassed-goku",
-      "mecha-frieza",
-      "vegeta-combat-power-24000",
-      "son-goku-son-gohan-kid-kintoun",
-      "super-saiyan-son-goku-z-warrior",
-      "king-cold",
-      "super-saiyan-2-son-goku",
-      "great-ape-vegeta",
-      "son-goku-effect-parts-set",
-      "vegeta-old-battle-uniforms",
-      "bulma-journey-to-namek",
-      "son-goku-kaioken",
-      "raditz",
-      "vegeta-scouter",
-      "nappa",
-      "son-gohan-boyhood"
+      "great-ape-vegeta"
     ],
-    "sh-figuarts-fill": [
-      "android-17",
-      "android-18",
-      "frieza",
-      "ginyu",
-      "hit",
-      "kakashi-hatake",
-      "son-gohan",
-      "super-saiyan-3-son-goku",
-      "tulece"
+    "sh-figuarts-fill": [],
+    "figuarts-zero-fill": [],
+    "otros-fill": [],
+    "saint-seiya-fill": [
+      "centaurus-babel",
+      "marine-steel-cloth",
+      "sky-steel-cloth",
+      "unicorn-cloth",
+      "wyvern-surplice",
+      "aries-mu-oce",
+      "sagittarius-aiolos-sog",
+      "siren-sorrento",
+      "hypnos"
     ],
-    "figuarts-zero-fill": [
-      "aokiji-kuzan",
-      "brook-otama-ver-wano",
-      "chopper",
-      "luffytaro",
-      "monkeydluffy-gear-4",
-      "nami",
-      "robin",
-      "sanji",
-      "zoro"
-    ],
-    "otros-fill": [
-      "shu-of-the-stone",
-      "shin-of-the-torrent"
-    ],
-    "db": [
-      "son-goku-innocent-challenger",
-      "bulma-great-adventure",
-      "taopaipai"
-    ],
-    "berserk": [
-      "nosferatu-zodd",
-      "isidro",
-      "schierke",
-      "guts-berserker-armor-heat-of-passion",
-      "griffith-hawk-of-light",
-      "guts-berserker-armor"
-    ],
-    "marvel": [
-      "captain-america-tech-on-avengers",
-      "iron-man-tech-on-avengers"
-    ]
+    "db": [],
+    "berserk": [],
+    "marvel": []
   },
   "overrides": {
     "_comment_saint_seiya": "── Saint Seiya · Myth Cloth + Myth Cloth EX ───────────",
@@ -208,416 +106,41 @@
     "_comment_dbs_super_hero": "── Dragon Ball Super: Super Hero (SH Figuarts) ────────",
     "_comment_dbs_broly": "── Dragon Ball Super: Broly (SH Figuarts) ─────────────",
     "_comment_dbz": "── Dragon Ball Z (SH Figuarts) ────────────────────────",
-    "medical-machine": {
-      "id": "15080",
-      "line": "sh-figuarts",
-      "name": "Medical Machine"
-    },
-    "son-goku-saiyan-raised-on-earth": {
-      "id": "12445",
-      "line": "sh-figuarts",
-      "name": "Son Goku (A Saiyan Raised on Earth)"
-    },
-    "majin-buu-evil": {
-      "id": "12722",
-      "line": "sh-figuarts",
-      "name": "Majin Buu (Evil)"
-    },
-    "piccolo-proud-namekian": {
-      "id": "13286",
-      "line": "sh-figuarts",
-      "name": "Piccolo (The Proud Namekian)"
-    },
-    "bardock": {
-      "id": "13330",
-      "line": "sh-figuarts",
-      "name": "Bardock"
-    },
-    "super-saiyan-fullpower-son-goku": "13505",
-    "krillin-earths-strongest-man": {
-      "id": "13677",
-      "line": "sh-figuarts",
-      "name": "Krillin (Earth's Strongest Man)"
-    },
-    "dodoria": "13766",
-    "zarbon": "13800",
-    "shenron": {
-      "id": "14171",
-      "line": "sh-figuarts",
-      "name": "Shenron (Exclusive Edition)"
-    },
-    "android-16": {
-      "id": "14169",
-      "line": "sh-figuarts",
-      "name": "Android 16 (Exclusive Edition)"
-    },
-    "super-saiyan-2-son-goku-exclusive": {
-      "id": "14161",
-      "line": "sh-figuarts",
-      "name": "Super Saiyan 2 Son Goku (Exclusive Edition)"
-    },
-    "cell-first-form": "13900",
-    "krillin-battle-suit": {
-      "id": "13975",
-      "line": "sh-figuarts",
-      "name": "Krillin (Battle Suit)"
-    },
-    "porunga-dende-set": {
-      "id": "14087",
-      "line": "sh-figuarts",
-      "name": "Porunga & Dende — Glowing Dragon Ball Set"
-    },
-    "super-saiyan-goku-exclusive": {
-      "id": "14332",
-      "line": "sh-figuarts",
-      "name": "Super Saiyan Goku (Exclusive Edition)"
-    },
-    "super-saiyan-trunks": "14204",
-    "super-saiyan-vegeta-awakening-blood": {
-      "id": "14203",
-      "line": "sh-figuarts",
-      "name": "Super Saiyan Vegeta (Awakening Super Saiyan Blood)"
-    },
-    "majin-vegeta": {
-      "id": "14501",
-      "line": "sh-figuarts",
-      "name": "Majin Vegeta (Exclusive Edition)"
-    },
-    "raditz-son-gohan-childhood": {
-      "id": "14500",
-      "line": "sh-figuarts",
-      "name": "Raditz & Son Gohan (Childhood) (Exclusive Edition)"
-    },
-    "super-saiyan-trunks-infinite": {
-      "id": "14349",
-      "line": "sh-figuarts",
-      "name": "Super Saiyan Trunks (Infinite Latent Super Power)"
-    },
-    "super-saiyan-son-goku-legendary": {
-      "id": "14415",
-      "line": "sh-figuarts",
-      "name": "Super Saiyan Son Goku (Legendary Super Saiyan)"
-    },
-    "son-goku-kaioken-180000": {
-      "id": "14749",
-      "line": "sh-figuarts",
-      "name": "Son Goku Kaio-ken (180,000 Fighting Power)"
-    },
-    "metal-cooler": {
-      "id": "14435",
-      "line": "sh-figuarts",
-      "name": "Metal Cooler"
-    },
-    "super-saiyan-son-gohan-surpassed-goku": {
-      "id": "14672",
-      "line": "sh-figuarts",
-      "name": "Super Saiyan Son Gohan (The Fighter Who Surpassed Goku)"
-    },
-    "mecha-frieza": {
-      "id": "14569",
-      "line": "sh-figuarts",
-      "name": "Mecha Frieza"
-    },
-    "vegeta-combat-power-24000": {
-      "id": "14665",
-      "line": "sh-figuarts",
-      "name": "Vegeta (Combat Power of 24,000)"
-    },
-    "son-goku-son-gohan-kid-kintoun": {
-      "id": "15008",
-      "line": "sh-figuarts",
-      "name": "Son Goku & Son Gohan (Kid) & Kintoun (Exclusive Edition)"
-    },
-    "super-saiyan-son-goku-z-warrior": {
-      "id": "15015",
-      "line": "sh-figuarts",
-      "name": "Super Saiyan Son Goku (Z Warrior)"
-    },
-    "king-cold": {
-      "id": "14835",
-      "line": "sh-figuarts",
-      "name": "King Cold"
-    },
-    "super-saiyan-2-son-goku": {
-      "id": "15187",
-      "line": "sh-figuarts",
-      "name": "Super Saiyan 2 Son Goku"
-    },
-    "great-ape-vegeta": {
-      "id": "15444",
-      "line": "sh-figuarts",
-      "name": "Great Ape Vegeta (Exclusive Edition)"
-    },
+    "great-ape-vegeta": "13194",
     "_comment_dbs": "── Dragon Ball Super (SH Figuarts) ────────────────────",
     "_comment_dbgt": "── Dragon Ball GT (SH Figuarts) ───────────────────────",
     "_comment_jjk": "── Jujutsu Kaisen (SH Figuarts + Figuarts Zero) ───────",
-    "megumi-fushiguro": "13990",
-    "megumi-fushiguro-sh": {
-      "id": "13710",
-      "line": "sh-figuarts",
-      "name": "Megumi Fushiguro (SH Figuarts)"
-    },
-    "nobara-kugisaki-sh": {
-      "id": "13783",
-      "line": "sh-figuarts",
-      "name": "Nobara Kugisaki (SH Figuarts)"
-    },
-    "yuji-itadori-fz": {
-      "id": "13755",
-      "line": "figuarts-zero",
-      "name": "Yuji Itadori (Figuarts Zero)"
-    },
-    "sukuna-fz": {
-      "id": "13856",
-      "line": "figuarts-zero",
-      "name": "Sukuna (Figuarts Zero)"
-    },
-    "satoru-gojo-fz": {
-      "id": "13903",
-      "line": "figuarts-zero",
-      "name": "Satoru Gojo (Figuarts Zero)"
-    },
-    "nobara-kugisaki-fz": {
-      "id": "13991",
-      "line": "figuarts-zero",
-      "name": "Nobara Kugisaki (Figuarts Zero)"
-    },
-    "suguru-geto-jjk0": {
-      "id": "14257",
-      "line": "sh-figuarts",
-      "name": "Suguru Geto (Jujutsu Kaisen 0)"
-    },
-    "satoru-gojo-high-school": {
-      "id": "14511",
-      "line": "sh-figuarts",
-      "name": "Satoru Gojo (Jujutsu Technical High School)"
-    },
-    "suguru-geto-high-school": {
-      "id": "14512",
-      "line": "sh-figuarts",
-      "name": "Suguru Geto (Jujutsu Technical High School)"
-    },
     "_comment_one_piece": "── One Piece (SH Figuarts) ────────────────────────────",
     "_comment_one_piece_fz": "── One Piece (Figuarts Zero) ──────────────────────────",
     "_comment_spy_x_family": "── Spy × Family (SH Figuarts + Figuarts Zero) ─────────",
-    "yor-forger": "14029",
     "_comment_chainsaw_man": "── Chainsaw Man (SH Figuarts + Figuarts Zero) ─────────",
     "_comment_naruto": "── Naruto (SH Figuarts + Figuarts Zero) ───────────────",
     "_comment_bleach": "── Bleach (SH Figuarts + Figuarts Zero) ───────────────",
     "_comment_mha": "── My Hero Academia (SH Figuarts) ─────────────────────",
-    "izuku-midoriya": {
-      "id": "15039",
-      "line": "sh-figuarts",
-      "name": "Izuku Midoriya"
-    },
     "_comment_demon_slayer_fz": "── Demon Slayer (Figuarts Zero) ───────────────────────",
     "_comment_proplica": "── PROPLICA replicas ─────────────────────────────────",
-    "libra-dohko-revival": {
-      "id": "14590",
-      "line": "myth-cloth-ex",
-      "name": "Libra Dohko (Revival Version)"
-    },
-    "virgo-shaka-20th-revival": {
-      "id": "14712",
-      "line": "myth-cloth-ex",
-      "name": "Virgo Shaka (20th Revival Version)"
-    },
-    "cancer-deathmask-revival": {
-      "id": "15297",
-      "line": "myth-cloth-ex",
-      "name": "Cancer Deathmask (Revival Edition)"
-    },
-    "aries-mu-revival": {
-      "id": "15295",
-      "line": "myth-cloth-ex",
-      "name": "Aries Mu (Revival Ver.)"
-    },
-    "aquarius-camus-revival": {
-      "id": "15300",
-      "line": "myth-cloth-ex",
-      "name": "Aquarius Camus (Revival Ver., Tamashii Web)"
-    },
-    "andromeda-shun-v2": "13756",
-    "limnades-casa": "13815",
-    "geminis-cloth-kanon": "13827",
     "_comment_touche_metallique": "── Touche Métallique (special line → otros) ───────────",
-    "touche-metallique-sagittarius-seiya": {
-      "id": "14883",
-      "line": "otros",
-      "name": "Touche Métallique — Sagittarius Seiya (Figuarts Zero)"
-    },
     "_comment_imagination_works": "── Imagination Works ─────────────────────────────────",
-
     "_comment_one_piece_extra": "── One Piece · SH Figuarts (--batch=one-piece) ────────",
-    "yamato-sh": {
-      "id": "14514",
-      "line": "sh-figuarts",
-      "name": "Yamato"
-    },
-
     "_comment_bleach_extra": "── Bleach · SH Figuarts (--batch=bleach) ──────────────",
-    "ichigo-dualzangetsu": {
-      "id": "14917",
-      "line": "sh-figuarts",
-      "name": "Ichigo Kurosaki (Dual Zangetsu)"
-    },
-
     "_comment_db": "── Dragon Ball · original series (--batch=db) ─────────",
-    "son-goku-innocent-challenger": {
-      "id": "14539",
-      "line": "sh-figuarts",
-      "name": "Son Goku (The Innocent Challenger)"
-    },
-    "bulma-great-adventure": {
-      "id": "12969",
-      "line": "sh-figuarts",
-      "name": "Bulma (The Beginning of the Great Adventure)"
-    },
-    "taopaipai": {
-      "id": "13043",
-      "line": "sh-figuarts",
-      "name": "Tao Pai Pai"
-    },
-
     "_comment_dbz_extra": "── Dragon Ball Z · SH Figuarts (--batch=dbz) ──────────",
-    "son-goku-effect-parts-set": {
-      "id": "14327",
-      "line": "sh-figuarts",
-      "name": "Son Goku — Effect Parts Set (Tamashii Web)"
-    },
-    "vegeta-old-battle-uniforms": {
-      "id": "15059",
-      "line": "sh-figuarts",
-      "name": "Vegeta (Old Battle Uniforms)"
-    },
-    "bulma-journey-to-namek": {
-      "id": "13638",
-      "line": "sh-figuarts",
-      "name": "Bulma (Journey to Namek)"
-    },
-    "son-goku-kaioken": {
-      "id": "13128",
-      "line": "sh-figuarts",
-      "name": "Son Goku (Kaiō-ken)"
-    },
-    "raditz": {
-      "id": "13426",
-      "line": "sh-figuarts",
-      "name": "Raditz"
-    },
-    "vegeta-scouter": {
-      "id": "11747",
-      "line": "sh-figuarts",
-      "name": "Vegeta"
-    },
-    "nappa": {
-      "id": "11760",
-      "line": "sh-figuarts",
-      "name": "Nappa"
-    },
-    "son-gohan-boyhood": {
-      "id": "13314",
-      "line": "sh-figuarts",
-      "name": "Son Gohan (Boyhood)"
-    },
-
     "_comment_dbs_extra": "── Dragon Ball Super · SH Figuarts (--batch=dbs) ──────",
-    "son-goku-ultra-instinct-toyotaro": {
-      "id": "14587",
-      "line": "sh-figuarts",
-      "name": "Son Goku Ultra Instinct (Toyotaro Edition)"
-    },
-    "android-21-lab-coat": {
-      "id": "13892",
-      "line": "sh-figuarts",
-      "name": "Android 21 (Lab Coat)"
-    },
-    "ssgss-son-goku-kaioken": {
-      "id": "14540",
-      "line": "sh-figuarts",
-      "name": "Super Saiyan God Super Saiyan Son Goku Kaiō-ken"
-    },
-    "super-saiyan-kefla": {
-      "id": "13750",
-      "line": "sh-figuarts",
-      "name": "Super Saiyan Kefla"
-    },
-
     "_comment_dbs_broly_extra": "── Dragon Ball Super: Broly · SH Figuarts (--batch=dbs-broly) ──",
-    "broly-super": {
-      "id": "12907",
-      "line": "sh-figuarts",
-      "name": "Broly (Super)"
-    },
-
     "_comment_berserk": "── Berserk · SH Figuarts (--batch=berserk) ────────────",
-    "nosferatu-zodd": {
-      "id": "15144",
-      "line": "sh-figuarts",
-      "name": "Nosferatu Zodd"
-    },
-    "isidro": {
-      "id": "15037",
-      "line": "sh-figuarts",
-      "name": "Isidro"
-    },
-    "schierke": {
-      "id": "14839",
-      "line": "sh-figuarts",
-      "name": "Schierke"
-    },
-    "guts-berserker-armor-heat-of-passion": {
-      "id": "14598",
-      "line": "sh-figuarts",
-      "name": "Guts (Berserker Armor) — Heat of Passion"
-    },
-    "griffith-hawk-of-light": {
-      "id": "14384",
-      "line": "sh-figuarts",
-      "name": "Griffith (Hawk of Light)"
-    },
-    "guts-berserker-armor": {
-      "id": "14383",
-      "line": "sh-figuarts",
-      "name": "Guts (Berserker Armor)"
-    },
-
     "_comment_marvel": "── Marvel · Tech-On Avengers · SH Figuarts (--batch=marvel) ──",
-    "captain-america-tech-on-avengers": {
-      "id": "13852",
-      "line": "sh-figuarts",
-      "name": "Captain America (Tech-On Avengers)"
-    },
-    "iron-man-tech-on-avengers": {
-      "id": "13651",
-      "line": "sh-figuarts",
-      "name": "Iron Man (Tech-On Avengers)"
-    },
-
     "_comment_sh_figuarts_fill": "── SH Figuarts · existing rows, fill ID then run --batch=sh-figuarts-fill ──",
-    "android-17": "13731",
-    "android-18": "13732",
-    "frieza": "13711",
-    "ginyu": "13130",
-    "hit": "13541",
-    "kakashi-hatake": "14030",
-    "son-gohan": "13933",
-    "super-saiyan-3-son-goku": "12125",
-    "tulece": "14094",
-
     "_comment_figuarts_zero_fill": "── Figuarts Zero · existing rows, fill ID then run --batch=figuarts-zero-fill ──",
-    "aokiji-kuzan": "",
-    "brook-otama-ver-wano": "",
-    "chopper": "",
-    "luffytaro": "",
-    "monkeydluffy-gear-4": "",
-    "nami": "",
-    "robin": "",
-    "sanji": "",
-    "zoro": "",
-
     "_comment_otros_fill": "── Otros · existing Tamashii rows, fill ID then run --batch=otros-fill ──",
-    "shu-of-the-stone": "",
-    "shin-of-the-torrent": ""
+    "_comment_saint_seiya_fill": "── Saint Seiya · existing rows missing images/desc, fill ID then run --batch=saint-seiya-fill ──",
+    "centaurus-babel": "14025",
+    "marine-steel-cloth": "13915",
+    "sky-steel-cloth": "13555",
+    "unicorn-cloth": "13212",
+    "wyvern-surplice": "384",
+    "aries-mu-oce": "11197",
+    "sagittarius-aiolos-sog": "11368",
+    "siren-sorrento": "13631",
+    "hypnos": "13687"
   }
 }
