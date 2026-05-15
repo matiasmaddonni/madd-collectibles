@@ -7,7 +7,6 @@ export const dynamic = "force-dynamic";
 
 type Row = {
   id: string;
-  sku: string | null;
   name: string;
   price: number | string;
   currency: string;
@@ -21,7 +20,7 @@ export default async function ProductsListPage() {
   const { data } = await admin
     .from("products")
     .select(
-      "id, sku, name, price, currency, status, condition, product_line:product_lines ( name )",
+      "id, name, price, currency, status, condition, product_line:product_lines ( name )",
     )
     .order("created_at", { ascending: false });
 
@@ -42,7 +41,6 @@ export default async function ProductsListPage() {
       <table className="w-full text-sm border border-zinc-300">
         <thead className="bg-zinc-100 text-left">
           <tr>
-            <th className="px-2 py-2 border-b">SKU</th>
             <th className="px-2 py-2 border-b">Name</th>
             <th className="px-2 py-2 border-b">Line</th>
             <th className="px-2 py-2 border-b">Price</th>
@@ -58,7 +56,6 @@ export default async function ProductsListPage() {
               : r.product_line;
             return (
               <tr key={r.id} className="border-b border-zinc-200 hover:bg-zinc-50">
-                <td className="px-2 py-1 font-mono text-xs">{r.sku ?? "—"}</td>
                 <td className="px-2 py-1">{r.name}</td>
                 <td className="px-2 py-1">{line?.name ?? "—"}</td>
                 <td className="px-2 py-1">
@@ -84,7 +81,7 @@ export default async function ProductsListPage() {
           })}
           {rows.length === 0 && (
             <tr>
-              <td colSpan={7} className="px-2 py-3 text-center text-zinc-600">
+              <td colSpan={6} className="px-2 py-3 text-center text-zinc-600">
                 No products.
               </td>
             </tr>
