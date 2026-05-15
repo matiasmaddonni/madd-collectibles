@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { OPINIONES, type Opinion, type OpinionMessage } from "@/lib/opiniones";
 
@@ -114,22 +115,43 @@ function OpinionCard({ op }: { op: Opinion }) {
 
       {/* Footer */}
       <footer className="flex items-center gap-3 px-4 py-3 border-t border-border-subtle">
-        <div
-          aria-hidden
-          className="foto-stripe relative w-9 h-9 rounded-sm bg-bg-elevated border border-border-subtle grid place-items-center shrink-0"
-        >
-          <span className="font-mono text-[8px] text-text-secondary">FOTO</span>
-        </div>
+        {op.product.imageUrl ? (
+          <div
+            aria-hidden
+            className="relative w-9 h-9 rounded-sm bg-bg-elevated border border-border-subtle overflow-hidden shrink-0"
+          >
+            <Image
+              src={op.product.imageUrl}
+              alt=""
+              fill
+              sizes="36px"
+              className="object-cover"
+            />
+          </div>
+        ) : (
+          <div
+            aria-hidden
+            className="foto-stripe relative w-9 h-9 rounded-sm bg-bg-elevated border border-border-subtle grid place-items-center shrink-0"
+          >
+            <span className="font-mono text-[8px] text-text-secondary">FOTO</span>
+          </div>
+        )}
         <div className="flex flex-col min-w-0 flex-1">
           <span className="font-mono text-[9.5px] uppercase tracked-wide text-[var(--color-ink-3)]">
             Compró
           </span>
-          <Link
-            href={`/products/${op.product.slug}`}
-            className="font-body text-[13px] font-semibold text-text-primary hover:text-accent transition-colors truncate"
-          >
-            {op.product.name}
-          </Link>
+          {op.product.slug ? (
+            <Link
+              href={`/products/${op.product.slug}`}
+              className="font-body text-[13px] font-semibold text-text-primary hover:text-accent transition-colors truncate"
+            >
+              {op.product.name}
+            </Link>
+          ) : (
+            <span className="font-body text-[13px] font-semibold text-text-primary truncate">
+              {op.product.name}
+            </span>
+          )}
           <span className="font-mono text-[10.5px] text-text-secondary truncate">
             {op.product.line} · US$ {op.product.price}
           </span>

@@ -19,7 +19,10 @@ export type Opinion = {
   // Date pill text inside the chat body, e.g. "12 abr 2026".
   dateLabel: string;
   product: {
-    slug: string; // links to /products/<slug>
+    // Only present when the figure is still in the catalog. When set, the
+    // footer renders an anchor to /products/<slug>; otherwise the name is
+    // rendered as plain text.
+    slug?: string;
     name: string;
     line: string;
     price: number; // USD
@@ -96,30 +99,35 @@ export const OPINIONES: Opinion[] = [
     ],
   },
   {
-    name: "Martín P.",
-    dateLabel: "15 mar 2026",
+    name: "Maxi F.",
+    dateLabel: "8 abr 2026",
     product: {
-      slug: "frieza",
-      name: "Frieza",
+      // Figure no longer in catalog — render name without a link.
+      name: "Goku evento",
       line: "S.H.Figuarts",
-      price: 75,
+      price: 180,
     },
     messages: [
       {
         from: "them",
-        text:
-          "Hola! Buscaba el Frieza desde hace un montón. ¿Tenés stock?",
-        time: "19:41",
+        text: "Hola Mati! Te paso lo del Goku de evento.",
+        time: "11:55",
       },
       {
         from: "me",
-        text: "Sí, sellado. ¿Te lo dejo apartado mientras coordinamos?",
-        time: "19:42",
+        text:
+          "Hola Maxi! Son 180 usd. Te lo llevo el 24 cuando viajo a capital.",
+        time: "11:56",
       },
       {
         from: "them",
-        text: "Sí porfa! Mañana paso por el correo.",
-        time: "19:43",
+        image: "Comprobante de transferencia",
+        time: "12:20",
+      },
+      {
+        from: "me",
+        text: "Recibido. Nos vemos el 24.",
+        time: "12:21",
       },
     ],
   },
