@@ -146,7 +146,12 @@ export function seriesForOverride(slug: string): string | null {
   return loadBatchSeries()[batch] ?? null;
 }
 
-const ITEM_IMAGE_RE = /\/images\/item\/item_\d{6,}_[A-Za-z0-9]+_(\d+)\.(?:jpg|jpeg|png|webp)/i;
+// Modern listings: item_<10digit>_<hash>_<NN>.jpg.
+// Legacy listings (pre-2015 IDs): item_<10digit>_<NN>.jpg — no hash.
+// Capture the trailing sequence number for both shapes so the gallery
+// from an old listing (e.g. Wyvern Rhadamanthys, id 384) is found.
+const ITEM_IMAGE_RE =
+  /\/images\/item\/item_\d{6,}(?:_[A-Za-z0-9]+)?_(\d+)\.(?:jpg|jpeg|png|webp)/i;
 
 function extractGallery(html: string): string[] {
   const $ = cheerio.load(html);

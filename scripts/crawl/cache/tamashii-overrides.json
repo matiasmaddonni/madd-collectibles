@@ -44,6 +44,7 @@
     "dbs": "Dragon Ball Super",
     "dbgt": "Dragon Ball GT",
     "dbz": "Dragon Ball Z",
+    "dbz-fz": "Dragon Ball Z",
     "db": "Dragon Ball",
     "jujutsu-kaisen": "Jujutsu Kaisen",
     "one-piece": "One Piece",
@@ -59,19 +60,38 @@
     "marvel": "Marvel"
   },
   "_batches": {
-    "saint-seiya-mcex-metal": [
-      "garuda-aiacos"
-    ],
+    "saint-seiya-mcex-metal": [],
     "dbs-super-hero": [],
     "dbs-broly": [],
     "dbs": [],
     "dbgt": [],
     "jujutsu-kaisen": [],
     "one-piece": [],
-    "one-piece-fz": [],
+    "one-piece-fz": [
+      "fz-roger-kamusari",
+      "fz-crocodile-top-battle",
+      "fz-kozuki-oden",
+      "fz-zoro-zorojuro",
+      "fz-nami-onami",
+      "fz-robin-orobi",
+      "fz-usopp-usohachi",
+      "fz-chopper-chopaemon",
+      "fz-franky-furanosuke",
+      "fz-sanji-sangoro",
+      "fz-luffy-summit-battle",
+      "fz-luffy-battle-ver-special"
+    ],
     "spy-x-family": [],
     "chainsaw-man": [],
-    "naruto": [],
+    "naruto": [
+      "fz-naruto-kizuna",
+      "fz-sasuke-kizuna",
+      "fz-naruto-shippuden-kizuna",
+      "fz-sasuke-shippuden-kizuna",
+      "fz-gaara-shippuden-kizuna",
+      "fz-naruto-kurama-kizuna",
+      "fz-minato-kurama-kizuna"
+    ],
     "bleach": [],
     "my-hero-academia": [],
     "demon-slayer-fz": [],
@@ -79,42 +99,133 @@
     "saint-seiya": [],
     "touche-metallique": [],
     "imagination-works": [],
-    "dbz": [
-      "great-ape-vegeta"
+    "dbz": [],
+    "dbz-fz": [
+      "fz-son-goku-krillin",
+      "fz-ss4-gogeta-dokkan",
+      "fz-super-saiyan-trunks",
+      "fz-ss-gogeta-resurrection",
+      "fz-ss3-goku-dragon-fist",
+      "fz-janenba",
+      "fz-ss2-gohan-true-power",
+      "fz-son-gohan-beast"
     ],
     "sh-figuarts-fill": [],
     "figuarts-zero-fill": [],
     "otros-fill": [],
-    "saint-seiya-fill": [
-      "centaurus-babel",
-      "marine-steel-cloth",
-      "sky-steel-cloth",
-      "unicorn-cloth",
-      "wyvern-surplice",
-      "aries-mu-oce",
-      "sagittarius-aiolos-sog",
-      "siren-sorrento",
-      "hypnos"
-    ],
+    "saint-seiya-fill": [],
     "db": [],
     "berserk": [],
     "marvel": []
   },
   "overrides": {
     "_comment_saint_seiya": "── Saint Seiya · Myth Cloth + Myth Cloth EX ───────────",
-    "garuda-aiacos": "13912",
     "_comment_dbs_super_hero": "── Dragon Ball Super: Super Hero (SH Figuarts) ────────",
     "_comment_dbs_broly": "── Dragon Ball Super: Broly (SH Figuarts) ─────────────",
     "_comment_dbz": "── Dragon Ball Z (SH Figuarts) ────────────────────────",
-    "great-ape-vegeta": "13194",
     "_comment_dbs": "── Dragon Ball Super (SH Figuarts) ────────────────────",
     "_comment_dbgt": "── Dragon Ball GT (SH Figuarts) ───────────────────────",
     "_comment_jjk": "── Jujutsu Kaisen (SH Figuarts + Figuarts Zero) ───────",
     "_comment_one_piece": "── One Piece (SH Figuarts) ────────────────────────────",
     "_comment_one_piece_fz": "── One Piece (Figuarts Zero) ──────────────────────────",
+    "fz-roger-kamusari": {
+      "id": "13570",
+      "line": "figuarts-zero",
+      "name": "Gol D. Roger — Kamusari"
+    },
+    "fz-crocodile-top-battle": {
+      "id": "13165",
+      "line": "figuarts-zero",
+      "name": "Sir Crocodile — Top Battle"
+    },
+    "fz-kozuki-oden": {
+      "id": "13527",
+      "line": "figuarts-zero",
+      "name": "Kozuki Oden"
+    },
+    "fz-zoro-zorojuro": {
+      "id": "13335",
+      "line": "figuarts-zero",
+      "name": "Roronoa Zoro (Zorojuro)"
+    },
+    "fz-nami-onami": {
+      "id": "13368",
+      "line": "figuarts-zero",
+      "name": "Nami (O-Nami)"
+    },
+    "fz-robin-orobi": {
+      "id": "13369",
+      "line": "figuarts-zero",
+      "name": "Nico Robin (Orobi)"
+    },
+    "fz-usopp-usohachi": {
+      "id": "13339",
+      "line": "figuarts-zero",
+      "name": "Usopp (Usohachi)"
+    },
+    "fz-chopper-chopaemon": {
+      "id": "13337",
+      "line": "figuarts-zero",
+      "name": "Tony Tony Chopper (Chopaemon)"
+    },
+    "fz-franky-furanosuke": {
+      "id": "13370",
+      "line": "figuarts-zero",
+      "name": "Franky (Furanosuke)"
+    },
+    "fz-sanji-sangoro": {
+      "id": "13336",
+      "line": "figuarts-zero",
+      "name": "Sanji (Sangoro)"
+    },
+    "fz-luffy-summit-battle": {
+      "id": "13164",
+      "line": "figuarts-zero",
+      "name": "Monkey D. Luffy — Summit Battle"
+    },
+    "fz-luffy-battle-ver-special": {
+      "id": "13023",
+      "line": "figuarts-zero",
+      "name": "Monkey D. Luffy — Battle Ver. Gomu Gomu no Kakenju (Special Color)"
+    },
     "_comment_spy_x_family": "── Spy × Family (SH Figuarts + Figuarts Zero) ─────────",
     "_comment_chainsaw_man": "── Chainsaw Man (SH Figuarts + Figuarts Zero) ─────────",
     "_comment_naruto": "── Naruto (SH Figuarts + Figuarts Zero) ───────────────",
+    "fz-naruto-kizuna": {
+      "id": "11806",
+      "line": "figuarts-zero",
+      "name": "Naruto Uzumaki — Kizuna Relation"
+    },
+    "fz-sasuke-kizuna": {
+      "id": "11807",
+      "line": "figuarts-zero",
+      "name": "Uchiha Sasuke — Kizuna Relation"
+    },
+    "fz-naruto-shippuden-kizuna": {
+      "id": "13233",
+      "line": "figuarts-zero",
+      "name": "Naruto Uzumaki (Shippuden) — Kizuna Relation"
+    },
+    "fz-sasuke-shippuden-kizuna": {
+      "id": "13234",
+      "line": "figuarts-zero",
+      "name": "Uchiha Sasuke (Shippuden) — Kizuna Relation"
+    },
+    "fz-gaara-shippuden-kizuna": {
+      "id": "13235",
+      "line": "figuarts-zero",
+      "name": "Gaara (Shippuden) — Kizuna Relation"
+    },
+    "fz-naruto-kurama-kizuna": {
+      "id": "12638",
+      "line": "figuarts-zero",
+      "name": "Naruto Uzumaki (Kurama) — Kizuna Relation"
+    },
+    "fz-minato-kurama-kizuna": {
+      "id": "12639",
+      "line": "figuarts-zero",
+      "name": "Minato Namikaze (Kurama) — Kizuna Relation"
+    },
     "_comment_bleach": "── Bleach (SH Figuarts + Figuarts Zero) ───────────────",
     "_comment_mha": "── My Hero Academia (SH Figuarts) ─────────────────────",
     "_comment_demon_slayer_fz": "── Demon Slayer (Figuarts Zero) ───────────────────────",
@@ -125,6 +236,49 @@
     "_comment_bleach_extra": "── Bleach · SH Figuarts (--batch=bleach) ──────────────",
     "_comment_db": "── Dragon Ball · original series (--batch=db) ─────────",
     "_comment_dbz_extra": "── Dragon Ball Z · SH Figuarts (--batch=dbz) ──────────",
+    "_comment_dbz_fz": "── Dragon Ball Z · Figuarts Zero [Super Fierce Battle] (--batch=dbz-fz) ──",
+    "fz-son-goku-krillin": {
+      "id": "13883",
+      "line": "figuarts-zero",
+      "name": "Super Saiyan Son Goku — Are You Talking About Krillin?!"
+    },
+    "fz-ss4-gogeta-dokkan": {
+      "id": "13913",
+      "line": "figuarts-zero",
+      "name": "Super Saiyan 4 Gogeta (Dokkan Battle 7th Anniversary)",
+      "series": "Dragon Ball GT"
+    },
+    "fz-super-saiyan-trunks": {
+      "id": "14005",
+      "line": "figuarts-zero",
+      "name": "Super Saiyan Trunks — The Second Super Saiyan"
+    },
+    "fz-ss-gogeta-resurrection": {
+      "id": "14502",
+      "line": "figuarts-zero",
+      "name": "Super Saiyan Gogeta — Resurrection of Fusion (Exclusive Edition)"
+    },
+    "fz-ss3-goku-dragon-fist": {
+      "id": "14623",
+      "line": "figuarts-zero",
+      "name": "Super Saiyan 3 Son Goku — Dragon Fist Explosion (Exclusive Edition)"
+    },
+    "fz-janenba": {
+      "id": "14494",
+      "line": "figuarts-zero",
+      "name": "Janenba"
+    },
+    "fz-ss2-gohan-true-power": {
+      "id": "14956",
+      "line": "figuarts-zero",
+      "name": "Super Saiyan 2 Son Gohan — True Power"
+    },
+    "fz-son-gohan-beast": {
+      "id": "14410",
+      "line": "figuarts-zero",
+      "name": "Son Gohan Beast — Makankosappo",
+      "series": "Dragon Ball Super: Super Hero"
+    },
     "_comment_dbs_extra": "── Dragon Ball Super · SH Figuarts (--batch=dbs) ──────",
     "_comment_dbs_broly_extra": "── Dragon Ball Super: Broly · SH Figuarts (--batch=dbs-broly) ──",
     "_comment_berserk": "── Berserk · SH Figuarts (--batch=berserk) ────────────",
@@ -132,15 +286,6 @@
     "_comment_sh_figuarts_fill": "── SH Figuarts · existing rows, fill ID then run --batch=sh-figuarts-fill ──",
     "_comment_figuarts_zero_fill": "── Figuarts Zero · existing rows, fill ID then run --batch=figuarts-zero-fill ──",
     "_comment_otros_fill": "── Otros · existing Tamashii rows, fill ID then run --batch=otros-fill ──",
-    "_comment_saint_seiya_fill": "── Saint Seiya · existing rows missing images/desc, fill ID then run --batch=saint-seiya-fill ──",
-    "centaurus-babel": "14025",
-    "marine-steel-cloth": "13915",
-    "sky-steel-cloth": "13555",
-    "unicorn-cloth": "13212",
-    "wyvern-surplice": "384",
-    "aries-mu-oce": "11197",
-    "sagittarius-aiolos-sog": "11368",
-    "siren-sorrento": "13631",
-    "hypnos": "13687"
+    "_comment_saint_seiya_fill": "── Saint Seiya · existing rows missing images/desc, fill ID then run --batch=saint-seiya-fill ──"
   }
 }
