@@ -15,6 +15,7 @@ const OPTIONS: { value: Status; label: string }[] = [
 
 export function InlineStatus({ id, status }: { id: string; status: Status }) {
   const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -35,9 +36,23 @@ export function InlineStatus({ id, status }: { id: string; status: Status }) {
     const fd = new FormData();
     fd.set("id", id);
     fd.set("status", next);
-    await patchProduct(fd);
-    startTransition(() => router.refresh());
+    setSaving(true);
+    try {
+      await patchProduct(fd);
+      startTransition(() => router.refresh());
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (saving) {
+    return (
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+        <span className="ah-spinner ah-spinner--sm" style={{ color: "var(--ah-accent)" }} />
+        <span className="ah-dim ah-small">saving</span>
+      </span>
+    );
+  }
 
   return (
     <div className="ah-status-menu" ref={wrapRef}>

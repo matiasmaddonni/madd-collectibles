@@ -196,22 +196,39 @@ export default async function ProposalsPage({
   }
 
   // Selected stays "sticky" -- even if filter no longer includes it (user
-  // started reviewing, status changed to in_review while on New tab). The
-  // selected card is rendered at top of the list so they don't lose it.
-  const selectedExistsAnywhere =
+  // started reviewing, status changed mid-flight) and even if it has no
+  // pending work at all (e.g. all fields/images discarded but the product
+  // is still draft and waiting for Publish). The selected card pins to the
+  // top of the list so the user can keep working on the same item.
+  const selectedProductExists = sp.id && productMap.has(sp.id);
+  const selectedInGroups =
     sp.id && allGroups.some((g) => g.productId === sp.id);
-  const selectedId = selectedExistsAnywhere
-    ? sp.id!
-    : filtered[0]?.productId;
+  const selectedId = selectedProductExists ? sp.id! : filtered[0]?.productId;
 
-  const filteredWithSticky = selectedExistsAnywhere
-    ? filtered.some((g) => g.productId === sp.id)
-      ? filtered
-      : [
-          withStatus.find((g) => g.productId === sp.id)!,
-          ...filtered,
-        ]
-    : filtered;
+  // Build a synthetic group row for the sticky pin when the product has no
+  // pending work left (filtered list won't include it).
+  const syntheticGroup = (pid: string) => {
+    const real = withStatus.find((g) => g.productId === pid);
+    if (real) return real;
+    return {
+      productId: pid,
+      fieldCount: 0,
+      pendingCount: 0,
+      decidedCount: 0,
+      imageCount: 0,
+      sources: new Set<string>(),
+      avgConfidence: 0,
+      fetchedAt: new Date().toISOString(),
+      derivedStatus: "in_review" as const,
+    };
+  };
+
+  const filteredWithSticky =
+    selectedProductExists &&
+    !filtered.some((g) => g.productId === sp.id)
+      ? [syntheticGroup(sp.id!), ...filtered]
+      : filtered;
+  void selectedInGroups;
 
   let detailContent: React.ReactNode = (
     <div className="ah-prop-empty">No proposals in this view.</div>

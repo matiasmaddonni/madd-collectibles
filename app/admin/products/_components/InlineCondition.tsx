@@ -30,6 +30,7 @@ export function InlineCondition({
   condition: Cond;
 }) {
   const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
   const router = useRouter();
   const [, startTransition] = useTransition();
 
@@ -39,9 +40,23 @@ export function InlineCondition({
     const fd = new FormData();
     fd.set("id", id);
     fd.set("condition", next);
-    await patchProduct(fd);
-    startTransition(() => router.refresh());
+    setSaving(true);
+    try {
+      await patchProduct(fd);
+      startTransition(() => router.refresh());
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (saving) {
+    return (
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+        <span className="ah-spinner ah-spinner--sm" style={{ color: "var(--ah-accent)" }} />
+        <span className="ah-dim ah-small">saving</span>
+      </span>
+    );
+  }
 
   if (editing) {
     return (

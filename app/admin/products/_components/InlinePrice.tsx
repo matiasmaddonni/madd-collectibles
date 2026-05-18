@@ -12,6 +12,7 @@ type Props = {
 
 export function InlinePrice({ id, price, currency }: Props) {
   const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [value, setValue] = useState(String(price));
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -35,9 +36,14 @@ export function InlinePrice({ id, price, currency }: Props) {
     const fd = new FormData();
     fd.set("id", id);
     fd.set("price", String(n));
-    await patchProduct(fd);
+    setSaving(true);
     setEditing(false);
-    startTransition(() => router.refresh());
+    try {
+      await patchProduct(fd);
+      startTransition(() => router.refresh());
+    } finally {
+      setSaving(false);
+    }
   };
 
   const cancel = () => {
@@ -61,6 +67,15 @@ export function InlinePrice({ id, price, currency }: Props) {
           else if (e.key === "Escape") cancel();
         }}
       />
+    );
+  }
+
+  if (saving) {
+    return (
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+        <span className="ah-spinner ah-spinner--sm" style={{ color: "var(--ah-accent)" }} />
+        <span className="ah-dim">saving</span>
+      </span>
     );
   }
 

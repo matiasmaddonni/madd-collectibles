@@ -185,6 +185,45 @@ body:has(.admin-root[data-theme="dark"]) { color-scheme: dark; }
 .ah-btn--danger-ghost:hover { background: var(--ah-danger-bg); }
 .ah-btn[disabled] { opacity: 0.45; cursor: not-allowed; }
 
+/* === SPINNER === */
+@keyframes ah-spin { to { transform: rotate(360deg); } }
+.ah-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: ah-spin 0.6s linear infinite;
+  vertical-align: -2px;
+}
+.ah-spinner--sm { width: 11px; height: 11px; border-width: 1.5px; }
+
+/* Page-level progress bar — animated via loading.tsx. */
+@keyframes ah-progress {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(0%); }
+  100% { transform: translateX(100%); }
+}
+.ah-progress-bar {
+  position: fixed;
+  top: 0; left: 0;
+  height: 3px;
+  width: 100%;
+  background: var(--ah-accent);
+  transform-origin: left;
+  animation: ah-progress 1.4s ease-in-out infinite;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+/* Table dimmed while a transition is pending (pagination/sort/filter). */
+.ah-table-wrap.is-pending {
+  opacity: 0.55;
+  pointer-events: none;
+  transition: opacity 0.15s linear;
+}
+
 /* === PAGE === */
 .ah-main {
   flex: 1;

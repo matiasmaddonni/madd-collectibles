@@ -80,6 +80,7 @@ function PriceForm({ productId }: { productId: string }) {
             borderColor: "var(--ah-accent)",
           }}
         >
+          {pending && <span className="ah-spinner ah-spinner--sm" />}
           {pending ? "Saving..." : "Save price"}
         </button>
       </div>
@@ -172,10 +173,11 @@ export function PublishPanel({
             padding: "8px 16px",
             fontSize: 14,
             fontWeight: 500,
-            opacity: pending || !readiness.ok ? 0.45 : 1,
+            opacity: pending || !readiness.ok ? 0.7 : 1,
             cursor: pending || !readiness.ok ? "not-allowed" : "pointer",
           }}
         >
+          {pending && <span className="ah-spinner ah-spinner--sm" />}
           {pending ? "Publishing..." : "Publish to storefront"}
         </button>
         {!readiness.ok && (
