@@ -204,6 +204,47 @@ export async function updateProduct(fd: FormData) {
   if (payload.slug) revalidatePath(`/products/${payload.slug}`);
 }
 
+// Lean partial update for inline edits (price / status / condition). Avoids
+// re-running parseProductForm, which expects the full edit form payload.
+const PATCH_STATUSES = new Set(["draft", "available", "reserved", "sold"]);
+const PATCH_CONDITIONS = new Set([
+  "mint_sealed",
+  "mint_open",
+  "near_mint",
+  "good",
+  "fair",
+]);
+export async function patchProduct(fd: FormData) {
+  await requireAdmin();
+  const id = fd.get("id") as string;
+  if (!id || !UUID_RE.test(id)) throw new Error("Invalid id");
+  const update: Record<string, unknown> = {};
+  const rawStatus = fd.get("status");
+  if (typeof rawStatus === "string" && rawStatus) {
+    if (!PATCH_STATUSES.has(rawStatus)) throw new Error("Invalid status");
+    update.status = rawStatus;
+  }
+  const rawCondition = fd.get("condition");
+  if (typeof rawCondition === "string" && rawCondition) {
+    if (!PATCH_CONDITIONS.has(rawCondition)) throw new Error("Invalid condition");
+    update.condition = rawCondition;
+  }
+  const rawPrice = fd.get("price");
+  if (typeof rawPrice === "string" && rawPrice !== "") {
+    const n = Number(rawPrice);
+    if (!Number.isFinite(n) || n < 0) throw new Error("Invalid price");
+    update.price = n;
+  }
+  if (Object.keys(update).length === 0) return;
+  const admin = createAdminClient();
+  const { error } = await admin.from("products").update(update).eq("id", id);
+  if (error) throw error;
+  revalidatePath("/admin/products");
+  revalidatePath("/admin");
+  revalidatePath("/");
+  revalidatePath("/catalogo");
+}
+
 export async function deleteProduct(fd: FormData) {
   await requireAdmin();
   const id = fd.get("id") as string;
@@ -405,6 +446,8 @@ export async function upsertBrand(fd: FormData) {
     if (error) throw error;
   }
   revalidatePath("/admin/brands");
+  revalidatePath("/admin/settings");
+  revalidatePath("/admin");
 }
 
 export async function deleteBrand(fd: FormData) {
@@ -415,6 +458,8 @@ export async function deleteBrand(fd: FormData) {
   const { error } = await admin.from("brands").delete().eq("id", id);
   if (error) throw error;
   revalidatePath("/admin/brands");
+  revalidatePath("/admin/settings");
+  revalidatePath("/admin");
 }
 
 // ---------- product_lines ----------
@@ -440,6 +485,8 @@ export async function upsertLine(fd: FormData) {
     if (error) throw error;
   }
   revalidatePath("/admin/product-lines");
+  revalidatePath("/admin/settings");
+  revalidatePath("/admin");
 }
 
 export async function deleteLine(fd: FormData) {
@@ -450,6 +497,8 @@ export async function deleteLine(fd: FormData) {
   const { error } = await admin.from("product_lines").delete().eq("id", id);
   if (error) throw error;
   revalidatePath("/admin/product-lines");
+  revalidatePath("/admin/settings");
+  revalidatePath("/admin");
 }
 
 // ---------- series ----------
@@ -479,6 +528,8 @@ export async function upsertSeries(fd: FormData) {
     if (error) throw error;
   }
   revalidatePath("/admin/series");
+  revalidatePath("/admin/settings");
+  revalidatePath("/admin");
 }
 
 export async function deleteSeries(fd: FormData) {
@@ -489,4 +540,6 @@ export async function deleteSeries(fd: FormData) {
   const { error } = await admin.from("series").delete().eq("id", id);
   if (error) throw error;
   revalidatePath("/admin/series");
+  revalidatePath("/admin/settings");
+  revalidatePath("/admin");
 }

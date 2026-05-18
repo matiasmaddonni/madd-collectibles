@@ -51,17 +51,17 @@ export default async function EditProductPage({
   const images = (imagesRes.data ?? []) as unknown as ImageRow[];
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Edit: {product.name}</h1>
-        <Link href="/admin/products" className="text-sm hover:underline">
+    <div className="ah-page">
+      <div className="ah-page-title">
+        <h1 className="ah-h1">Edit: {product.name}</h1>
+        <Link href="/admin/products" className="ah-link">
           ← Back to products
         </Link>
       </div>
 
       <ProductForm initial={product} lines={lines} series={series} />
 
-      <hr className="border-zinc-300" />
+      <hr className="ah-divider" />
 
       <ProductImagesEditor
         productId={product.id}

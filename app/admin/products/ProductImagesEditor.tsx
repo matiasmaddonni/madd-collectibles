@@ -76,28 +76,60 @@ export function ProductImagesEditor({
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <h2 className="text-lg font-semibold">Images</h2>
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <h2 className="ah-h3" style={{ fontSize: 16 }}>Images</h2>
 
       {images.length === 0 && (
-        <p className="text-sm text-zinc-600">No images yet.</p>
+        <p className="ah-small ah-dim">No images yet.</p>
       )}
 
-      <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+      <ul
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+          gap: 12,
+          listStyle: "none",
+          padding: 0,
+          margin: 0,
+        }}
+      >
         {images.map((img) => (
           <li
             key={img.id}
-            className="border border-zinc-300 p-2 flex flex-col gap-2"
+            style={{
+              border: "1px solid var(--ah-border)",
+              borderRadius: 6,
+              padding: 8,
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+              background: "var(--ah-surface)",
+            }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={img.url}
               alt=""
-              className="w-full aspect-square object-cover bg-zinc-100"
+              style={{
+                width: "100%",
+                aspectRatio: "1 / 1",
+                objectFit: "cover",
+                background: "var(--ah-surface-2)",
+                borderRadius: 4,
+              }}
             />
-            <div className="flex items-center justify-between text-xs">
-              <span>{img.is_primary ? "★ Primary" : ""}</span>
-              <div className="flex gap-2">
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                fontSize: 12,
+              }}
+            >
+              <span style={{ color: img.is_primary ? "var(--ah-ok)" : "var(--ah-text-3)", fontWeight: 600 }}>
+                {img.is_primary ? "★ Primary" : ""}
+              </span>
+              <div style={{ display: "flex", gap: 10 }}>
                 {!img.is_primary && (
                   <button
                     type="button"
@@ -110,7 +142,7 @@ export function ProductImagesEditor({
                         });
                       })
                     }
-                    className="text-blue-700 hover:underline"
+                    className="ah-link"
                   >
                     Set primary
                   </button>
@@ -128,7 +160,7 @@ export function ProductImagesEditor({
                       });
                     });
                   }}
-                  className="text-red-700 hover:underline"
+                  className="ah-link ah-link--danger"
                 >
                   Delete
                 </button>
@@ -138,14 +170,17 @@ export function ProductImagesEditor({
         ))}
       </ul>
 
-      <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium">Upload images</span>
-        <div className="flex items-center gap-3 flex-wrap">
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <span className="ah-form-label">Upload images</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <label
             htmlFor="product-image-input"
-            className={`inline-flex items-center gap-2 px-4 py-2 border border-zinc-400 rounded-sm bg-white text-sm font-medium hover:bg-zinc-100 active:bg-zinc-200 cursor-pointer select-none ${
-              uploading ? "pointer-events-none opacity-50" : ""
-            }`}
+            className="ah-btn"
+            style={{
+              cursor: uploading ? "not-allowed" : "pointer",
+              opacity: uploading ? 0.5 : 1,
+              pointerEvents: uploading ? "none" : "auto",
+            }}
           >
             <svg
               width="16"
@@ -168,21 +203,41 @@ export function ProductImagesEditor({
             id="product-image-input"
             ref={fileInputRef}
             type="file"
-            // Broad accept so iOS surfaces the gallery (HEIC photos), Android
-            // shows all gallery items, and desktop file pickers don't filter
-            // unfamiliar formats. Type validation happens server-side.
             accept="image/*"
             multiple
             onChange={onUpload}
             disabled={uploading}
             className="sr-only"
+            style={{
+              position: "absolute",
+              width: 1,
+              height: 1,
+              padding: 0,
+              margin: -1,
+              overflow: "hidden",
+              clip: "rect(0,0,0,0)",
+              whiteSpace: "nowrap",
+              border: 0,
+            }}
           />
-          {uploading && <p className="text-sm text-zinc-600">Subiendo…</p>}
+          {uploading && <p className="ah-small ah-dim">Subiendo…</p>}
         </div>
-        <p className="text-xs text-zinc-600">
+        <p className="ah-small ah-dim">
           JPEG, PNG, WEBP, AVIF. HEIC del iPhone se convierten automáticamente.
         </p>
-        {error && <p className="text-sm text-red-700">{error}</p>}
+        {error && (
+          <p
+            style={{
+              fontSize: 13,
+              padding: "8px 12px",
+              background: "var(--ah-danger-bg)",
+              color: "var(--ah-danger)",
+              borderRadius: 4,
+            }}
+          >
+            {error}
+          </p>
+        )}
       </div>
     </div>
   );

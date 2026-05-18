@@ -36,7 +36,7 @@ function slugify(s: string) {
   return s
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[̀-ͯ]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)+/g, "");
 }
@@ -66,10 +66,10 @@ export function ProductForm({
   const action = isEdit ? updateProduct : createProduct;
 
   return (
-    <form action={action} className="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <form action={action} className="ah-form-grid">
       {initial.id && <input type="hidden" name="id" value={initial.id} />}
 
-      <Field label="Name" className="md:col-span-2">
+      <Field label="Name" full>
         <input
           name="name"
           required
@@ -78,7 +78,7 @@ export function ProductForm({
             setName(e.target.value);
             if (!slugTouched) setSlug(slugify(e.target.value));
           }}
-          className={inputClass}
+          className="ah-input"
         />
       </Field>
 
@@ -91,12 +91,16 @@ export function ProductForm({
             setSlug(e.target.value);
             setSlugTouched(true);
           }}
-          className={inputClass}
+          className="ah-input"
         />
       </Field>
 
       <Field label="SKU">
-        <input name="sku" defaultValue={initial.sku ?? ""} className={inputClass} />
+        <input
+          name="sku"
+          defaultValue={initial.sku ?? ""}
+          className="ah-input"
+        />
       </Field>
 
       <Field label="Product Line">
@@ -108,7 +112,7 @@ export function ProductForm({
             setLineId(e.target.value);
             setSeriesId("");
           }}
-          className={inputClass}
+          className="ah-input"
         >
           <option value="">— select —</option>
           {lines.map((l) => (
@@ -124,7 +128,7 @@ export function ProductForm({
           name="series_id"
           value={seriesId}
           onChange={(e) => setSeriesId(e.target.value)}
-          className={inputClass}
+          className="ah-input"
           disabled={!lineId}
         >
           <option value="">— none —</option>
@@ -143,7 +147,7 @@ export function ProductForm({
           step="0.01"
           required
           defaultValue={initial.price ?? ""}
-          className={inputClass}
+          className="ah-input"
         />
       </Field>
 
@@ -153,7 +157,7 @@ export function ProductForm({
           type="number"
           step="0.01"
           defaultValue={initial.cost_price ?? ""}
-          className={inputClass}
+          className="ah-input"
         />
       </Field>
 
@@ -161,7 +165,7 @@ export function ProductForm({
         <select
           name="currency"
           defaultValue={initial.currency ?? "ARS"}
-          className={inputClass}
+          className="ah-input"
         >
           <option value="ARS">ARS</option>
           <option value="USD">USD</option>
@@ -173,7 +177,7 @@ export function ProductForm({
           name="condition"
           required
           defaultValue={initial.condition ?? "mint_sealed"}
-          className={inputClass}
+          className="ah-input"
         >
           {CONDITIONS.map((c) => (
             <option key={c} value={c}>
@@ -188,7 +192,7 @@ export function ProductForm({
           name="status"
           required
           defaultValue={initial.status ?? "available"}
-          className={inputClass}
+          className="ah-input"
         >
           {STATUSES.map((s) => (
             <option key={s} value={s}>
@@ -203,7 +207,7 @@ export function ProductForm({
           name="stock_qty"
           type="number"
           defaultValue={initial.stock_qty ?? 1}
-          className={inputClass}
+          className="ah-input"
         />
       </Field>
 
@@ -212,12 +216,12 @@ export function ProductForm({
           name="release_year"
           type="number"
           defaultValue={initial.release_year ?? ""}
-          className={inputClass}
+          className="ah-input"
         />
       </Field>
 
-      <Field label="Featured" className="md:col-span-2">
-        <label className="flex items-center gap-2 text-sm">
+      <Field label="Featured" full>
+        <label className="ah-checkbox-row">
           <input
             type="checkbox"
             name="is_featured"
@@ -227,28 +231,25 @@ export function ProductForm({
         </label>
       </Field>
 
-      <Field label="Description" className="md:col-span-2">
+      <Field label="Description" full>
         <textarea
           name="description"
-          rows={3}
+          rows={4}
           defaultValue={initial.description ?? ""}
-          className={inputClass}
+          className="ah-input"
         />
       </Field>
 
-      <Field label="Tags (comma-separated)" className="md:col-span-2">
+      <Field label="Tags (comma-separated)" full>
         <input
           name="tags"
           defaultValue={(initial.tags ?? []).join(", ")}
-          className={inputClass}
+          className="ah-input"
         />
       </Field>
 
-      <div className="md:col-span-2 flex gap-3 mt-2">
-        <button
-          type="submit"
-          className="bg-black text-white px-4 py-2 text-sm"
-        >
+      <div className="ah-form-field--full" style={{ display: "flex", gap: 12, marginTop: 4 }}>
+        <button type="submit" className="ah-btn ah-btn--primary">
           {isEdit ? "Save changes" : "Create product"}
         </button>
       </div>
@@ -256,21 +257,18 @@ export function ProductForm({
   );
 }
 
-const inputClass =
-  "border border-zinc-400 px-2 py-1 text-sm w-full bg-white text-black";
-
 function Field({
   label,
-  className = "",
+  full,
   children,
 }: {
   label: string;
-  className?: string;
+  full?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <label className={`flex flex-col gap-1 text-xs ${className}`}>
-      <span className="text-zinc-700">{label}</span>
+    <label className={`ah-form-field${full ? " ah-form-field--full" : ""}`}>
+      <span className="ah-form-label">{label}</span>
       {children}
     </label>
   );

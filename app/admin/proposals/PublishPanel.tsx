@@ -46,9 +46,9 @@ function PriceForm({ productId }: { productId: string }) {
   };
 
   return (
-    <div className="flex flex-col gap-2 border border-zinc-300 bg-white p-3">
-      <label className="text-xs font-semibold text-zinc-700">Set price</label>
-      <div className="flex items-center gap-2">
+    <div className="ah-price-form">
+      <span className="ah-price-form-label">Set price</span>
+      <div className="ah-price-form-row">
         <input
           type="number"
           step="0.01"
@@ -57,13 +57,14 @@ function PriceForm({ productId }: { productId: string }) {
           onChange={(e) => setPrice(e.target.value)}
           placeholder="e.g. 120"
           disabled={pending}
-          className="flex-1 border border-zinc-400 px-2 py-1 text-sm"
+          className="ah-input"
+          style={{ flex: 1, minWidth: 120 }}
         />
         <select
           value={currency}
           onChange={(e) => setCurrency(e.target.value as "USD" | "ARS")}
           disabled={pending}
-          className="border border-zinc-400 px-2 py-1 text-sm"
+          className="ah-input"
         >
           <option value="USD">USD</option>
           <option value="ARS">ARS</option>
@@ -72,29 +73,29 @@ function PriceForm({ productId }: { productId: string }) {
           type="button"
           onClick={onSave}
           disabled={pending || price.trim().length === 0}
-          className="px-3 py-1 text-xs bg-blue-700 text-white hover:bg-blue-800 disabled:opacity-50"
+          className="ah-btn"
+          style={{
+            background: "var(--ah-accent)",
+            color: "white",
+            borderColor: "var(--ah-accent)",
+          }}
         >
-          {pending ? "Saving…" : "Save price"}
+          {pending ? "Saving..." : "Save price"}
         </button>
       </div>
-      {error && <p className="text-xs text-red-700">{error}</p>}
+      {error && <p className="ah-publish-error">{error}</p>}
     </div>
   );
 }
 
 function Check({ ok, label }: { ok: boolean; label: string }) {
   return (
-    <li className="flex items-center gap-2 text-sm">
-      <span
-        aria-hidden
-        className={`inline-block w-4 text-center font-mono ${
-          ok ? "text-green-700" : "text-red-700"
-        }`}
-      >
+    <div className={`ah-publish-check${ok ? " is-ok" : ""}`}>
+      <span aria-hidden className="ah-publish-check-mark">
         {ok ? "✓" : "✗"}
       </span>
-      <span className={ok ? "text-zinc-700" : "text-red-800"}>{label}</span>
-    </li>
+      <span>{label}</span>
+    </div>
   );
 }
 
@@ -122,51 +123,65 @@ export function PublishPanel({
   };
 
   return (
-    <section className="border border-green-300 bg-green-50 p-4 flex flex-col gap-3">
-      <h2 className="text-lg font-semibold">Publish to storefront</h2>
-      <p className="text-sm text-zinc-700">
-        Approve fields + images first, then click Publish to flip status
-        from <code>draft</code> to <code>available</code>. The item will
-        be visible at <code>/products/&lt;slug&gt;</code> immediately.
-      </p>
-      <ul className="flex flex-col gap-1 pl-1">
+    <section className="ah-publish">
+      <div>
+        <div className="ah-publish-title">Publish to storefront</div>
+        <div className="ah-publish-sub">
+          Approve fields + images first, then click Publish to flip status from
+          <code className="ah-mono"> draft </code>
+          to
+          <code className="ah-mono"> available</code>.
+        </div>
+      </div>
+
+      <div className="ah-publish-checks">
         <Check ok={readiness.hasName} label="Name set" />
         <Check ok={readiness.hasPrice} label="Price > 0" />
         <Check
           ok={readiness.hasPrimaryImage}
           label="At least one approved primary image"
         />
-        <Check ok={readiness.hasDescription} label="Description set (recommended)" />
-      </ul>
+        <Check
+          ok={readiness.hasDescription}
+          label="Description set (recommended)"
+        />
+      </div>
 
-      {!readiness.hasPrice && (
-        <PriceForm productId={productId} />
-      )}
+      {!readiness.hasPrice && <PriceForm productId={productId} />}
+
       {(readiness.pendingProposals > 0 ||
         readiness.pendingImageCandidates > 0) && (
-        <p className="text-xs text-amber-900 bg-amber-100 border border-amber-200 px-2 py-1">
-          Heads-up: {readiness.pendingProposals} pending field proposal(s)
-          and {readiness.pendingImageCandidates} candidate image(s) will
-          stay queued after publish — approve or discard them above first
-          if you want a clean state.
+        <p className="ah-publish-note">
+          Heads-up: {readiness.pendingProposals} pending field proposal(s) and{" "}
+          {readiness.pendingImageCandidates} candidate image(s) will stay queued
+          after publish.
         </p>
       )}
-      {error && (
-        <p className="text-sm text-red-800 bg-red-50 border border-red-200 px-2 py-1">
-          {error}
-        </p>
-      )}
-      <div className="flex gap-2">
+      {error && <p className="ah-publish-error">{error}</p>}
+
+      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
         <button
           type="button"
           onClick={onPublish}
           disabled={pending || !readiness.ok}
-          className="px-4 py-2 bg-green-700 text-white hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="ah-btn"
+          style={{
+            background: "var(--ah-ok)",
+            color: "white",
+            borderColor: "var(--ah-ok)",
+            padding: "8px 16px",
+            fontSize: 14,
+            fontWeight: 500,
+            opacity: pending || !readiness.ok ? 0.45 : 1,
+            cursor: pending || !readiness.ok ? "not-allowed" : "pointer",
+          }}
         >
-          {pending ? "Publishing…" : "Publish to storefront"}
+          {pending ? "Publishing..." : "Publish to storefront"}
         </button>
         {!readiness.ok && (
-          <span className="text-xs text-red-800 self-center">
+          <span
+            style={{ fontSize: 12.5, color: "var(--ah-danger)" }}
+          >
             Fix the items above first.
           </span>
         )}

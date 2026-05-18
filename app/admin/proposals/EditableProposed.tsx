@@ -24,15 +24,16 @@ export function EditableProposed({
 
   if (!editing) {
     return (
-      <div className="flex flex-col gap-1">
-        <pre className="whitespace-pre-wrap break-words bg-green-50 border border-green-200 p-2 text-xs">
-          {value}
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <pre className="ah-field-val" style={{ background: "var(--ah-ok-bg)", borderColor: "var(--ah-ok)" }}>
+          {value || "(empty)"}
         </pre>
         {editable && (
           <button
             type="button"
             onClick={() => setEditing(true)}
-            className="self-start text-[11px] text-blue-700 hover:underline"
+            className="ah-link"
+            style={{ alignSelf: "flex-start", fontSize: 12 }}
           >
             Edit text
           </button>
@@ -54,23 +55,42 @@ export function EditableProposed({
   };
 
   return (
-    <div className="flex flex-col gap-2">
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       <textarea
         value={value}
         onChange={(e) => setValue(e.target.value)}
         rows={Math.max(4, Math.min(20, value.split("\n").length + 2))}
-        className="w-full text-xs font-mono bg-white border border-zinc-400 p-2"
         disabled={pending}
+        style={{
+          width: "100%",
+          font: "inherit",
+          fontFamily: "'SF Mono', ui-monospace, monospace",
+          fontSize: 12.5,
+          padding: "10px 12px",
+          background: "var(--ah-surface-2)",
+          color: "var(--ah-text)",
+          border: "1px solid var(--ah-accent)",
+          borderRadius: 4,
+          outline: "none",
+          resize: "vertical",
+        }}
       />
-      {error && <p className="text-xs text-red-700">{error}</p>}
-      <div className="flex gap-2">
+      {error && (
+        <p style={{ color: "var(--ah-danger)", fontSize: 12 }}>{error}</p>
+      )}
+      <div style={{ display: "flex", gap: 6 }}>
         <button
           type="button"
           onClick={onSave}
           disabled={pending || value.trim().length === 0}
-          className="px-3 py-1 text-xs bg-blue-700 text-white hover:bg-blue-800 disabled:opacity-50"
+          className="ah-btn"
+          style={{
+            background: "var(--ah-accent)",
+            color: "white",
+            borderColor: "var(--ah-accent)",
+          }}
         >
-          {pending ? "Saving…" : "Save"}
+          {pending ? "Saving..." : "Save"}
         </button>
         <button
           type="button"
@@ -80,7 +100,7 @@ export function EditableProposed({
             setError(null);
           }}
           disabled={pending}
-          className="px-3 py-1 text-xs bg-zinc-200 text-zinc-800 hover:bg-zinc-300"
+          className="ah-btn ah-btn--ghost"
         >
           Cancel
         </button>
