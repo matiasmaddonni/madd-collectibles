@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<title>MADD. admin — overhaul proposal</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="admin-styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+/* Mock data for the admin prototype. Numbers tuned to feel like a real
+   inventory of ~256 items so the views aren't suspiciously sparse. */
+
+const LINES = [
+  { slug: 'sh-figuarts', name: 'S.H.Figuarts', brand: 'Tamashii Nations' },
+  { slug: 'myth-cloth',  name: 'Saint Cloth Myth', brand: 'Tamashii Nations' },
+  { slug: 'myth-cloth-ex', name: 'Saint Cloth Myth EX', brand: 'Tamashii Nations' },
+  { slug: 'figuarts-zero', name: 'Figuarts Zero', brand: 'Tamashii Nations' },
+  { slug: 'popup-parade', name: 'Pop Up Parade', brand: 'Good Smile Company' },
+  { slug: 'variable-action-heroes', name: 'Variable Action Heroes', brand: 'MegaHouse' },
+  { slug: 'proplica', name: 'PROPLICA', brand: 'Tamashii Nations' },
+  { slug: 'otros', name: 'Otros', brand: 'Otros' },
+];
+
+const SERIES = [
+  'Dragon Ball Z', 'Dragon Ball Super', 'Saint Seiya', 'Jujutsu Kaisen',
+  'Demon Slayer', 'Chainsaw Man', 'My Hero Academia', 'Bleach',
+  'Berserk', 'Spy x Family', 'Haikyuu',
+];
+
+const STATUSES = ['available', 'reserved', 'sold', 'draft'];
+const CONDITIONS = ['mint_sealed', 'mint_open', 'good', 'fair'];
+
+const SAMPLE_NAMES = [
+  'Suguru Geto', 'Satoru Gojo', 'Nobara Kugisaki', 'Megumi Fushiguro', 'Sukuna',
+  'Yuji Itadori', 'Son Goku', 'Vegeta', 'Trunks', 'Gohan', 'Piccolo', 'Frieza',
+  'Cell', 'Majin Buu', 'Bardock', 'Raditz', 'Nappa', 'Tien Shinhan', 'Krillin',
+  'Yamcha', 'Saga de Gemini', 'Aiolos de Sagitario', 'Shaka de Virgo', 'Mu de Aries',
+  'Aldebaran de Tauro', 'Milo de Escorpio', 'Camus de Acuario', 'Aphrodite de Piscis',
+  'Death Mask de Cancer', 'Shiryu de Dragon', 'Hyoga de Cisne', 'Seiya de Pegaso',
+  'Ikki de Fenix', 'Shun de Andromeda', 'Babel de Centaurus', 'Capella de Auriga',
+  'Moses de Whale', 'Jabu de Unicorn', 'Tatsumi Oga', 'Power', 'Denji',
+  'Makima', 'Pochita', 'Yor Forger', 'Loid Forger', 'Anya Forger',
+];
+
+const SUFFIXES = [
+  '', '(Exclusive Edition)', '(Tamashii Web)', '(Z Warrior)', '(Boyhood)',
+  '(Combat Power of 24,000)', '(Old Battle Uniforms)', '(Awakening)',
+  '(Battle Suit)', '(Effect Parts Set)', '(Kaio-ken)', '— Glowing Set',
+  '(Journey to Namek)', '(Legendary Super Saiyan)',
+];
+
+const RNG = (() => {
+  // deterministic PRNG so the prototype renders the same numbers every refresh
+  let s = 1337;
+  return () => {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    return s / 0xffffffff;
+  };
+})();
+
+const pick = (arr) => arr[Math.floor(RNG() * arr.length)];
+const pickWeighted = (entries) => {
+  const total = entries.reduce((a, [, w]) => a + w, 0);
+  let r = RNG() * total;
+  for (const [v, w] of entries) { if ((r -= w) <= 0) return v; }
+  return entries[0][0];
+};
+
+const PRODUCTS = (() => {
+  const out = [];
+  const today = new Date('2026-05-15T12:00:00');
+  for (let i = 0; i < 256; i++) {
+    const line = pickWeighted([
+      ['sh-figuarts', 84], ['myth-cloth', 28], ['myth-cloth-ex', 22],
+      ['figuarts-zero', 16], ['popup-parade', 47], ['variable-action-heroes', 9],
+      ['proplica', 8], ['otros', 6],
+    ]);
+    const status = pickWeighted([
+      ['available', 241], ['reserved', 7], ['sold', 3], ['draft', 5],
+    ]);
+    const condition = pickWeighted([
+      ['mint_sealed', 180], ['mint_open', 50], ['good', 18], ['fair', 8],
+    ]);
+    const series = pick(SERIES);
+    const name = pick(SAMPLE_NAMES);
+    const suffix = pick(SUFFIXES);
+    const price = status === 'draft' ? 0 : Math.round((60 + RNG() * 400) / 5) * 5;
+    const daysAgoCreated = Math.floor(RNG() * 365);
+    const daysAgoUpdated = Math.floor(RNG() * Math.min(daysAgoCreated, 60));
+    const created = new Date(today); created.setDate(today.getDate() - daysAgoCreated);
+    const updated = new Date(today); updated.setDate(today.getDate() - daysAgoUpdated);
+    const reservedAt = status === 'reserved' ? new Date(today.getTime() - Math.floor(RNG() * 25) * 86400000) : null;
+    const soldAt = status === 'sold' ? new Date(today.getTime() - Math.floor(RNG() * 90) * 86400000) : null;
+    const hasPhoto = status === 'draft' ? RNG() > 0.5 : RNG() > 0.04;
+    const hasDesc = status === 'draft' ? RNG() > 0.7 : RNG() > 0.18;
+    out.push({
+      id: `p-${i + 1}`,
+      slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + (i + 1),
+      name: suffix ? `${name} ${suffix}` : name,
+      line, series, status, condition, price,
+      created, updated, reservedAt, soldAt,
+      hasPhoto, hasDesc,
+    });
+  }
+  return out;
+})();
+
+// Calibrate top counters to feel like the screenshot (256 / 241 / 7 / 3)
+const COUNTERS = {
+  total: PRODUCTS.length,
+  available: PRODUCTS.filter(p => p.status === 'available').length,
+  reserved: PRODUCTS.filter(p => p.status === 'reserved').length,
+  sold: PRODUCTS.filter(p => p.status === 'sold').length,
+  draft: PRODUCTS.filter(p => p.status === 'draft').length,
+};
+
+const INVENTORY_VALUE = {
+  available: PRODUCTS.filter(p => p.status === 'available').reduce((a, p) => a + p.price, 0),
+  reserved: PRODUCTS.filter(p => p.status === 'reserved').reduce((a, p) => a + p.price, 0),
+  sold: PRODUCTS.filter(p => p.status === 'sold').reduce((a, p) => a + p.price, 0),
+};
+
+// Sales history — last 90 days, count of items flipped to sold per day (mock).
+const SALES_HISTORY = (() => {
+  const out = [];
+  for (let i = 89; i >= 0; i--) {
+    const d = new Date('2026-05-15T12:00:00');
+    d.setDate(d.getDate() - i);
+    // mostly 0–1 sales/day with occasional bursts
+    const r = RNG();
+    const count = r < 0.75 ? 0 : r < 0.93 ? 1 : r < 0.99 ? 2 : 3;
+    out.push({ date: d, count });
+  }
+  return out;
+})();
+
+const AVG_DAYS_IN_STOCK = (() => {
+  const sold = PRODUCTS.filter(p => p.status === 'sold' && p.soldAt);
+  if (!sold.length) return 47; // fallback
+  const total = sold.reduce((a, p) => a + (p.soldAt - p.created) / 86400000, 0);
+  return Math.round(total / sold.length);
+})();
+
+const STOCK_BY_LINE = LINES.map(l => ({
+  ...l,
+  count: PRODUCTS.filter(p => p.line === l.slug && p.status === 'available').length,
+})).filter(x => x.count > 0).sort((a, b) => b.count - a.count);
+
+const MISSING = {
+  photos: PRODUCTS.filter(p => !p.hasPhoto && p.status !== 'sold'),
+  desc:   PRODUCTS.filter(p => !p.hasDesc && p.status !== 'sold' && p.status !== 'draft'),
+  price:  PRODUCTS.filter(p => p.price === 0 && p.status !== 'sold'),
+};
+
+// Proposals — 9 pending across 6 products
+const PROPOSALS = [
+  {
+    id: 'pp-1',
+    productSlug: 'gemini-kanon',
+    productName: 'Gemini Kanon',
+    productLine: 'Saint Cloth Myth EX',
+    status: 'new',
+    receivedAt: new Date('2026-05-14T22:14:00'),
+    fieldCount: 3,
+    imageCount: 4,
+    sources: ['tamashii', 'ebay'],
+    avgConfidence: 92,
+    fields: [
+      { key: 'description', source: 'tamashii', confidence: 95,
+        current: 'Edición exclusiva de Tamashii Web Shop. Lanzamiento: mayo 2022.',
+        proposed: 'Edición exclusiva de Tamashii Web Shop. Lanzamiento: noviembre 2017.' },
+      { key: 'price', source: 'ebay', confidence: 85,
+        current: '220', proposed: '195',
+        note: 'min $150 · median $195 · max $280 across 11 NEW listings (eBay Browse API)' },
+      { key: 'release_year', source: 'tamashii', confidence: 95,
+        current: '2022', proposed: '2017' },
+    ],
+    images: 4,
+  },
+  {
+    id: 'pp-2',
+    productSlug: 'babel-de-centaurus',
+    productName: 'Babel de Centaurus',
+    productLine: 'Saint Cloth Myth',
+    status: 'new',
+    receivedAt: new Date('2026-05-13T15:02:00'),
+    fieldCount: 2,
+    imageCount: 0,
+    sources: ['ebay'],
+    avgConfidence: 78,
+    fields: [
+      { key: 'price', source: 'ebay', confidence: 82,
+        current: '200', proposed: '215',
+        note: 'min $180 · median $215 · max $250 across 6 listings' },
+      { key: 'condition', source: 'ebay', confidence: 74,
+        current: 'mint_sealed', proposed: 'mint_open',
+        note: 'Most active listings note box opened — verify before changing' },
+    ],
+  },
+  {
+    id: 'pp-3',
+    productSlug: 'super-saiyan-vegeta-awakening',
+    productName: 'Super Saiyan Vegeta (Awakening Super Saiyan Blood)',
+    productLine: 'S.H.Figuarts',
+    status: 'in-review',
+    receivedAt: new Date('2026-05-12T09:41:00'),
+    fieldCount: 1,
+    imageCount: 2,
+    sources: ['tamashii'],
+    avgConfidence: 96,
+    fields: [
+      { key: 'description', source: 'tamashii', confidence: 96,
+        current: '', proposed: 'Edición Tamashii Web Shop, lanzamiento agosto 2019.' },
+    ],
+  },
+  {
+    id: 'pp-4',
+    productSlug: 'sukuna-figuarts-zero',
+    productName: 'Sukuna',
+    productLine: 'Figuarts Zero',
+    status: 'new',
+    receivedAt: new Date('2026-05-12T18:30:00'),
+    fieldCount: 4,
+    imageCount: 3,
+    sources: ['tamashii', 'ebay'],
+    avgConfidence: 71,
+    fields: [
+      { key: 'price', source: 'ebay', confidence: 68, current: '140', proposed: '125' },
+      { key: 'description', source: 'tamashii', confidence: 92, current: '', proposed: 'Lanzamiento: enero 2024.' },
+      { key: 'release_year', source: 'tamashii', confidence: 88, current: '', proposed: '2024' },
+      { key: 'sku', source: 'tamashii', confidence: 36, current: '', proposed: 'BAS65498' },
+    ],
+  },
+  {
+    id: 'pp-5',
+    productSlug: 'moses-de-whale',
+    productName: 'Moses de Whale',
+    productLine: 'Saint Cloth Myth',
+    status: 'new',
+    receivedAt: new Date('2026-05-11T11:22:00'),
+    fieldCount: 1,
+    imageCount: 5,
+    sources: ['ebay'],
+    avgConfidence: 81,
+    fields: [
+      { key: 'price', source: 'ebay', confidence: 81, current: '240', proposed: '260',
+        note: 'min $220 · median $260 · max $310 across 8 listings' },
+    ],
+  },
+  {
+    id: 'pp-6',
+    productSlug: 'metal-cooler',
+    productName: 'Metal Cooler',
+    productLine: 'S.H.Figuarts',
+    status: 'new',
+    receivedAt: new Date('2026-05-10T08:00:00'),
+    fieldCount: 2,
+    imageCount: 1,
+    sources: ['tamashii'],
+    avgConfidence: 89,
+    fields: [
+      { key: 'description', source: 'tamashii', confidence: 91, current: 'Cooler en su forma final.', proposed: 'Cooler en su forma Metal Cooler. Tamashii Nations, julio 2022.' },
+      { key: 'release_year', source: 'tamashii', confidence: 87, current: '2021', proposed: '2022' },
+    ],
+  },
+];
+
+const RECENT_SOLD = PRODUCTS
+  .filter(p => p.status === 'sold')
+  .sort((a, b) => b.soldAt - a.soldAt)
+  .slice(0, 5);
+
+const RECENT_RESERVED = PRODUCTS
+  .filter(p => p.status === 'reserved')
+  .sort((a, b) => b.reservedAt - a.reservedAt)
+  .slice(0, 6);
+
+const RECENT_ADDED = [...PRODUCTS]
+  .sort((a, b) => b.created - a.created)
+  .slice(0, 6);
+
+const BRANDS = [
+  { name: 'Tamashii Nations', slug: 'tamashii-nations' },
+  { name: 'Good Smile Company', slug: 'good-smile' },
+  { name: 'MegaHouse', slug: 'megahouse' },
+  { name: 'Otros', slug: 'varios' },
+];
+
+const SERIES_DATA = [
+  { name: 'Dragon Ball Z', slug: 'dragon-ball-z', line: 'S.H.Figuarts' },
+  { name: 'Marvel', slug: 'marvel', line: 'S.H.Figuarts' },
+  { name: 'Berserk', slug: 'berserk', line: 'S.H.Figuarts' },
+  { name: 'Bleach', slug: 'bleach', line: 'S.H.Figuarts' },
+  { name: 'Spy × Family', slug: 'spy-family', line: 'S.H.Figuarts' },
+  { name: 'Dragon Ball Super', slug: 'dragon-ball-super', line: 'S.H.Figuarts' },
+  { name: 'Saint Seiya', slug: 'saint-seiya', line: 'Saint Cloth Myth EX' },
+  { name: 'Dragon Ball', slug: 'dragon-ball', line: 'S.H.Figuarts' },
+  { name: 'Chainsaw Man', slug: 'chainsaw-man', line: 'Pop Up Parade' },
+  { name: 'Demon Slayer', slug: 'demon-slayer', line: 'Pop Up Parade' },
+  { name: 'Jujutsu Kaisen', slug: 'jujutsu-kaisen', line: 'Pop Up Parade' },
+];
+
+Object.assign(window, {
+  LINES, SERIES, STATUSES, CONDITIONS, PRODUCTS, COUNTERS, INVENTORY_VALUE,
+  SALES_HISTORY, AVG_DAYS_IN_STOCK, STOCK_BY_LINE, MISSING, PROPOSALS,
+  RECENT_SOLD, RECENT_RESERVED, RECENT_ADDED, BRANDS, SERIES_DATA,
+});
+
+</script>
+<script type="text/babel" data-presets="react">
+/* Header, primary nav, theme toggle, settings dropdown.
+   Plain admin chrome — function over form. */
+
+const { useState, useEffect, useRef } = React;
+
+const ShellHeader = ({ active, onNav, theme, onTheme }) => {
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const settingsRef = useRef(null);
+  useEffect(() => {
+    if (!settingsOpen) return;
+    const close = (e) => { if (settingsRef.current && !settingsRef.current.contains(e.target)) setSettingsOpen(false); };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [settingsOpen]);
+
+  const tabs = [
+    { id: 'dashboard', label: 'Dashboard' },
+    { id: 'products',  label: 'Products' },
+    { id: 'proposals', label: 'Proposals', badge: window.PROPOSALS.filter(p => p.status === 'new').length },
+  ];
+
+  return (
+    <header className="ah-header">
+      <div className="ah-brand">
+        <span className="ah-brand-word">MADD</span>
+        <span className="ah-brand-dot">.</span>
+        <span className="ah-brand-tag">admin</span>
+      </div>
+
+      <nav className="ah-nav">
+        {tabs.map(t => (
+          <button
+            key={t.id}
+            className={'ah-nav-item' + (active === t.id ? ' is-active' : '')}
+            onClick={() => onNav(t.id)}
+          >
+            {t.label}
+            {t.badge ? <span className="ah-nav-badge">{t.badge}</span> : null}
+          </button>
+        ))}
+        <div className="ah-settings-wrap" ref={settingsRef}>
+          <button
+            className={'ah-nav-item ah-nav-item--dropdown' + (active === 'settings' ? ' is-active' : '')}
+            onClick={() => setSettingsOpen(o => !o)}
+            aria-expanded={settingsOpen}
+          >
+            Settings
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ marginLeft: 4 }}>
+              <path d="M2 3.5 5 6.5 8 3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+          {settingsOpen && (
+            <div className="ah-settings-menu" role="menu">
+              {[
+                { id: 'settings:brands', label: 'Brands', count: window.BRANDS.length },
+                { id: 'settings:lines',  label: 'Lines',  count: window.LINES.length },
+                { id: 'settings:series', label: 'Series', count: window.SERIES_DATA.length },
+              ].map(item => (
+                <button
+                  key={item.id}
+                  className="ah-settings-item"
+                  onClick={() => { onNav(item.id); setSettingsOpen(false); }}
+                >
+                  <span>{item.label}</span>
+                  <span className="ah-settings-count">{item.count}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </nav>
+
+      <div className="ah-header-right">
+        <button
+          className="ah-icon-btn"
+          onClick={() => onTheme(theme === 'dark' ? 'light' : 'dark')}
+          aria-label="Toggle theme"
+          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+        >
+          {theme === 'dark' ? (
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="3" fill="currentColor"/>
+              <g stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+                <path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1"/>
+              </g>
+            </svg>
+          ) : (
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M13 9.5A5 5 0 0 1 6.5 3a5 5 0 1 0 6.5 6.5Z" fill="currentColor"/>
+            </svg>
+          )}
+        </button>
+        <span className="ah-user">matiasmaddonni@gmail.com</span>
+        <button className="ah-btn ah-btn--ghost">Sign out</button>
+      </div>
+    </header>
+  );
+};
+
+const PageTitle = ({ title, count, right }) => (
+  <div className="ah-page-title">
+    <h1 className="ah-h1">
+      {title}
+      {count !== undefined && <span className="ah-h1-count"> ({count})</span>}
+    </h1>
+    {right}
+  </div>
+);
+
+const StatusChip = ({ status }) => (
+  <span className={`ah-chip ah-chip--${status}`}>{status}</span>
+);
+
+const formatRelative = (d) => {
+  const now = new Date('2026-05-15T12:00:00');
+  const diffMs = now - d;
+  const min = Math.floor(diffMs / 60000);
+  if (min < 1) return 'just now';
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const day = Math.floor(hr / 24);
+  if (day < 30) return `${day}d ago`;
+  const mo = Math.floor(day / 30);
+  return `${mo}mo ago`;
+};
+
+const formatDate = (d) => {
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${months[d.getMonth()]} ${d.getDate()}`;
+};
+
+window.ShellHeader = ShellHeader;
+window.PageTitle = PageTitle;
+window.StatusChip = StatusChip;
+window.formatRelative = formatRelative;
+window.formatDate = formatDate;
+
+</script>
+<script type="text/babel" data-presets="react">
+/* Dashboard — at-a-glance view tuned to what the user picked:
+   - Counts (Total/Available/Reserved/Sold) + Inventory value tile
+   - Sales over time (7/30/90 day toggle)
+   - Stock breakdown by line
+   - Action items (missing photos/desc/price) — clickable to filter products
+   - Recent sold + recent reserved (with age) */
+
+const SparkChart = ({ data, range }) => {
+  // simple SVG bar chart, range = number of days
+  const slice = data.slice(-range);
+  const max = Math.max(2, ...slice.map(d => d.count));
+  const total = slice.reduce((a, d) => a + d.count, 0);
+  const days = slice.length;
+  const w = 720, h = 140, padL = 28, padR = 12, padT = 12, padB = 22;
+  const innerW = w - padL - padR;
+  const innerH = h - padT - padB;
+  const bw = innerW / days;
+  const ticks = [0, Math.ceil(max / 2), max];
+  return (
+    <div className="ah-chart-wrap">
+      <div className="ah-chart-head">
+        <div className="ah-chart-stat">
+          <div className="ah-chart-stat-value">{total}</div>
+          <div className="ah-chart-stat-label">sold · last {range}d</div>
+        </div>
+        <div className="ah-chart-stat">
+          <div className="ah-chart-stat-value">${slice.reduce((a, d) => a + d.count * 145, 0).toLocaleString()}</div>
+          <div className="ah-chart-stat-label">approx revenue (avg $145/item)</div>
+        </div>
+      </div>
+      <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="ah-chart-svg" aria-label="Sales chart">
+        {ticks.map((t, i) => {
+          const y = padT + innerH - (t / max) * innerH;
+          return (
+            <g key={i}>
+              <line x1={padL} x2={w - padR} y1={y} y2={y} className="ah-chart-grid" />
+              <text x={padL - 6} y={y + 3} textAnchor="end" className="ah-chart-axis">{t}</text>
+            </g>
+          );
+        })}
+        {slice.map((d, i) => {
+          const x = padL + i * bw + 1;
+          const barH = (d.count / max) * innerH;
+          const y = padT + innerH - barH;
+          return (
+            <rect key={i} x={x} y={y} width={Math.max(1, bw - 2)} height={Math.max(0.5, barH)} className="ah-chart-bar" />
+          );
+        })}
+        {/* x-axis labels: 4 evenly spaced */}
+        {[0, 0.33, 0.66, 0.99].map((p, i) => {
+          const idx = Math.floor(p * (days - 1));
+          const x = padL + idx * bw + bw / 2;
+          return <text key={i} x={x} y={h - 6} textAnchor="middle" className="ah-chart-axis">{window.formatDate(slice[idx].date)}</text>;
+        })}
+      </svg>
+    </div>
+  );
+};
+
+const Dashboard = ({ onJumpProducts }) => {
+  const [range, setRange] = useState(30);
+  const { COUNTERS, INVENTORY_VALUE, SALES_HISTORY, AVG_DAYS_IN_STOCK,
+          STOCK_BY_LINE, MISSING, RECENT_SOLD, RECENT_RESERVED } = window;
+  const totalLines = STOCK_BY_LINE.reduce((a, l) => a + l.count, 0);
+
+  return (
+    <div className="ah-page">
+      <window.PageTitle title="Dashboard" right={
+        <div className="ah-page-meta">
+          <span className="ah-mono ah-dim">Last sync · 2 min ago</span>
+        </div>
+      } />
+
+      {/* Stat tiles */}
+      <div className="ah-tiles">
+        <Tile label="Total" value={COUNTERS.total} accent="neutral" />
+        <Tile label="Available" value={COUNTERS.available} accent="ok" sub={`${COUNTERS.draft} drafts`} />
+        <Tile label="Reserved" value={COUNTERS.reserved} accent="warn" />
+        <Tile label="Sold" value={COUNTERS.sold} accent="neutral" />
+        <Tile label="Inventory value" value={`${INVENTORY_VALUE.available.toLocaleString()}`} sub="available only · USD" accent="neutral" wide />
+        <Tile label="Avg days in stock" value={AVG_DAYS_IN_STOCK} sub="before sold" accent="neutral" />
+      </div>
+
+      {/* Chart */}
+      <Card>
+        <div className="ah-card-head">
+          <div>
+            <div className="ah-card-title">Sales over time</div>
+            <div className="ah-card-sub">Units sold per day · click a range</div>
+          </div>
+          <div className="ah-seg">
+            {[7, 30, 90].map(r => (
+              <button key={r} className={'ah-seg-btn' + (range === r ? ' is-active' : '')} onClick={() => setRange(r)}>{r}d</button>
+            ))}
+          </div>
+        </div>
+        <SparkChart data={SALES_HISTORY} range={range} />
+      </Card>
+
+      <div className="ah-grid-2">
+        {/* Stock by line */}
+        <Card>
+          <div className="ah-card-head">
+            <div>
+              <div className="ah-card-title">Stock by line</div>
+              <div className="ah-card-sub">Available units only</div>
+            </div>
+            <div className="ah-mono ah-dim">{totalLines} total</div>
+          </div>
+          <div className="ah-bars">
+            {STOCK_BY_LINE.map(l => {
+              const pct = (l.count / STOCK_BY_LINE[0].count) * 100;
+              return (
+                <button key={l.slug} className="ah-bar-row" onClick={() => onJumpProducts({ line: l.slug })}>
+                  <div className="ah-bar-label">{l.name}</div>
+                  <div className="ah-bar-track">
+                    <div className="ah-bar-fill" style={{ width: `${pct}%` }} />
+                  </div>
+                  <div className="ah-bar-count ah-mono">{l.count}</div>
+                </button>
+              );
+            })}
+          </div>
+        </Card>
+
+        {/* Action items */}
+        <Card>
+          <div className="ah-card-head">
+            <div>
+              <div className="ah-card-title">Needs attention</div>
+              <div className="ah-card-sub">Click to filter products</div>
+            </div>
+          </div>
+          <div className="ah-action-list">
+            {[
+              { key: 'photos', label: 'Missing photos', count: MISSING.photos.length, severity: 'high' },
+              { key: 'price',  label: 'Missing price (drafts)', count: MISSING.price.length, severity: 'high' },
+              { key: 'desc',   label: 'Missing description', count: MISSING.desc.length, severity: 'med' },
+            ].map(a => (
+              <button key={a.key} className="ah-action-row" onClick={() => onJumpProducts({ missing: a.key })}>
+                <div className={`ah-action-dot ah-action-dot--${a.severity}`} />
+                <div className="ah-action-label">{a.label}</div>
+                <div className="ah-action-count ah-mono">{a.count}</div>
+                <div className="ah-action-arrow">→</div>
+              </button>
+            ))}
+            <div className="ah-action-sep" />
+            <button className="ah-action-row" onClick={() => onJumpProducts({ status: 'reserved' })}>
+              <div className="ah-action-dot ah-action-dot--med" />
+              <div className="ah-action-label">Reserved &gt; 14 days (chase up)</div>
+              <div className="ah-action-count ah-mono">
+                {RECENT_RESERVED.filter(p => (new Date('2026-05-15') - p.reservedAt) / 86400000 > 14).length}
+              </div>
+              <div className="ah-action-arrow">→</div>
+            </button>
+            <button className="ah-action-row" onClick={() => onJumpProducts({ status: 'draft' })}>
+              <div className="ah-action-dot ah-action-dot--low" />
+              <div className="ah-action-label">Drafts ready to finish</div>
+              <div className="ah-action-count ah-mono">{COUNTERS.draft}</div>
+              <div className="ah-action-arrow">→</div>
+            </button>
+          </div>
+        </Card>
+      </div>
+
+      <div className="ah-grid-2">
+        {/* Recent sold */}
+        <Card>
+          <div className="ah-card-head">
+            <div>
+              <div className="ah-card-title">Recently sold</div>
+              <div className="ah-card-sub">Last items that flipped to sold</div>
+            </div>
+          </div>
+          <div className="ah-list">
+            {RECENT_SOLD.map(p => (
+              <div key={p.id} className="ah-list-row">
+                <div className="ah-thumb" />
+                <div className="ah-list-main">
+                  <div className="ah-list-name">{p.name}</div>
+                  <div className="ah-list-sub">{window.LINES.find(l => l.slug === p.line)?.name}</div>
+                </div>
+                <div className="ah-list-meta">
+                  <div className="ah-mono">USD {p.price}</div>
+                  <div className="ah-dim ah-mono ah-small">{window.formatRelative(p.soldAt)}</div>
+                </div>
+              </div>
+            ))}
+            {!RECENT_SOLD.length && <div className="ah-empty">No sales yet.</div>}
+          </div>
+        </Card>
+
+        {/* Reserved with age */}
+        <Card>
+          <div className="ah-card-head">
+            <div>
+              <div className="ah-card-title">Reserved · sorted by age</div>
+              <div className="ah-card-sub">Older first — chase the stale ones</div>
+            </div>
+          </div>
+          <div className="ah-list">
+            {RECENT_RESERVED.slice().sort((a, b) => a.reservedAt - b.reservedAt).map(p => {
+              const days = Math.floor((new Date('2026-05-15') - p.reservedAt) / 86400000);
+              const stale = days > 14;
+              return (
+                <div key={p.id} className="ah-list-row">
+                  <div className="ah-thumb" />
+                  <div className="ah-list-main">
+                    <div className="ah-list-name">{p.name}</div>
+                    <div className="ah-list-sub">{window.LINES.find(l => l.slug === p.line)?.name}</div>
+                  </div>
+                  <div className="ah-list-meta">
+                    <div className="ah-mono">USD {p.price}</div>
+                    <div className={'ah-mono ah-small ' + (stale ? 'ah-warn' : 'ah-dim')}>
+                      {days}d reserved
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            {!RECENT_RESERVED.length && <div className="ah-empty">Nothing reserved right now.</div>}
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+const Tile = ({ label, value, sub, accent, wide }) => (
+  <div className={`ah-tile ah-tile--${accent || 'neutral'}` + (wide ? ' ah-tile--wide' : '')}>
+    <div className="ah-tile-label">{label}</div>
+    <div className="ah-tile-value">{value}</div>
+    {sub && <div className="ah-tile-sub">{sub}</div>}
+  </div>
+);
+
+const Card = ({ children }) => <section className="ah-card">{children}</section>;
+
+window.Dashboard = Dashboard;
+window.Card = Card;
+window.Tile = Tile;
+
+</script>
+<script type="text/babel" data-presets="react">
+/* Products — search, filters, compact table with 24px thumbs, inline status menu.
+   Default sort: most recently updated. */
+
+const Products = ({ initialFilters }) => {
+  const [search, setSearch] = useState('');
+  const [filters, setFilters] = useState(initialFilters || {});
+  const [sort, setSort] = useState({ key: 'updated', dir: 'desc' });
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 25;
+
+  useEffect(() => { setFilters(initialFilters || {}); setPage(0); }, [initialFilters]);
+
+  const rows = useMemo(() => {
+    let r = window.PRODUCTS;
+    if (search) {
+      const q = search.toLowerCase();
+      r = r.filter(p => p.name.toLowerCase().includes(q));
+    }
+    if (filters.status)  r = r.filter(p => p.status === filters.status);
+    if (filters.line)    r = r.filter(p => p.line === filters.line);
+    if (filters.brand)   r = r.filter(p => window.LINES.find(l => l.slug === p.line)?.brand === filters.brand);
+    if (filters.series)  r = r.filter(p => p.series === filters.series);
+    if (filters.missing === 'photos') r = r.filter(p => !p.hasPhoto && p.status !== 'sold');
+    if (filters.missing === 'desc')   r = r.filter(p => !p.hasDesc && p.status !== 'sold' && p.status !== 'draft');
+    if (filters.missing === 'price')  r = r.filter(p => p.price === 0 && p.status !== 'sold');
+    r = [...r].sort((a, b) => {
+      const k = sort.key;
+      const av = a[k], bv = b[k];
+      if (av instanceof Date) return sort.dir === 'desc' ? bv - av : av - bv;
+      if (typeof av === 'number') return sort.dir === 'desc' ? bv - av : av - bv;
+      return sort.dir === 'desc' ? String(bv).localeCompare(String(av)) : String(av).localeCompare(String(bv));
+    });
+    return r;
+  }, [search, filters, sort]);
+
+  const visible = rows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+
+  const setFilter = (k, v) => setFilters(f => {
+    const next = { ...f };
+    if (v === null || v === f[k]) delete next[k]; else next[k] = v;
+    return next;
+  });
+
+  const activeFilterCount = Object.keys(filters).length + (search ? 1 : 0);
+
+  const toggleSort = (key) => setSort(s => s.key === key ? { key, dir: s.dir === 'desc' ? 'asc' : 'desc' } : { key, dir: 'desc' });
+
+  return (
+    <div className="ah-page">
+      <window.PageTitle title="Products" count={window.COUNTERS.total} right={
+        <button className="ah-btn ah-btn--primary">+ New Product</button>
+      } />
+
+      {/* Toolbar */}
+      <div className="ah-toolbar">
+        <div className="ah-search">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.4"/>
+            <path d="m10.5 10.5 3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+          </svg>
+          <input
+            type="text"
+            placeholder="Search by name…"
+            value={search}
+            onChange={e => { setSearch(e.target.value); setPage(0); }}
+          />
+          {search && <button className="ah-search-clear" onClick={() => setSearch('')}>×</button>}
+        </div>
+        <FilterSelect label="Status" value={filters.status} options={[
+          { v: 'available', n: 'Available' },
+          { v: 'reserved', n: 'Reserved' },
+          { v: 'sold', n: 'Sold' },
+          { v: 'draft', n: 'Draft' },
+        ]} onChange={v => setFilter('status', v)} />
+        <FilterSelect label="Line" value={filters.line} options={window.LINES.map(l => ({ v: l.slug, n: l.name }))} onChange={v => setFilter('line', v)} />
+        <FilterSelect label="Brand" value={filters.brand} options={[...new Set(window.LINES.map(l => l.brand))].map(b => ({ v: b, n: b }))} onChange={v => setFilter('brand', v)} />
+        <FilterSelect label="Series" value={filters.series} options={window.SERIES.map(s => ({ v: s, n: s }))} onChange={v => setFilter('series', v)} />
+        {activeFilterCount > 0 && (
+          <button className="ah-btn ah-btn--ghost ah-btn--sm" onClick={() => { setFilters({}); setSearch(''); }}>
+            Clear ({activeFilterCount})
+          </button>
+        )}
+        <div className="ah-toolbar-spacer" />
+        <div className="ah-mono ah-dim ah-small">
+          {rows.length} {rows.length === 1 ? 'result' : 'results'}
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="ah-table-wrap">
+        <table className="ah-table">
+          <thead>
+            <tr>
+              <th style={{ width: 36 }}></th>
+              <ThCol label="Name" k="name" sort={sort} onSort={toggleSort} />
+              <ThCol label="Line" k="line" sort={sort} onSort={toggleSort} />
+              <ThCol label="Series" k="series" sort={sort} onSort={toggleSort} />
+              <ThCol label="Price" k="price" sort={sort} onSort={toggleSort} align="right" />
+              <ThCol label="Status" k="status" sort={sort} onSort={toggleSort} />
+              <ThCol label="Cond." k="condition" sort={sort} onSort={toggleSort} />
+              <ThCol label="Updated" k="updated" sort={sort} onSort={toggleSort} />
+              <th style={{ width: 110, textAlign: 'right' }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {visible.map(p => <Row key={p.id} p={p} />)}
+            {!visible.length && (
+              <tr><td colSpan="9" className="ah-table-empty">
+                No products match. <button className="ah-link" onClick={() => { setFilters({}); setSearch(''); }}>Clear filters</button>
+              </td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      <div className="ah-pager">
+        <button className="ah-btn ah-btn--ghost ah-btn--sm" disabled={page === 0} onClick={() => setPage(p => p - 1)}>← Prev</button>
+        <span className="ah-mono ah-dim ah-small">Page {page + 1} of {totalPages}</span>
+        <button className="ah-btn ah-btn--ghost ah-btn--sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>Next →</button>
+      </div>
+    </div>
+  );
+};
+
+const useMemo = React.useMemo;
+
+const ThCol = ({ label, k, sort, onSort, align }) => (
+  <th onClick={() => onSort(k)} className="ah-th-sortable" style={{ textAlign: align || 'left' }}>
+    <span>{label}</span>
+    {sort.key === k && (
+      <span className="ah-th-arrow">{sort.dir === 'desc' ? '↓' : '↑'}</span>
+    )}
+  </th>
+);
+
+const FilterSelect = ({ label, value, options, onChange }) => (
+  <div className={'ah-filter' + (value ? ' is-active' : '')}>
+    <span className="ah-filter-label">{label}</span>
+    <select value={value || ''} onChange={e => onChange(e.target.value || null)}>
+      <option value="">All</option>
+      {options.map(o => <option key={o.v} value={o.v}>{o.n}</option>)}
+    </select>
+  </div>
+);
+
+const Row = ({ p }) => {
+  const [status, setStatus] = useState(p.status);
+  const [editing, setEditing] = useState(null);
+  const [price, setPrice] = useState(p.price);
+  const [condition, setCondition] = useState(p.condition);
+  const lineName = window.LINES.find(l => l.slug === p.line)?.name || p.line;
+
+  return (
+    <tr>
+      <td>
+        <div className="ah-thumb ah-thumb--xs" title={p.hasPhoto ? 'Has photo' : 'Missing photo'}>
+          {!p.hasPhoto && <span className="ah-thumb-warn">!</span>}
+        </div>
+      </td>
+      <td>
+        <div className="ah-row-name">
+          {p.name}
+          {!p.hasDesc && status !== 'draft' && <span className="ah-mini-flag" title="No description">D</span>}
+        </div>
+      </td>
+      <td className="ah-dim">{lineName}</td>
+      <td className="ah-dim">{p.series}</td>
+      <td style={{ textAlign: 'right' }}>
+        {editing === 'price' ? (
+          <input
+            type="number"
+            value={price}
+            autoFocus
+            className="ah-inline-input"
+            onChange={e => setPrice(Number(e.target.value))}
+            onBlur={() => setEditing(null)}
+            onKeyDown={e => { if (e.key === 'Enter' || e.key === 'Escape') setEditing(null); }}
+          />
+        ) : (
+          <span className="ah-mono ah-editable" onClick={() => setEditing('price')}>
+            {price === 0 ? <span className="ah-warn">—</span> : `US$ ${price}`}
+          </span>
+        )}
+      </td>
+      <td>
+        <StatusMenu value={status} onChange={setStatus} />
+      </td>
+      <td>
+        {editing === 'condition' ? (
+          <select
+            autoFocus
+            value={condition}
+            className="ah-inline-input"
+            onChange={e => { setCondition(e.target.value); setEditing(null); }}
+            onBlur={() => setEditing(null)}
+          >
+            {window.CONDITIONS.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        ) : (
+          <span className="ah-mono ah-editable ah-small" onClick={() => setEditing('condition')}>{condition}</span>
+        )}
+      </td>
+      <td className="ah-dim ah-mono ah-small">{window.formatRelative(p.updated)}</td>
+      <td style={{ textAlign: 'right' }}>
+        <div className="ah-row-actions">
+          <button className="ah-link" title="Open on storefront">↗</button>
+          <button className="ah-link">Edit</button>
+        </div>
+      </td>
+    </tr>
+  );
+};
+
+const StatusMenu = ({ value, onChange }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [open]);
+  return (
+    <span className="ah-status-menu" ref={ref}>
+      <button className={`ah-chip ah-chip--${value} ah-chip--button`} onClick={() => setOpen(o => !o)}>
+        {value}
+        <span style={{ marginLeft: 4, opacity: 0.6 }}>▾</span>
+      </button>
+      {open && (
+        <div className="ah-status-pop" role="menu">
+          {window.STATUSES.map(s => (
+            <button key={s} className={'ah-status-pop-item' + (s === value ? ' is-active' : '')} onClick={() => { onChange(s); setOpen(false); }}>
+              <span className={`ah-chip-dot ah-chip-dot--${s}`} />
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+    </span>
+  );
+};
+
+window.Products = Products;
+window.StatusMenu = StatusMenu;
+
+</script>
+<script type="text/babel" data-presets="react">
+/* Proposals — master-detail.
+   List on left (filterable by source / confidence / status), detail on right. */
+
+const useRef2 = React.useRef;
+
+const Proposals = () => {
+  const [selectedId, setSelectedId] = useState(window.PROPOSALS[0]?.id);
+  const [sourceFilter, setSourceFilter] = useState(null);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [confidenceFilter, setConfidenceFilter] = useState('all');
+  const [sort, setSort] = useState('newest');
+  const [items, setItems] = useState(window.PROPOSALS);
+
+  const filtered = items.filter(p => {
+    if (sourceFilter && !p.sources.includes(sourceFilter)) return false;
+    if (statusFilter !== 'all' && p.status !== statusFilter) return false;
+    if (confidenceFilter === 'high' && p.avgConfidence < 90) return false;
+    if (confidenceFilter === 'med'  && (p.avgConfidence >= 90 || p.avgConfidence < 70)) return false;
+    if (confidenceFilter === 'low'  && p.avgConfidence >= 70) return false;
+    return true;
+  }).sort((a, b) => {
+    if (sort === 'newest') return b.receivedAt - a.receivedAt;
+    if (sort === 'oldest') return a.receivedAt - b.receivedAt;
+    if (sort === 'confidence') return b.avgConfidence - a.avgConfidence;
+    return 0;
+  });
+
+  const selected = filtered.find(p => p.id === selectedId) || filtered[0];
+
+  // Keyboard nav: j/k for next/prev
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+      const i = filtered.findIndex(p => p.id === selected?.id);
+      if (e.key === 'j' && i < filtered.length - 1) setSelectedId(filtered[i + 1].id);
+      if (e.key === 'k' && i > 0) setSelectedId(filtered[i - 1].id);
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [filtered, selected]);
+
+  const newCount = items.filter(p => p.status === 'new').length;
+
+  return (
+    <div className="ah-page ah-page--full">
+      <window.PageTitle title="Proposals" count={items.length} right={
+        <div className="ah-page-meta">
+          <span className="ah-mono ah-dim">Crawler · last run 47 min ago</span>
+          <button className="ah-btn ah-btn--ghost ah-btn--sm">Run crawler</button>
+        </div>
+      } />
+
+      <div className="ah-prop-layout">
+        {/* LIST */}
+        <aside className="ah-prop-list">
+          <div className="ah-prop-list-toolbar">
+            <div className="ah-prop-list-row">
+              <FilterTabs
+                value={statusFilter}
+                onChange={setStatusFilter}
+                options={[
+                  { v: 'all', n: 'All', count: items.length },
+                  { v: 'new', n: 'New', count: newCount },
+                  { v: 'in-review', n: 'In review', count: items.filter(p => p.status === 'in-review').length },
+                ]}
+              />
+            </div>
+            <div className="ah-prop-list-row ah-prop-list-row--filters">
+              <select className="ah-mini-select" value={sourceFilter || ''} onChange={e => setSourceFilter(e.target.value || null)}>
+                <option value="">All sources</option>
+                <option value="tamashii">tamashii</option>
+                <option value="ebay">ebay</option>
+              </select>
+              <select className="ah-mini-select" value={confidenceFilter} onChange={e => setConfidenceFilter(e.target.value)}>
+                <option value="all">Any confidence</option>
+                <option value="high">≥ 90% (high)</option>
+                <option value="med">70–89% (med)</option>
+                <option value="low">&lt; 70% (low)</option>
+              </select>
+              <select className="ah-mini-select" value={sort} onChange={e => setSort(e.target.value)}>
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+                <option value="confidence">Confidence ↓</option>
+              </select>
+            </div>
+          </div>
+          <div className="ah-prop-list-scroll">
+            {filtered.map(p => (
+              <button
+                key={p.id}
+                className={'ah-prop-item' + (p.id === selected?.id ? ' is-active' : '')}
+                onClick={() => setSelectedId(p.id)}
+              >
+                <div className="ah-prop-item-top">
+                  <span className="ah-prop-item-name">{p.productName}</span>
+                  {p.status === 'new' && <span className="ah-tag ah-tag--new">NEW</span>}
+                </div>
+                <div className="ah-prop-item-mid">
+                  <span className="ah-dim ah-small">{p.productLine}</span>
+                </div>
+                <div className="ah-prop-item-bot">
+                  <span className="ah-mono ah-small">
+                    {p.fieldCount} field{p.fieldCount !== 1 ? 's' : ''} · {p.imageCount} image{p.imageCount !== 1 ? 's' : ''}
+                  </span>
+                  <span className="ah-mono ah-small ah-dim">{window.formatRelative(p.receivedAt)}</span>
+                </div>
+                <div className="ah-prop-item-foot">
+                  <span className="ah-prop-sources">
+                    {p.sources.map(s => <span key={s} className="ah-source-pill">{s}</span>)}
+                  </span>
+                  <ConfidenceMeter value={p.avgConfidence} />
+                </div>
+              </button>
+            ))}
+            {!filtered.length && (
+              <div className="ah-empty ah-empty--padded">
+                No proposals match these filters.
+              </div>
+            )}
+          </div>
+          <div className="ah-prop-list-foot">
+            <span className="ah-mono ah-small ah-dim">↑↓ or j/k to navigate</span>
+          </div>
+        </aside>
+
+        {/* DETAIL */}
+        <main className="ah-prop-detail">
+          {selected ? <ProposalDetail key={selected.id} prop={selected} /> : (
+            <div className="ah-empty ah-empty--padded">Select a proposal from the list.</div>
+          )}
+        </main>
+      </div>
+    </div>
+  );
+};
+
+const FilterTabs = ({ value, onChange, options }) => (
+  <div className="ah-filter-tabs">
+    {options.map(o => (
+      <button key={o.v} className={'ah-filter-tab' + (value === o.v ? ' is-active' : '')} onClick={() => onChange(o.v)}>
+        {o.n}
+        <span className="ah-filter-tab-count">{o.count}</span>
+      </button>
+    ))}
+  </div>
+);
+
+const ConfidenceMeter = ({ value }) => {
+  const cls = value >= 90 ? 'high' : value >= 70 ? 'med' : 'low';
+  return (
+    <span className={`ah-conf ah-conf--${cls}`} title={`${value}% confidence`}>
+      <span className="ah-conf-track"><span className="ah-conf-fill" style={{ width: `${value}%` }} /></span>
+      <span className="ah-mono ah-small">{value}%</span>
+    </span>
+  );
+};
+
+const ProposalDetail = ({ prop }) => {
+  const [fieldStates, setFieldStates] = useState(() =>
+    prop.fields.reduce((a, f) => ({ ...a, [f.key]: 'pending' }), {})
+  );
+  const setField = (k, v) => setFieldStates(s => ({ ...s, [k]: v }));
+
+  const allApproved = prop.fields.every(f => fieldStates[f.key] === 'approved');
+  const anyApproved = prop.fields.some(f => fieldStates[f.key] === 'approved');
+
+  return (
+    <div className="ah-prop-detail-inner">
+      {/* Detail header */}
+      <div className="ah-prop-detail-head">
+        <div>
+          <div className="ah-prop-detail-tag">
+            <span className="ah-tag ah-tag--draft">NEW DRAFT</span>
+            <span className="ah-dim ah-small">{prop.productLine}</span>
+          </div>
+          <h2 className="ah-prop-detail-title">{prop.productName}</h2>
+        </div>
+        <div className="ah-prop-detail-actions">
+          <button className="ah-btn ah-btn--ghost ah-btn--sm">← Back</button>
+          <button className="ah-btn ah-btn--ghost ah-btn--sm">Edit product</button>
+        </div>
+      </div>
+
+      {/* Publish panel */}
+      <div className="ah-publish">
+        <div className="ah-publish-head">
+          <div>
+            <div className="ah-publish-title">Publish to storefront</div>
+            <div className="ah-publish-sub">
+              Approve fields + images first, then publish to flip <code className="ah-code">draft</code> → <code className="ah-code">available</code>.
+            </div>
+          </div>
+          <button className={'ah-btn ah-btn--publish' + (allApproved ? '' : ' is-disabled')} disabled={!allApproved}>
+            Publish
+          </button>
+        </div>
+        <div className="ah-publish-checks">
+          <Check ok label="Name set" />
+          <Check ok={anyApproved} label="At least one approved primary image" />
+          <Check ok={anyApproved} label="Price &gt; 0" />
+          <Check ok={anyApproved} label="Description set (recommended)" soft />
+        </div>
+        {!allApproved && (
+          <div className="ah-publish-note">
+            {prop.fields.filter(f => fieldStates[f.key] === 'pending').length} pending field proposal(s) · {prop.imageCount} candidate image(s).
+            Approve or discard them below.
+          </div>
+        )}
+      </div>
+
+      {/* Bulk actions */}
+      <div className="ah-prop-bulk">
+        <button className="ah-btn ah-btn--sm ah-btn--ghost-green" onClick={() => {
+          const next = {}; prop.fields.forEach(f => { next[f.key] = 'approved'; }); setFieldStates(next);
+        }}>Approve all fields</button>
+        <button className="ah-btn ah-btn--sm ah-btn--ghost" onClick={() => {
+          const next = {}; prop.fields.forEach(f => { next[f.key] = 'discarded'; }); setFieldStates(next);
+        }}>Discard all fields</button>
+        <div className="ah-toolbar-spacer" />
+        <button className="ah-btn ah-btn--sm ah-btn--danger-ghost">Discard everything (fields + images)</button>
+      </div>
+
+      {/* Fields */}
+      <div className="ah-section-head">
+        <h3 className="ah-h3">Field proposals</h3>
+        <span className="ah-dim ah-small">
+          {Object.values(fieldStates).filter(v => v === 'approved').length} approved ·
+          {' '}{Object.values(fieldStates).filter(v => v === 'discarded').length} discarded ·
+          {' '}{Object.values(fieldStates).filter(v => v === 'pending').length} pending
+        </span>
+      </div>
+      <div className="ah-field-list">
+        {prop.fields.map(f => (
+          <FieldRow key={f.key} field={f} state={fieldStates[f.key]} onSet={v => setField(f.key, v)} />
+        ))}
+      </div>
+
+      {/* Images */}
+      {prop.imageCount > 0 && (
+        <>
+          <div className="ah-section-head">
+            <h3 className="ah-h3">Image candidates</h3>
+            <span className="ah-dim ah-small">{prop.imageCount} found · click to approve</span>
+          </div>
+          <div className="ah-img-grid">
+            {Array.from({ length: prop.imageCount }, (_, i) => (
+              <ImageCandidate key={i} index={i + 1} />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+const Check = ({ ok, label, soft }) => (
+  <div className={'ah-check' + (ok ? ' is-ok' : '') + (soft ? ' is-soft' : '')}>
+    <span className="ah-check-mark">{ok ? '✓' : '○'}</span>
+    <span>{label}</span>
+  </div>
+);
+
+const FieldRow = ({ field, state, onSet }) => {
+  const cls = field.confidence >= 90 ? 'high' : field.confidence >= 70 ? 'med' : 'low';
+  return (
+    <div className={'ah-field' + (state === 'approved' ? ' is-approved' : '') + (state === 'discarded' ? ' is-discarded' : '')}>
+      <div className="ah-field-head">
+        <div className="ah-field-meta">
+          <span className="ah-tag ah-tag--key">{field.key.toUpperCase()}</span>
+          <span className="ah-mono ah-small">{field.source}</span>
+          <span className={`ah-conf ah-conf--${cls}`}>
+            <span className="ah-conf-track"><span className="ah-conf-fill" style={{ width: `${field.confidence}%` }} /></span>
+            <span className="ah-mono ah-small">{field.confidence}%</span>
+          </span>
+          <a href="#" className="ah-link ah-small">source ↗</a>
+        </div>
+        {state === 'approved' && <span className="ah-tag ah-tag--ok">APPROVED</span>}
+        {state === 'discarded' && <span className="ah-tag ah-tag--off">DISCARDED</span>}
+      </div>
+      <div className="ah-field-diff">
+        <div className="ah-field-col">
+          <div className="ah-field-col-label">CURRENT</div>
+          <pre className="ah-field-val">{field.current || <span className="ah-dim">(empty)</span>}</pre>
+        </div>
+        <div className="ah-field-col ah-field-col--proposed">
+          <div className="ah-field-col-label">PROPOSED</div>
+          <pre className="ah-field-val ah-field-val--proposed">{field.proposed}</pre>
+        </div>
+      </div>
+      {field.note && <div className="ah-field-note">{field.note}</div>}
+      <div className="ah-field-actions">
+        <button className="ah-btn ah-btn--sm ah-btn--ok" onClick={() => onSet('approved')}>Approve</button>
+        <button className="ah-btn ah-btn--sm ah-btn--ghost" onClick={() => onSet('discarded')}>Discard</button>
+        {state !== 'pending' && (
+          <button className="ah-btn ah-btn--sm ah-btn--ghost" onClick={() => onSet('pending')}>Reset</button>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const ImageCandidate = ({ index }) => {
+  const [state, setState] = useState('pending');
+  return (
+    <div className={'ah-img ' + (state === 'approved' ? 'is-approved' : '') + (state === 'discarded' ? ' is-discarded' : '')}>
+      <div className="ah-img-frame">
+        <span className="ah-img-label">img {index}</span>
+      </div>
+      <div className="ah-img-actions">
+        <button className={'ah-btn ah-btn--xs ' + (state === 'approved' ? 'ah-btn--ok' : 'ah-btn--ghost-green')} onClick={() => setState(state === 'approved' ? 'pending' : 'approved')}>
+          {state === 'approved' ? '✓ Primary' : 'Approve'}
+        </button>
+        <button className="ah-btn ah-btn--xs ah-btn--ghost" onClick={() => setState('discarded')}>Discard</button>
+      </div>
+    </div>
+  );
+};
+
+window.Proposals = Proposals;
+
+</script>
+<script type="text/babel" data-presets="react">
+/* Settings — folds Brands / Lines / Series into a single tab with sub-nav.
+   These are rarely edited; goal is clarity + compactness. */
+
+const Settings = ({ sub }) => {
+  const [active, setActive] = useState(sub || 'brands');
+  useEffect(() => { if (sub) setActive(sub); }, [sub]);
+
+  return (
+    <div className="ah-page">
+      <window.PageTitle title="Settings" right={null} />
+      <div className="ah-subnav">
+        {[
+          { v: 'brands', n: 'Brands', count: window.BRANDS.length },
+          { v: 'lines',  n: 'Lines',  count: window.LINES.length },
+          { v: 'series', n: 'Series', count: window.SERIES_DATA.length },
+        ].map(t => (
+          <button key={t.v} className={'ah-subnav-item' + (active === t.v ? ' is-active' : '')} onClick={() => setActive(t.v)}>
+            {t.n}
+            <span className="ah-subnav-count">{t.count}</span>
+          </button>
+        ))}
+      </div>
+
+      {active === 'brands' && <TaxonomyEditor
+        title="Brands"
+        items={window.BRANDS}
+        columns={['name', 'slug']}
+        addLabel="Add new brand"
+      />}
+      {active === 'lines' && <TaxonomyEditor
+        title="Product lines"
+        items={window.LINES.map(l => ({ name: l.name, slug: l.slug, brand: l.brand }))}
+        columns={['name', 'slug', 'brand']}
+        addLabel="Add new line"
+        selectColumns={{ brand: window.BRANDS.map(b => b.name) }}
+      />}
+      {active === 'series' && <TaxonomyEditor
+        title="Series"
+        items={window.SERIES_DATA}
+        columns={['name', 'slug', 'line']}
+        addLabel="Add new series"
+        selectColumns={{ line: window.LINES.map(l => l.name) }}
+      />}
+    </div>
+  );
+};
+
+const TaxonomyEditor = ({ title, items, columns, addLabel, selectColumns = {} }) => (
+  <Card>
+    <div className="ah-card-head">
+      <div>
+        <div className="ah-card-title">{title}</div>
+        <div className="ah-card-sub">{items.length} entries · inline edit, save per row</div>
+      </div>
+    </div>
+
+    <div className="ah-tax-add">
+      <div className="ah-card-sub" style={{ marginBottom: 8 }}>{addLabel}</div>
+      <div className="ah-tax-add-row">
+        {columns.map(c => (
+          <div key={c} className="ah-tax-field">
+            <label>{c}</label>
+            {selectColumns[c] ? (
+              <select><option>— select —</option>{selectColumns[c].map(o => <option key={o}>{o}</option>)}</select>
+            ) : <input type="text" />}
+          </div>
+        ))}
+        <button className="ah-btn ah-btn--primary ah-btn--sm">Add</button>
+      </div>
+    </div>
+
+    <div className="ah-tax-list">
+      {items.map((it, i) => (
+        <div key={i} className="ah-tax-row">
+          {columns.map(c => (
+            <div key={c} className="ah-tax-cell">
+              <span className="ah-tax-cell-label">{c}</span>
+              {selectColumns[c] ? (
+                <select defaultValue={it[c]}>{selectColumns[c].map(o => <option key={o}>{o}</option>)}</select>
+              ) : <input type="text" defaultValue={it[c]} />}
+            </div>
+          ))}
+          <div className="ah-tax-row-actions">
+            <button className="ah-link">Save</button>
+            <button className="ah-link ah-link--danger">Delete</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  </Card>
+);
+
+window.Settings = Settings;
+
+</script>
+<script type="text/babel" data-presets="react">
+/* Root app — wires the shell to the page components, owns theme + nav state.
+   Also owns the "jump to products with filters" hand-off from dashboard. */
+
+const App = () => {
+  const [theme, setTheme] = useState('light');
+  const [route, setRoute] = useState('dashboard');
+  const [productFilters, setProductFilters] = useState(null);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  const handleNav = (id) => {
+    if (id.startsWith('settings:')) {
+      const sub = id.split(':')[1];
+      setRoute('settings:' + sub);
+    } else {
+      setRoute(id);
+    }
+    if (id === 'products') setProductFilters(null);
+  };
+
+  const handleJumpProducts = (filters) => {
+    setRoute('products');
+    setProductFilters(filters);
+  };
+
+  const active = route.startsWith('settings') ? 'settings' : route;
+
+  return (
+    <div className="ah-root">
+      <window.ShellHeader active={active} onNav={handleNav} theme={theme} onTheme={setTheme} />
+      <main className="ah-main">
+        {route === 'dashboard' && <window.Dashboard onJumpProducts={handleJumpProducts} />}
+        {route === 'products'  && <window.Products initialFilters={productFilters} />}
+        {route === 'proposals' && <window.Proposals />}
+        {route.startsWith('settings') && <window.Settings sub={route.split(':')[1]} />}
+      </main>
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+</script>
+</body>
+</html>
