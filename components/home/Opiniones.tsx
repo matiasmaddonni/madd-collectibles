@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { OPINIONES, type Opinion, type OpinionMessage } from "@/lib/opiniones";
+import { formatPrice } from "@/lib/format";
 
 function DoubleCheck() {
   return (
@@ -153,7 +154,7 @@ function OpinionCard({ op }: { op: Opinion }) {
             </span>
           )}
           <span className="font-mono text-[10.5px] text-text-secondary truncate">
-            {op.product.line} · US$ {op.product.price}
+            {op.product.line} · {formatPrice(op.product.price, "USD")}
           </span>
         </div>
         <span

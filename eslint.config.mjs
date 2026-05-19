@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Design-handoff mocks aren't shipped — keep them out of CI noise.
+    "design_handoff_admin_overhaul/**",
   ]),
 ]);
 

@@ -192,7 +192,7 @@ export function CardImageCarousel({
               e.stopPropagation();
               go(idx - 1);
             }}
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 flex items-center justify-center bg-bg-deep/70 backdrop-blur-sm border border-border-subtle text-text-primary opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:text-accent"
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 flex items-center justify-center bg-bg-deep/70 backdrop-blur-sm border border-border-subtle text-text-primary opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100 transition-opacity hover:text-accent focus-visible:text-accent"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="m15 18-6-6 6-6" />
@@ -207,7 +207,7 @@ export function CardImageCarousel({
               e.stopPropagation();
               go(idx + 1);
             }}
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 flex items-center justify-center bg-bg-deep/70 backdrop-blur-sm border border-border-subtle text-text-primary opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:text-accent"
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 flex items-center justify-center bg-bg-deep/70 backdrop-blur-sm border border-border-subtle text-text-primary opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100 transition-opacity hover:text-accent focus-visible:text-accent"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="m9 18 6-6-6-6" />

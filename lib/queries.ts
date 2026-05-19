@@ -464,6 +464,18 @@ export async function getAvailableProductsCount(): Promise<number> {
   return count ?? 0;
 }
 
+// Lifetime curated-stock count for the Hero claim. Excludes drafts (RLS
+// already hides them from anon) so the number matches the catalogo's
+// public footprint.
+export async function getCuratedProductsCount(): Promise<number> {
+  const supabase = await createClient();
+  const { count } = await supabase
+    .from("products")
+    .select("id", { count: "exact", head: true })
+    .in("status", ["available", "reserved", "sold"]);
+  return count ?? 0;
+}
+
 export async function getAllProductSlugs(): Promise<
   { slug: string; updatedAt: string | null }[]
 > {

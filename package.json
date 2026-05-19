@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "crawl": "tsx scripts/crawl.ts",
     "crawl:apply": "tsx scripts/crawl.ts --apply",
     "n8n": "bash scripts/start-n8n.sh"

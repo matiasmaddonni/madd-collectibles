@@ -67,6 +67,27 @@ export default async function RootLayout({
       className={`${bebas.variable} ${dmSans.variable} ${dmMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-bg-deep text-text-primary font-body">
+        {/*
+          Organization structured data — site-wide brand SEO. Tells Google
+          the canonical site name, logo, and social profiles so it can show
+          a knowledge-panel-style sitelink and the right favicon.
+        */}
+        <script
+          type="application/ld+json"
+          nonce={nonce}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "MADD.",
+              alternateName: "MADD Collectibles",
+              url: SITE_URL,
+              logo: `${SITE_URL}/madd-logo.svg`,
+              description: SITE_DESCRIPTION,
+              areaServed: { "@type": "Country", name: "Argentina" },
+            }),
+          }}
+        />
         <CartProvider>
           {children}
           <CartDrawer />

@@ -7,7 +7,10 @@ import { FeaturedProducts } from "@/components/home/FeaturedProducts";
 import { Opiniones } from "@/components/home/Opiniones";
 import { HowToBuy } from "@/components/home/HowToBuy";
 import { AboutMadd } from "@/components/home/AboutMadd";
-import { getAvailableProductsCount } from "@/lib/queries";
+import {
+  getAvailableProductsCount,
+  getCuratedProductsCount,
+} from "@/lib/queries";
 
 export const metadata: Metadata = {
   title: {
@@ -20,12 +23,15 @@ export const metadata: Metadata = {
 export const revalidate = 300;
 
 export default async function HomePage() {
-  const availableCount = await getAvailableProductsCount();
+  const [availableCount, curatedCount] = await Promise.all([
+    getAvailableProductsCount(),
+    getCuratedProductsCount(),
+  ]);
   return (
     <>
       <Navbar />
       <main className="flex-1">
-        <Hero availableCount={availableCount} />
+        <Hero availableCount={availableCount} curatedCount={curatedCount} />
         <CategoryGrid />
         <FeaturedProducts />
         <Opiniones />

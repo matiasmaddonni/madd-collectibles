@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth";
+import { urlToStoragePath } from "@/lib/storage";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -217,13 +218,6 @@ export async function rejectAllForProduct(productId: string): Promise<void> {
 
 // ---------- image proposals ----------
 
-function urlToStoragePath(url: string): string | null {
-  const marker = "/storage/v1/object/public/product-images/";
-  const idx = url.indexOf(marker);
-  if (idx < 0) return null;
-  return url.slice(idx + marker.length);
-}
-
 export async function approveImageProposal(
   imageId: string,
   mode: "primary" | "gallery",
@@ -324,7 +318,10 @@ export async function setProductPrice(
     .from("products")
     .update({ price, currency })
     .eq("id", productId);
-  if (error) return { ok: false, reason: error.message };
+  if (error) {
+    console.error("setProductPrice failed", error);
+    return { ok: false, reason: "Could not save price" };
+  }
   await revalidateProductPaths(productId);
   return { ok: true };
 }
@@ -428,7 +425,10 @@ export async function publishDraftProduct(
     .from("products")
     .update({ status: "available" })
     .eq("id", productId);
-  if (error) return { ok: false, reason: error.message };
+  if (error) {
+    console.error("publishDraftProduct failed", error);
+    return { ok: false, reason: "Could not publish — check the server logs" };
+  }
 
   await revalidateProductPaths(productId);
   return { ok: true };

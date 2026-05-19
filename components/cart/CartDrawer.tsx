@@ -158,7 +158,7 @@ export function CartDrawer() {
                 Todavía no agregaste ninguna figura.
               </p>
               <p className="font-body text-sm text-text-secondary">
-                Tocá el ícono de bolsa al pasar el mouse sobre una figura.
+                Tocá el ícono de bolsa en la figura que te interese para sumarla.
               </p>
             </div>
           ) : (

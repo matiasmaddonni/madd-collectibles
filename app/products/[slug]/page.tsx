@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
@@ -51,7 +52,13 @@ export async function generateMetadata({
   const { slug } = await params;
   const product = await getProductBySlug(slug);
   if (!product) return { title: "Producto no encontrado" };
-  const description = `${product.name} — ${product.lineName} en perfecto estado. Precio: ${product.price} ${product.currency}.`;
+  const priceStr = formatPrice(product.price, product.currency);
+  const description = `${product.name} — ${product.lineName} en perfecto estado. Precio: ${priceStr}.`;
+  // Square dimensions: product photos are 1:1 so social previews crop
+  // cleanly. Twitter card images mirror OG.
+  const images = product.imageUrl
+    ? [{ url: product.imageUrl, width: 1200, height: 1200, alt: product.name }]
+    : undefined;
   return {
     title: product.name,
     description,
@@ -60,16 +67,22 @@ export async function generateMetadata({
       type: "website",
       title: product.name,
       description,
-      images: product.imageUrl
-        ? [{ url: product.imageUrl, width: 1200, height: 630 }]
-        : undefined,
+      images,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: product.name,
+      description,
+      images: images?.map((i) => i.url),
     },
   };
 }
 
 const SCHEMA_AVAILABILITY: Record<ProductStatus, string> = {
   available: "https://schema.org/InStock",
-  reserved: "https://schema.org/PreOrder",
+  // Reserved = one customer holds it, not a pre-order. LimitedAvailability
+  // is the correct schema.org term.
+  reserved: "https://schema.org/LimitedAvailability",
   sold: "https://schema.org/OutOfStock",
 };
 
@@ -77,6 +90,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
   if (!product) notFound();
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
 
   const isAvailable = product.status === "available" && product.stockQty > 0;
   const [related, usdToArs] = await Promise.all([
@@ -124,6 +138,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
     <>
       <script
         type="application/ld+json"
+        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <Navbar />

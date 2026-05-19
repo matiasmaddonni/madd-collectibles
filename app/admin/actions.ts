@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail, requireAdmin } from "@/lib/auth";
+import { urlToStoragePath } from "@/lib/storage";
 
 export async function signOut() {
   const supabase = await createClient();
@@ -302,13 +303,6 @@ export async function deleteProduct(fd: FormData) {
 }
 
 // ---------- product images ----------
-
-function urlToStoragePath(url: string): string | null {
-  const marker = "/storage/v1/object/public/product-images/";
-  const idx = url.indexOf(marker);
-  if (idx < 0) return null;
-  return url.slice(idx + marker.length);
-}
 
 const ALLOWED_IMAGE_EXTS = new Set(["jpg", "jpeg", "png", "webp", "avif"]);
 

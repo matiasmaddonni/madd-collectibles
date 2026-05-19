@@ -201,7 +201,7 @@ export function AboutMadd() {
             Coleccionista desde 2020. Fanático nostalgico de los animes de los 90s.
           </h3>
           <p className="font-body text-[15px] leading-[1.7] text-text-secondary">
-            Soy Matias, coleccionista apasionado desde hace más de 6 años. 
+            Soy Matias, coleccionista apasionado desde hace varios años.
             Empecé con las Myth Cloth EX (en particular la de Kanon de Geminis)
             y no paré más. Hoy tengo un stock cuidado de más de 300 piezas
             entre Myth Cloth EX, S.H.Figuarts y más. Cada figura que vendí pasó

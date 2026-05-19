@@ -112,7 +112,13 @@ export default async function ProductsListPage({
       { count: "exact" },
     );
 
-  if (sp.q) query = query.ilike("name", `%${sp.q}%`);
+  if (sp.q) {
+    // Strip ilike wildcard chars + escape backslash. Otherwise a literal %
+    // or _ in the search box matches anything / a single char respectively,
+    // surprising the admin.
+    const safeQ = sp.q.replace(/[\\%_]/g, " ").trim();
+    if (safeQ) query = query.ilike("name", `%${safeQ}%`);
+  }
   if (sp.status) query = query.eq("status", sp.status);
   if (filterLine) query = query.eq("product_line_id", filterLine.id);
   if (filterSeries) query = query.eq("series_id", filterSeries.id);

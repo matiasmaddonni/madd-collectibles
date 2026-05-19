@@ -10,6 +10,20 @@ const securityHeaders = [
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
 ];
 
+// Derive the Supabase host from the public env var so rotating the project
+// or pointing at a staging Supabase doesn't require a config diff. Falls
+// back to the current production hostname if env is missing at build time
+// (e.g. local `next build` without .env.local).
+const SUPABASE_HOST = (() => {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!url) return "idkikvkdijmifaskobeh.supabase.co";
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return "idkikvkdijmifaskobeh.supabase.co";
+  }
+})();
+
 const nextConfig: NextConfig = {
   // Server Actions default to 1 MB of FormData body. Mobile camera photos
   // routinely exceed this — bump to 15 MB so admin image uploads succeed.
@@ -22,7 +36,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "idkikvkdijmifaskobeh.supabase.co",
+        hostname: SUPABASE_HOST,
         pathname: "/storage/v1/object/public/**",
       },
     ],

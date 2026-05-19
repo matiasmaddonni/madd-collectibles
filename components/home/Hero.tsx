@@ -66,19 +66,26 @@ function PlaceholderCard({ idx }: { idx: number }) {
   );
 }
 
-// Lifetime curated-stock claim. Bump when total stock grows meaningfully.
-const INVENTORY_TOTAL = 250;
-
-export async function Hero({ availableCount }: { availableCount: number }) {
+export async function Hero({
+  availableCount,
+  curatedCount,
+}: {
+  availableCount: number;
+  curatedCount: number;
+}) {
   const previews = await getHeroPreviewProducts(3);
   const slots = Array.from({ length: 3 }, (_, i) => previews[i] ?? null);
+  // Round down to the nearest 10 so the headline stays a stable "200+" /
+  // "300+" claim instead of jittering every time a sale flips a product
+  // to status='sold'. Avoids the previous hardcoded literal going stale.
+  const inventoryClaim = Math.max(0, Math.floor(curatedCount / 10) * 10);
 
   return (
     <section className="relative overflow-hidden noise-bg hero-glow diag-lines border-b border-border-subtle">
       <div className="max-w-7xl xl:max-w-[1500px] mx-auto px-6 py-24 md:py-32 grid lg:grid-cols-[5fr_7fr] gap-8 lg:gap-4 xl:gap-8 items-center">
         <div className="flex flex-col gap-8 anim-fade-up lg:max-w-xl">
           <p className="font-mono text-xs uppercase tracked-wide text-text-secondary">
-            <span className="text-text-primary">+{INVENTORY_TOTAL}</span>{" "}
+            <span className="text-text-primary">+{inventoryClaim}</span>{" "}
             figuras curadas
             <span aria-hidden className="text-border-medium px-2">
               ·
