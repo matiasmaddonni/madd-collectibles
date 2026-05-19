@@ -75,6 +75,10 @@ export default async function RootLayout({
         <script
           type="application/ld+json"
           nonce={nonce}
+          // Browser strips the nonce attr off <script> tags after parsing for
+          // security, so React sees a mismatch on hydration. Behaviour-correct,
+          // warning is noise. Same suppression used in admin ThemeBootstrap.
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",

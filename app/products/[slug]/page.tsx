@@ -139,6 +139,9 @@ export default async function ProductDetailPage({ params }: PageProps) {
       <script
         type="application/ld+json"
         nonce={nonce}
+        // Browser strips the nonce attr after parsing -- React hydration
+        // diff is noise.
+        suppressHydrationWarning
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <Navbar />
