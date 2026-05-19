@@ -40,6 +40,9 @@ const VALID_CONDITIONS: ProductCondition[] = [
   "fair",
 ];
 
+const VALID_STATUSES = ["available", "reserved", "sold"] as const;
+type PublicStatus = (typeof VALID_STATUSES)[number];
+
 type SearchParams = Record<string, string | string[] | undefined>;
 
 function csv(v: string | string[] | undefined): string[] {
@@ -81,11 +84,20 @@ function parseFilters(sp: SearchParams): CatalogFilters {
     VALID_CONDITIONS.includes(c as ProductCondition),
   );
 
+  // ?disp=available,reserved,sold — empty / unset means all three. Drafts
+  // never make it through (RLS-hidden + filtered here for clarity).
+  const dispRaw = csv(sp.disp).filter((s): s is PublicStatus =>
+    (VALID_STATUSES as readonly string[]).includes(s),
+  );
+  const statuses: PublicStatus[] =
+    dispRaw.length > 0 ? dispRaw : [...VALID_STATUSES];
+
   return {
     lineSlugs: csv(sp.linea),
     excludeLineSlugs: csv(sp.excluir),
     seriesSlugs: csv(sp.serie),
     conditions: conds,
+    statuses,
     minPrice: num(sp.min),
     maxPrice: num(sp.max),
     q: str(sp.q),

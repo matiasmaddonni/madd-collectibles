@@ -231,6 +231,10 @@ export type CatalogFilters = {
   excludeLineSlugs?: string[];
   seriesSlugs?: string[];
   conditions?: ProductCondition[];
+  // Public-facing statuses only — drafts are RLS-hidden from anon
+  // regardless. Empty / undefined means "all three" (available + reserved
+  // + sold). Pass an explicit subset to narrow.
+  statuses?: Array<"available" | "reserved" | "sold">;
   minPrice?: number;
   maxPrice?: number;
   q?: string;
@@ -299,6 +303,9 @@ export async function getCatalogProducts(
   }
   if (f.conditions && f.conditions.length > 0) {
     q = q.in("condition", f.conditions);
+  }
+  if (f.statuses && f.statuses.length > 0) {
+    q = q.in("status", f.statuses);
   }
   if (typeof f.minPrice === "number" && Number.isFinite(f.minPrice)) {
     q = q.gte("price", f.minPrice);

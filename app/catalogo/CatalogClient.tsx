@@ -154,6 +154,11 @@ function FilterPanel({ lines, series, conditions, pathname }: PanelProps) {
   const selectedLines = csvList(params.get("linea"));
   const selectedSeries = csvList(params.get("serie"));
   const selectedConditions = csvList(params.get("condicion"));
+  // Disponibilidad: when `disp` param is unset, all three statuses are
+  // shown (server default). User can narrow by checking a subset.
+  const dispParam = csvList(params.get("disp"));
+  const selectedDisp =
+    dispParam.length > 0 ? dispParam : ["available", "reserved", "sold"];
   const min = params.get("min") ?? "";
   const max = params.get("max") ?? "";
 
@@ -184,6 +189,21 @@ function FilterPanel({ lines, series, conditions, pathname }: PanelProps) {
   const onToggleCondition = (value: string) => {
     const next = toggleCsv(params.get("condicion") ?? "", value);
     push({ condicion: next || null });
+  };
+  const onToggleDisp = (value: string) => {
+    // First click off the implicit "all" state: seed the param with the
+    // other two, equivalent to "unchecked this one". Subsequent toggles
+    // use normal CSV add/remove semantics. Empty string clears back to
+    // the default (all three).
+    const current = params.get("disp");
+    const all = ["available", "reserved", "sold"];
+    if (!current) {
+      const remaining = all.filter((v) => v !== value);
+      push({ disp: remaining.length === all.length ? null : remaining.join(",") });
+      return;
+    }
+    const next = toggleCsv(current, value);
+    push({ disp: next || null });
   };
   const applyPrice = () => {
     push({
@@ -256,6 +276,24 @@ function FilterPanel({ lines, series, conditions, pathname }: PanelProps) {
         )}
       </FilterGroup>
 
+      <FilterGroup label="Disponibilidad">
+        <CheckRow
+          checked={selectedDisp.includes("available")}
+          onChange={() => onToggleDisp("available")}
+          label="Disponible"
+        />
+        <CheckRow
+          checked={selectedDisp.includes("reserved")}
+          onChange={() => onToggleDisp("reserved")}
+          label="Reservado"
+        />
+        <CheckRow
+          checked={selectedDisp.includes("sold")}
+          onChange={() => onToggleDisp("sold")}
+          label="Vendido"
+        />
+      </FilterGroup>
+
       <FilterGroup label="Precio">
         <div className="flex items-center gap-2">
           <input
@@ -313,7 +351,7 @@ function CheckRow({
   checked: boolean;
   onChange: () => void;
   label: string;
-  count: number;
+  count?: number;
 }) {
   return (
     <label className="flex items-center justify-between gap-3 cursor-pointer group">
@@ -328,9 +366,11 @@ function CheckRow({
           {label}
         </span>
       </span>
-      <span className="font-mono text-[10px] text-text-secondary">
-        {count}
-      </span>
+      {count !== undefined && (
+        <span className="font-mono text-[10px] text-text-secondary">
+          {count}
+        </span>
+      )}
     </label>
   );
 }
