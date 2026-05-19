@@ -33,73 +33,71 @@ export type Opinion = {
 
 export const OPINIONES: Opinion[] = [
   {
-    name: "Ezequiel R.",
-    dateLabel: "12 abr 2026",
+    name: "Ezequiel M.",
+    dateLabel: "6 abr 2026",
     product: {
       slug: "ginyu",
       name: "Ginyu",
       line: "S.H.Figuarts",
       price: 100,
+      imageUrl:
+        "https://idkikvkdijmifaskobeh.supabase.co/storage/v1/object/public/product-images/ginyu/tamashii-1778783147011-50q6na.jpg",
     },
     messages: [
       {
         from: "them",
-        text: "Hola Matias! Me interesa el Ginyu. ¿Sigue disponible?",
-        time: "14:02",
-      },
-      {
-        from: "me",
-        text: "Hola! Sí, queda uno sellado. Te paso fotos reales.",
-        time: "14:03",
-      },
-      {
-        from: "me",
-        image: "Ginyu sellado, fotos reales",
-        time: "14:03",
+        text: "Hola Mati! Acabo de retirar a Ginyu.",
+        time: "14:12",
       },
       {
         from: "them",
-        text: "Lo llevo. Coordinamos envío a Córdoba?",
-        time: "14:08",
+        text: "Genial, muchas gracias 💪",
+        time: "14:12",
+      },
+      {
+        from: "me",
+        text:
+          "Buenísimo! Gracias por la compra, cualquier duda escribime.",
+        time: "15:14",
       },
     ],
   },
   {
-    name: "Lucía M.",
-    dateLabel: "28 mar 2026",
+    name: "Paul M.",
+    dateLabel: "3 may 2026",
     product: {
-      slug: "centaurus-babel",
-      name: "Babel de Centaurus",
-      line: "Saint Cloth Myth",
-      price: 200,
+      slug: "griffon-minos-oce",
+      name: "Griffon Minos (OCE)",
+      line: "Myth Cloth EX",
+      price: 240,
+      imageUrl:
+        "https://idkikvkdijmifaskobeh.supabase.co/storage/v1/object/public/product-images/griffon-minos-oce/1777967129667-ye77oc.jpg",
     },
     messages: [
       {
         from: "them",
-        text:
-          "Hola! Vi la página, ¿el Babel de Centaurus está en condición sellado?",
-        time: "10:14",
+        text: "Consulta el Minos OCE, ¿aún lo tenes?",
+        time: "11:24",
       },
       {
         from: "me",
-        text:
-          "Sí, sellado original Bandai. Te mando foto del precinto y la caja.",
-        time: "10:16",
+        text: "Sí, sellado. Te paso fotos de la caja.",
+        time: "11:25",
       },
       {
         from: "me",
-        image: "Caja sellada con precinto Bandai",
-        time: "10:16",
+        image: "Minos OCE sellado en caja",
+        time: "12:00",
       },
       {
         from: "them",
-        text: "Espectacular. Lo reservo, te transfiero ahora.",
-        time: "10:20",
+        text: "Dale, quedamos así. Mañana te transfiero.",
+        time: "12:17",
       },
     ],
   },
   {
-    name: "Maxi F.",
+    name: "Maxi T.",
     dateLabel: "8 abr 2026",
     product: {
       // Figure no longer in catalog — render name without a link.
