@@ -16,11 +16,15 @@ function resolveTheme(): Theme {
 export function ThemeToggle() {
   const [theme, setTheme] = useState<Theme | null>(null);
 
+  // Syncs local React state with the data-theme attr that ThemeBootstrap
+  // sets on #admin-root before paint. setState in effect is the
+  // idiomatic pattern for hydrating from a non-React external (the DOM).
   useEffect(() => {
     const root = document.getElementById("admin-root");
     if (!root) return;
     const attr = root.getAttribute("data-theme");
     if (attr === "light" || attr === "dark") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTheme(attr);
       return;
     }

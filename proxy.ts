@@ -12,14 +12,14 @@ function buildCsp(nonce: string): string {
     ? `https://${SUPABASE_HOSTNAME}`
     : "https://*.supabase.co";
   const isDev = process.env.NODE_ENV !== "production";
-  // React's dev runtime + Next's Turbopack HMR both require eval() in
-  // development — production never does. In prod we keep CSP strict.
+  // strict-dynamic + nonce is the modern policy. Browsers that understand
+  // strict-dynamic ignore legacy fallbacks (host-list + 'unsafe-inline')
+  // anyway, so we drop them — pure nonce gating. Dev needs eval for
+  // React's dev runtime + Turbopack HMR; prod never does.
   const scriptSrc = [
     "'self'",
     `'nonce-${nonce}'`,
     "'strict-dynamic'",
-    "https:",
-    "'unsafe-inline'",
     isDev ? "'unsafe-eval'" : "",
   ]
     .filter(Boolean)

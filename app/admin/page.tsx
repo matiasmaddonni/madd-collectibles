@@ -143,6 +143,11 @@ export default async function AdminDashboard() {
   let staleReserved = 0;
   let draftsReady = 0;
 
+  // Dashboard "now" — Date.now() in a server component is the request time,
+  // which is exactly the "today" we want for the stale-reservation cutoff.
+  // ESLint's react-hooks/purity flags this defensively; the
+  // dashboard intentionally re-evaluates on every render.
+  // eslint-disable-next-line react-hooks/purity
   const fourteenDaysAgo = Date.now() - 14 * DAY_MS;
 
   // Stock by line: count of `available` items per product_line_id.
@@ -387,8 +392,10 @@ export default async function AdminDashboard() {
             ) : (
               reserved.map((p) => {
                 const line = getOne(p.product_line);
+                // Server-time "now" again — see comment on line 146.
                 const days = p.reserved_at
                   ? Math.floor(
+                      // eslint-disable-next-line react-hooks/purity
                       (Date.now() - new Date(p.reserved_at).getTime()) / DAY_MS,
                     )
                   : null;

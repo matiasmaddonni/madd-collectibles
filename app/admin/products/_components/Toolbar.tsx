@@ -38,7 +38,11 @@ export function Toolbar({
   const series = sp.get("series") ?? "";
 
   const [qLocal, setQLocal] = useState(q);
+  // Mirror URL search param into the local controlled input — keeps the
+  // input in sync when filters are cleared via "Clear" or the URL changes
+  // externally (e.g. browser back).
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setQLocal(q);
   }, [q]);
 

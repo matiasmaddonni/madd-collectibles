@@ -18,7 +18,12 @@ export function InlinePrice({ id, price, currency }: Props) {
   const router = useRouter();
   const [, startTransition] = useTransition();
 
+  // Mirror the prop into the controlled input when the parent's `price`
+  // changes from outside (e.g. after a different cell saves and the page
+  // refreshes). The lint rule discourages setState-in-effect but this is
+  // the idiomatic prop->state sync.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setValue(String(price));
   }, [price]);
 
