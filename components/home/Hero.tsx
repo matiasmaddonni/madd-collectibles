@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { getHeroPreviewProducts, type HomeProductCard } from "@/lib/queries";
+import { getFeaturedProducts, type HomeProductCard } from "@/lib/queries";
 import { formatPrice } from "@/lib/format";
 
 const caseClassMap = {
@@ -73,7 +73,10 @@ export async function Hero({
   availableCount: number;
   curatedCount: number;
 }) {
-  const previews = await getHeroPreviewProducts(3);
+  // Hero showcases the curated highlights of the catalog -- products the
+  // owner flagged as is_featured. Falls back to most-recent when fewer
+  // than 3 featured rows exist (getFeaturedProducts handles the merge).
+  const previews = await getFeaturedProducts(3);
   const slots = Array.from({ length: 3 }, (_, i) => previews[i] ?? null);
   // Round down to the nearest 10 so the headline stays a stable "200+" /
   // "300+" claim instead of jittering every time a sale flips a product

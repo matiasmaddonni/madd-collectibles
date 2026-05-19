@@ -172,6 +172,24 @@ export async function getFeaturedProducts(
   return [...featured, ...fill].map(toCard);
 }
 
+// Pure newest-first available products. Used by the home "Recién
+// agregadas" section. Distinct from getFeaturedProducts which keys on
+// is_featured first and falls back to recent only when there aren't
+// enough featured rows.
+export async function getRecentlyAddedProducts(
+  limit = 4,
+): Promise<HomeProductCard[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("products")
+    .select(SELECT)
+    .eq("status", "available")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  const rows = (data ?? []) as unknown as Row[];
+  return rows.map(toCard);
+}
+
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

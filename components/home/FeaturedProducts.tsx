@@ -1,8 +1,11 @@
 import { ProductCard } from "@/components/catalog/ProductCard";
-import { getFeaturedProducts } from "@/lib/queries";
+import { getRecentlyAddedProducts } from "@/lib/queries";
 
+// "Recién agregadas" — pure newest-first feed of available stock so
+// returning visitors can immediately see what's new since their last
+// visit. Featured / curated highlights live in the Hero block above.
 export async function FeaturedProducts() {
-  const cards = await getFeaturedProducts(4);
+  const cards = await getRecentlyAddedProducts(4);
   if (cards.length === 0) return null;
 
   return (
@@ -11,7 +14,7 @@ export async function FeaturedProducts() {
         <header className="flex items-end justify-between mb-10">
           <div className="flex flex-col gap-2">
             <span className="font-mono text-xs uppercase tracked-wide text-text-secondary">
-              Destacados
+              Novedades
             </span>
             <h2 className="font-display text-4xl md:text-5xl tracked-mid text-text-primary">
               Recién agregadas
