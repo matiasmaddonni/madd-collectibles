@@ -77,11 +77,10 @@ export function ProductCard({
           )
         )}
 
-        <span className="absolute top-3 left-3 z-10 pointer-events-none font-mono text-[10px] tracked-wide uppercase px-2 py-1 bg-bg-deep/70 backdrop-blur-sm border border-border-subtle text-text-secondary">
+        <span
+          className="absolute top-3 left-3 z-10 pointer-events-none font-mono text-[10px] tracked-wide uppercase px-2 py-1 bg-bg-deep/70 backdrop-blur-sm border border-border-subtle text-text-secondary whitespace-nowrap overflow-hidden text-ellipsis max-w-[calc(100%-1.25rem)]"
+        >
           {card.lineName}
-        </span>
-        <span className="absolute top-3 right-3 z-10 pointer-events-none font-mono text-[10px] tracked-wide uppercase px-2 py-1 bg-bg-deep/70 backdrop-blur-sm border border-border-subtle text-text-secondary">
-          {card.conditionLabel}
         </span>
 
         <AddToCartButton
@@ -102,8 +101,16 @@ export function ProductCard({
         <h3 className="font-body font-semibold text-text-primary leading-snug group-hover:text-accent transition-colors">
           {card.name}
         </h3>
-        <p className="font-body text-sm text-text-secondary">
-          {card.seriesName ?? card.lineName}
+        <p className="font-body text-sm text-text-secondary flex items-baseline flex-wrap gap-x-1.5">
+          <span>{card.seriesName ?? card.lineName}</span>
+          {card.conditionLabel && (
+            <>
+              <span aria-hidden className="text-[var(--color-ink-3)]">·</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-text-secondary">
+                {card.conditionLabel}
+              </span>
+            </>
+          )}
         </p>
 
         <div className="mt-auto flex items-end justify-between pt-3">
