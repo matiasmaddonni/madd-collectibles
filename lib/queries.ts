@@ -529,13 +529,6 @@ const CATEGORY_DEFS: Array<{
   matchTokens: string[];
 }> = [
   {
-    slug: "myth-cloth",
-    name: "Myth Cloth",
-    caseGradient: "gold",
-    lineSlugs: ["myth-cloth", "myth-cloth-ex", "myth-cloth-ex-metal"],
-    matchTokens: ["myth-cloth", "myth_cloth", "mythcloth"],
-  },
-  {
     slug: "sh-figuarts",
     name: "S.H.Figuarts",
     caseGradient: "crimson",
@@ -557,11 +550,11 @@ const CATEGORY_DEFS: Array<{
     matchTokens: ["popup-parade", "pop-up-parade", "popupparade", "pop_up_parade"],
   },
   {
-    slug: "otros",
-    name: "Otros",
-    caseGradient: "cool",
-    lineSlugs: ["variable-action-heroes", "otros"],
-    matchTokens: ["otros", "varios"],
+    slug: "myth-cloth",
+    name: "Myth Cloth",
+    caseGradient: "gold",
+    lineSlugs: ["myth-cloth", "myth-cloth-ex", "myth-cloth-ex-metal"],
+    matchTokens: ["myth-cloth", "myth_cloth", "mythcloth"],
   },
 ];
 
@@ -592,14 +585,6 @@ function findCategoryImage(
 }
 
 function buildCategoryHref(slug: string): string {
-  if (slug === "otros") {
-    const exclude = CATEGORY_DEFS.filter((d) => d.slug !== "otros").flatMap(
-      (d) => d.lineSlugs,
-    );
-    const unique = [...new Set(exclude)];
-    if (unique.length === 0) return "/catalogo";
-    return `/catalogo?excluir=${encodeURIComponent(unique.join(","))}`;
-  }
   const def = CATEGORY_DEFS.find((d) => d.slug === slug);
   if (!def || def.lineSlugs.length === 0) return "/catalogo";
   return `/catalogo?linea=${encodeURIComponent(def.lineSlugs.join(","))}`;
