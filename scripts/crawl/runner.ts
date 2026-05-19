@@ -17,11 +17,18 @@ import { fandomAdapter } from "./sources/fandom";
 import { ebayAdapter } from "./sources/ebay";
 import { goodsmileAdapter } from "./sources/goodsmile";
 import { megahouseAdapter } from "./sources/megahouse";
+import {
+  loadThreezeroOverrides,
+  threezeroAdapter,
+  threezeroSeriesForOverride,
+  threezeroSlugsForBatch,
+} from "./sources/threezero";
 
 const ALL_ADAPTERS: SourceAdapter[] = [
   tamashiiAdapter,
   goodsmileAdapter,
   megahouseAdapter,
+  threezeroAdapter,
   fandomAdapter,
   ebayAdapter,
 ];
@@ -69,27 +76,72 @@ function takeOne<T>(v: T | T[] | null): T | null {
   return Array.isArray(v) ? (v[0] ?? null) : v;
 }
 
+// Draftable candidate from any override source (tamashii, threezero, …).
+// `source` identifies which adapter owns it so the draft creator can pick
+// the right name-resolution strategy. `id` is opaque to runner code: it's
+// the Tamashii item ID for tamashii overrides, or the threezero URL for
+// threezero overrides — only used by source-specific helpers.
+type DraftCandidate = {
+  slug: string;
+  line: string;
+  name?: string;
+  source: "tamashii" | "threezero";
+  id: string;
+};
+
 // Returns the list of override slugs that don't yet exist in the
 // `products` table AND specify a `line` (i.e. opt-in to draft
 // creation). Filtered by --slug / --line CLI flags so a targeted run
-// doesn't touch unrelated overrides.
+// doesn't touch unrelated overrides. Scans both tamashii + threezero
+// override files.
 async function findMissingOverrideSlugs(
   opts: RunnerOptions,
-): Promise<Array<{ slug: string; line: string; name?: string; id: string }>> {
-  const overrides = loadOverrides();
-  const batchSlugs = opts.batch ? new Set(slugsForBatch(opts.batch)) : null;
-  const candidates = Object.entries(overrides)
-    .filter(([, v]) => Boolean(v.line))
-    .map(([slug, v]) => ({
+): Promise<DraftCandidate[]> {
+  const tamashiiOverrides = loadOverrides();
+  const threezeroOverrides = loadThreezeroOverrides();
+
+  // Batch-scope set covers both adapters: try tamashii's batches first,
+  // fall back to threezero's. Per-source batches are kept separate so a
+  // batch name only resolves inside its own override file.
+  const tamashiiBatchSlugs = opts.batch
+    ? new Set(slugsForBatch(opts.batch))
+    : null;
+  const threezeroBatchSlugs = opts.batch
+    ? new Set(threezeroSlugsForBatch(opts.batch))
+    : null;
+
+  const candidates: DraftCandidate[] = [];
+  for (const [slug, v] of Object.entries(tamashiiOverrides)) {
+    if (!v.line) continue;
+    candidates.push({
       slug,
-      line: v.line!,
+      line: v.line,
       name: v.name,
+      source: "tamashii",
       id: v.id,
-    }));
+    });
+  }
+  for (const [slug, v] of Object.entries(threezeroOverrides)) {
+    if (!v.line) continue;
+    candidates.push({
+      slug,
+      line: v.line,
+      name: v.name,
+      source: "threezero",
+      id: v.url,
+    });
+  }
+
   const filtered = candidates.filter((c) => {
     if (opts.slug && c.slug !== opts.slug) return false;
     if (opts.line && c.line !== opts.line) return false;
-    if (batchSlugs && !batchSlugs.has(c.slug)) return false;
+    if (opts.batch) {
+      const inTamashii =
+        c.source === "tamashii" && tamashiiBatchSlugs!.has(c.slug);
+      const inThreezero =
+        c.source === "threezero" && threezeroBatchSlugs!.has(c.slug);
+      if (!inTamashii && !inThreezero) return false;
+    }
     return true;
   });
   if (filtered.length === 0) return [];
@@ -199,16 +251,26 @@ async function ensureDraftsForOverrides(
       );
       continue;
     }
-    // Seed name from explicit override, falling back to Tamashii's EN
-    // title. If Tamashii is unreachable we use the slug as a humanised
-    // placeholder so the row passes NOT NULL — admin renames on review.
+    // Seed name from explicit override, falling back to the source's
+    // canonical title (Tamashii fetch for tamashii overrides). If the
+    // source is unreachable / has no API for it, use the slug as a
+    // humanised placeholder so the row passes NOT NULL — admin renames
+    // on review.
     let name = m.name ?? null;
     if (!name) {
-      const basics = await fetchTamashiiBasics(m.id);
-      name = basics?.title ?? slugToTitle(m.slug);
+      if (m.source === "tamashii") {
+        const basics = await fetchTamashiiBasics(m.id);
+        name = basics?.title ?? slugToTitle(m.slug);
+      } else {
+        name = slugToTitle(m.slug);
+      }
     }
-    // Resolve series via per-override field → batch default → null.
-    const seriesName = seriesForOverride(m.slug);
+    // Resolve series via per-override field → batch default → null. Each
+    // source owns its own overrides file, so consult the matching one.
+    const seriesName =
+      m.source === "tamashii"
+        ? seriesForOverride(m.slug)
+        : threezeroSeriesForOverride(m.slug);
     const seriesId = seriesName
       ? await ensureSeries(lineId, seriesName)
       : null;
@@ -293,8 +355,13 @@ async function loadProducts(opts: RunnerOptions): Promise<ProductRow[]> {
   // Batch filter is applied post-fetch so version-suffixed slugs in the
   // products table (e.g. `garuda-aiacos-oce`) still match a stripped
   // override key like `garuda-aiacos` from the _batches list.
+  // Batch may live in either override file (tamashii or threezero);
+  // union both so `--batch=naruto` picks up slugs from both sources.
   const batchSlugSet = opts.batch
-    ? new Set(slugsForBatch(opts.batch))
+    ? new Set([
+        ...slugsForBatch(opts.batch),
+        ...threezeroSlugsForBatch(opts.batch),
+      ])
     : null;
   if (batchSlugSet && batchSlugSet.size === 0) return [];
   if (opts.missing) {

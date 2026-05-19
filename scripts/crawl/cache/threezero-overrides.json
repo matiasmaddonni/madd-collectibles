@@ -1,0 +1,93 @@
+{
+  "_doc": [
+    "Map storefront product slugs → threezerohk.com product-page URLs.",
+    "The adapter fetches the page HTML, extracts JSON-LD Product data",
+    "(or falls back to og: meta tags + a gallery sweep), and proposes",
+    "description / sku / images.",
+    "",
+    "Two override shapes:",
+    "  Existing product (slug already in `products` table):",
+    "    \"figzero-naruto-uzumaki\": \"https://www.threezerohk.com/shop/3z0259-...\"",
+    "",
+    "  New product to be created as draft (slug NOT in `products`):",
+    "    \"figzero-naruto-uzumaki\": {",
+    "      \"url\": \"https://www.threezerohk.com/shop/3z0259-...\",",
+    "      \"line\": \"figzero\",          /* required: product_lines slug */",
+    "      \"name\": \"Naruto Uzumaki\"   /* optional: defaults to og:title */",
+    "    }",
+    "",
+    "Before draft creation works you must:",
+    "  1. Add brand `Three Zero` in /admin/settings?tab=brands",
+    "  2. Add lines under it in /admin/settings?tab=lines, e.g.:",
+    "       FigZero        (slug: figzero)",
+    "       Robo-Dou       (slug: robo-dou)",
+    "  3. Run: npm run crawl:apply -- --source=threezero",
+    "",
+    "_batches groups slugs so you can run a focused crawl:",
+    "  npm run crawl:apply -- --source=threezero --batch=naruto",
+    "",
+    "_batch_series maps each batch to a default series name. When the",
+    "runner creates a draft, it finds-or-creates a row in `series` and",
+    "sets products.series_id."
+  ],
+  "_batch_series": {
+    "naruto": "Naruto",
+    "evangelion": "Evangelion",
+    "berserk": "Berserk"
+  },
+  "_batches": {
+    "naruto": [
+      "figzero-naruto-uzumaki",
+      "figzero-sasuke-uchiha"
+    ],
+    "evangelion": [
+      "robo-dou-eva-02",
+      "robo-dou-eva-03",
+      "robo-dou-eva-00",
+      "robo-dou-4th-angel"
+    ],
+    "berserk": [
+      "figzero-guts-black-swordsman"
+    ]
+  },
+  "overrides": {
+    "_comment_naruto": "── Naruto (FigZero) ───────────────────────────────────",
+    "figzero-naruto-uzumaki": {
+      "url": "https://www.threezerohk.com/shop/3z0259-naruto-figzero-1-6-naruto-uzumaki-6684?category=90",
+      "line": "figzero",
+      "name": "Naruto Uzumaki"
+    },
+    "figzero-sasuke-uchiha": {
+      "url": "https://www.threezerohk.com/shop/3z0261-naruto-figzero-1-6-sasuke-uchiha-6752?category=90",
+      "line": "figzero",
+      "name": "Sasuke Uchiha"
+    },
+    "_comment_evangelion": "── Evangelion (Robo-Dou) ──────────────────────────────",
+    "robo-dou-eva-02": {
+      "url": "https://www.threezerohk.com/shop/3z0105-evangelion-new-theatrical-edition-robo-dou-evangelion-production-model-02-6567",
+      "line": "robo-dou",
+      "name": "Evangelion Production Model-02"
+    },
+    "robo-dou-eva-03": {
+      "url": "https://www.threezerohk.com/shop/3z0231-evangelion-new-theatrical-edition-robo-dou-evangelion-production-model-03-6710",
+      "line": "robo-dou",
+      "name": "Evangelion Production Model-03"
+    },
+    "robo-dou-eva-00": {
+      "url": "https://www.threezerohk.com/shop/3z0230-evangelion-new-theatrical-edition-robo-dou-evangelion-proto-type-00-6650?category=70",
+      "line": "robo-dou",
+      "name": "Evangelion Proto Type-00"
+    },
+    "robo-dou-4th-angel": {
+      "url": "https://www.threezerohk.com/shop/3z0316-evangelion-new-theatrical-edition-robo-dou-4th-angel-6730?category=70",
+      "line": "robo-dou",
+      "name": "4th Angel"
+    },
+    "_comment_berserk": "── Berserk (FigZero) ──────────────────────────────────",
+    "figzero-guts-black-swordsman": {
+      "url": "https://www.threezerohk.com/shop/3z0675-berserk-guts-black-swordsman-6437",
+      "line": "figzero",
+      "name": "Guts (Black Swordsman)"
+    }
+  }
+}
