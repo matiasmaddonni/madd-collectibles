@@ -38,8 +38,9 @@ async function rateLimitOk(ip: string): Promise<boolean> {
     p_max: RATE_LIMIT_MAX,
   });
   if (error) {
-    console.error("rate_limit_check failed; failing open", error);
-    return true;
+    // Fail closed: a flaky RPC must not become a bypass for the limiter.
+    console.error("rate_limit_check failed; failing closed", error);
+    return false;
   }
   return data === true;
 }
@@ -139,11 +140,82 @@ function escapeHtml(s: string): string {
     .replace(/'/g, "&#39;");
 }
 
+type ProductRow = {
+  id: string;
+  slug: string | null;
+  name: string;
+  price: number | string;
+  currency: "ARS" | "USD";
+  status: "draft" | "available" | "reserved" | "sold";
+  stock_qty: number | null;
+  product_line:
+    | { name: string }
+    | { name: string }[]
+    | null;
+};
+
+function getLineName(rel: ProductRow["product_line"]): string {
+  if (!rel) return "";
+  const one = Array.isArray(rel) ? rel[0] : rel;
+  return one?.name ?? "";
+}
+
+// Re-validate the client-supplied cart against the database. Returns a
+// VerifiedIntent the server fully owns: prices, names, line names, totals
+// all come from the products table, not the cart payload. Aborts when any
+// item is missing, unavailable, or out of stock — the customer is bounced
+// back to fix their cart instead of submitting a stale order.
+async function verifyAgainstDb(
+  client: IntentInput,
+): Promise<{ ok: true; data: IntentInput } | { ok: false; error: string }> {
+  const ids = Array.from(new Set(client.items.map((i) => i.id)));
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("products")
+    .select(
+      "id, slug, name, price, currency, status, stock_qty, product_line:product_lines(name)",
+    )
+    .in("id", ids);
+  if (error || !data) {
+    console.error("checkout: product lookup failed", error);
+    return { ok: false, error: "lookup failed" };
+  }
+  const rows = data as unknown as ProductRow[];
+  const byId = new Map(rows.map((r) => [r.id, r]));
+
+  const verifiedItems: IntentItem[] = [];
+  const totals: Record<string, number> = {};
+
+  for (const it of client.items) {
+    const p = byId.get(it.id);
+    if (!p) return { ok: false, error: "item not found" };
+    if (p.status !== "available" || (p.stock_qty ?? 0) <= 0) {
+      return { ok: false, error: `"${p.name}" no longer available` };
+    }
+    const price = Number(p.price);
+    if (!Number.isFinite(price) || price <= 0) {
+      return { ok: false, error: `"${p.name}" has no price set` };
+    }
+    verifiedItems.push({
+      id: p.id,
+      slug: p.slug,
+      name: p.name,
+      lineName: getLineName(p.product_line),
+      price,
+      currency: p.currency,
+      qty: it.qty,
+    });
+    totals[p.currency] = (totals[p.currency] ?? 0) + price * it.qty;
+  }
+
+  return { ok: true, data: { items: verifiedItems, totals } };
+}
+
 export async function recordCheckoutIntent(
   raw: unknown,
 ): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
-  const data = sanitize(raw);
-  if (!data) return { ok: false, error: "invalid payload" };
+  const client = sanitize(raw);
+  if (!client) return { ok: false, error: "invalid payload" };
 
   const h = await headers();
   if (!originAllowed(h)) {
@@ -153,6 +225,14 @@ export async function recordCheckoutIntent(
   if (!(await rateLimitOk(ip))) {
     return { ok: false, error: "rate limited" };
   }
+
+  // Re-derive prices + totals from the products table. Client-supplied
+  // price / currency / lineName / name are now ignored everywhere
+  // downstream: no $1-for-$1000-figure tampering possible.
+  const verified = await verifyAgainstDb(client);
+  if (!verified.ok) return verified;
+  const data = verified.data;
+
   const userAgent = h.get("user-agent")?.slice(0, 500) ?? null;
   const referrer = h.get("referer")?.slice(0, 500) ?? null;
 

@@ -17,6 +17,10 @@ const stagger = [
 ];
 
 function PreviewCard({ p, idx }: { p: HomeProductCard; idx: number }) {
+  // Above-the-fold hero -- first preview is the page's LCP candidate, so
+  // it eager-loads with fetchpriority="high". The other two stay lazy to
+  // keep bytes off the critical path.
+  const isLcp = idx === 0;
   return (
     <Link
       href={`/products/${p.slug}`}
@@ -31,6 +35,8 @@ function PreviewCard({ p, idx }: { p: HomeProductCard; idx: number }) {
             fill
             sizes="(min-width: 1280px) 22vw, (min-width: 1024px) 25vw, 33vw"
             className="object-cover product-img-zoom"
+            priority={isLcp}
+            loading={isLcp ? "eager" : "lazy"}
           />
         )}
       </div>
