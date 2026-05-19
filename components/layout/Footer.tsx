@@ -152,8 +152,8 @@ export function Footer() {
 
         <div className="mt-10 pt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border-subtle">
           <p className="font-body text-xs text-text-secondary">
-            © 2025 MADD<span className="text-accent">.</span> Todas las figuras
-            son productos originales de Tamashii Nations.
+            © {new Date().getFullYear()} MADD<span className="text-accent">.</span>{" "}
+            Todas las figuras son productos originales de Tamashii Nations.
           </p>
           <p className="font-body text-xs text-text-secondary">
             Hecho por un coleccionista. Vendido por un coleccionista.

@@ -53,7 +53,7 @@ export async function generateMetadata({
   const product = await getProductBySlug(slug);
   if (!product) return { title: "Producto no encontrado" };
   const priceStr = formatPrice(product.price, product.currency);
-  const description = `${product.name} — ${product.lineName} en perfecto estado. Precio: ${priceStr}.`;
+  const description = `${product.name} -- ${product.lineName} (${product.conditionLabel}). Precio: ${priceStr}.`;
   // Square dimensions: product photos are 1:1 so social previews crop
   // cleanly. Twitter card images mirror OG.
   const images = product.imageUrl

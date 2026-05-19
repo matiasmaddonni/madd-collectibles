@@ -221,7 +221,7 @@ Tables:
 
 `/admin` (auth required). Sections:
 
-- **Dashboard** — six tiles (total / available / reserved / sold / inventory value in USD / avg days), a 30-day sales bar chart, stock-by-line bars colored by share of total, "Needs attention" actions (missing photos / price / description, stale reservations, drafts ready to publish), recently sold, reserved by age.
+- **Dashboard** — five tiles (total / available / reserved / sold / inventory value in USD with live USD-ARS rate), a 30-day sales bar chart, stock-by-line bars colored by share of total, "Needs attention" actions (missing photos / price / description, stale reservations, drafts ready to publish), recently sold, reserved by age.
 - **Products** — URL-driven filters (`q, status, line, brand, series, missing, sort, dir, page`), sortable columns, inline edits (price / status / condition), bulk thumbnail loading, 25/page.
 - **Proposals** — master-detail layout, sticky selection across mutations, per-field diff cards with approve / discard, image candidates sorted tamashii → goodsmile → megahouse → fandom → ebay, publish-to-storefront flow for drafts.
 - **Settings** — Brands / Lines / Series CRUD with sub-nav.

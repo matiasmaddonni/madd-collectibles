@@ -1,10 +1,21 @@
 import { ImageResponse } from "next/og";
+import { SITE_URL } from "@/lib/env";
 
 // Site-wide social-share fallback. Per-page metadata (e.g. product
 // detail) overrides this. Next picks it up automatically from this path
 // thanks to the App Router file-system convention.
 
 export const runtime = "edge";
+
+// Host displayed in the bottom strip — derived from the canonical
+// SITE_URL so domain changes flow through automatically.
+const siteHost = (() => {
+  try {
+    return new URL(SITE_URL).host;
+  } catch {
+    return "madd-collectibles.vercel.app";
+  }
+})();
 export const alt = "MADD. — Coleccionables Bandai en Argentina";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
@@ -110,7 +121,7 @@ export default async function OpenGraphImage() {
             fontFamily: 'ui-monospace, "SF Mono", monospace',
           }}
         >
-          <div style={{ display: "flex" }}>madd-collectibles.vercel.app</div>
+          <div style={{ display: "flex" }}>{siteHost}</div>
           <div style={{ display: "flex" }}>
             De coleccionista a coleccionista
           </div>

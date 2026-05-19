@@ -2,8 +2,9 @@
 // don't block us as a bare-bones bot, retries transient failures, and
 // enforces a polite delay between hits to the same host.
 
-const USER_AGENT =
-  "MaddCollectiblesCrawler/0.1 (+https://madd-collectibles.vercel.app)";
+const UA_SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://madd-collectibles.vercel.app";
+const USER_AGENT = `MaddCollectiblesCrawler/0.1 (+${UA_SITE_URL})`;
 
 // Sites that aggressively block non-browser UAs (eBay's /sch/ listings,
 // some CDN edges) need a browser-like UA. Adapters opt in via

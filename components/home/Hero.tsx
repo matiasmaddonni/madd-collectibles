@@ -85,12 +85,12 @@ export async function Hero({
       <div className="max-w-7xl xl:max-w-[1500px] mx-auto px-6 py-24 md:py-32 grid lg:grid-cols-[5fr_7fr] gap-8 lg:gap-4 xl:gap-8 items-center">
         <div className="flex flex-col gap-8 anim-fade-up lg:max-w-xl">
           <p className="font-mono text-xs uppercase tracked-wide text-text-secondary">
-            <span className="text-text-primary">+{inventoryClaim}</span>{" "}
+            <span className="text-text-primary">+{inventoryClaim.toLocaleString("es-AR")}</span>{" "}
             figuras curadas
             <span aria-hidden className="text-border-medium px-2">
               ·
             </span>
-            <span className="text-text-primary">{availableCount}</span>{" "}
+            <span className="text-text-primary">{availableCount.toLocaleString("es-AR")}</span>{" "}
             disponibles ahora
           </p>
           <h1 className="font-display text-5xl md:text-6xl lg:text-7xl xl:text-8xl leading-[0.95] tracked-mid text-text-primary">
