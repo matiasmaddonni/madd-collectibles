@@ -1,5 +1,5 @@
 import { waLink } from "@/lib/contact";
-import { SOCIAL_FOLLOWERS } from "@/lib/social";
+import { INSTAGRAM, TIKTOK } from "@/lib/social";
 
 function WhatsAppIcon({ size = 14, color = "currentColor" }: { size?: number; color?: string }) {
   return (
@@ -62,21 +62,19 @@ function TikTokIcon({ size = 18 }: { size?: number }) {
   );
 }
 
-const SOCIAL_LINKS: {
+type SocialLink = {
   label: string;
   href: string;
   Icon: (p: { size?: number }) => React.JSX.Element;
-}[] = [
-  {
-    label: "Instagram",
-    href: "https://instagram.com/madd.collector",
-    Icon: InstagramIcon,
-  },
-  {
-    label: "TikTok",
-    href: "https://www.tiktok.com/@madd.collector",
-    Icon: TikTokIcon,
-  },
+};
+
+// Build the list from the social config so we never link a network we
+// don't actually have a profile on.
+const SOCIAL_LINKS: SocialLink[] = [
+  { label: "Instagram", href: INSTAGRAM.url, Icon: InstagramIcon },
+  ...(TIKTOK
+    ? [{ label: "TikTok", href: TIKTOK.url, Icon: TikTokIcon }]
+    : []),
 ];
 
 const NAV_LINKS: { label: string; href: string }[] = [
@@ -146,14 +144,14 @@ export function Footer() {
         </div>
 
         <p className="mt-3 text-center font-mono text-[11px] text-text-secondary">
-          {SOCIAL_FOLLOWERS.instagram} en Instagram ·{" "}
-          {SOCIAL_FOLLOWERS.tiktok} en TikTok
+          {INSTAGRAM.followers} en Instagram
+          {TIKTOK && ` · ${TIKTOK.followers} en TikTok`}
         </p>
 
         <div className="mt-10 pt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border-subtle">
           <p className="font-body text-xs text-text-secondary">
             © {new Date().getFullYear()} MADD<span className="text-accent">.</span>{" "}
-            Todas las figuras son productos originales de Tamashii Nations.
+            Todas las figuras son productos 100% originales.
           </p>
           <p className="font-body text-xs text-text-secondary">
             Hecho por un coleccionista. Vendido por un coleccionista.

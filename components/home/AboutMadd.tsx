@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { waLink } from "@/lib/contact";
-import { SOCIAL_FOLLOWERS } from "@/lib/social";
+import { INSTAGRAM, TIKTOK } from "@/lib/social";
 
 function WhatsAppIcon({ size = 16, color = "currentColor" }: { size?: number; color?: string }) {
   return (
@@ -166,12 +166,17 @@ export function AboutMadd() {
             <h3 className="font-display text-3xl tracked-mid text-text-primary leading-none">
               Matias Maddonni
             </h3>
-            <span className="font-mono text-sm text-accent">
-              @madd.collector
-            </span>
+            <a
+              href={INSTAGRAM.url}
+              target="_blank"
+              rel="noreferrer"
+              className="font-mono text-sm text-accent hover:underline"
+            >
+              @{INSTAGRAM.handle}
+            </a>
             <span className="font-mono text-[11px] text-text-secondary mt-1">
-              {SOCIAL_FOLLOWERS.instagram} en Instagram ·{" "}
-              {SOCIAL_FOLLOWERS.tiktok} en TikTok
+              {INSTAGRAM.followers} en Instagram
+              {TIKTOK && ` · ${TIKTOK.followers} en TikTok`}
             </span>
           </div>
 
