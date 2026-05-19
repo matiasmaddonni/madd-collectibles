@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useCart, type CartItem } from "@/components/cart/CartProvider";
 import { trackEvent, trackMetaEvent } from "@/lib/analytics";
 import { waLink } from "@/lib/contact";
+import { SITE_URL } from "@/lib/env";
 import { formatPrice } from "@/lib/format";
 
 function WhatsAppIcon({ size = 16, color = "#25D366" }: { size?: number; color?: string }) {
@@ -61,9 +62,7 @@ export function StickyMobileCta({ item, slug, disabled }: Props) {
       value: item.price,
       currency: item.currency,
     });
-    const siteUrl =
-      process.env.NEXT_PUBLIC_SITE_URL ?? "https://madd-collectibles.vercel.app";
-    const url = `${siteUrl}/products/${slug}`;
+    const url = `${SITE_URL}/products/${slug}`;
     const msg = `Hola Matias, me interesa "${item.name}" (${formatPrice(
       item.price,
       item.currency,

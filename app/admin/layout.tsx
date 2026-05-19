@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { ADMIN_EMAILS } from "@/lib/env";
 import { ShellHeader } from "./_components/ShellHeader";
 import { ThemeBootstrap } from "./_components/ThemeBootstrap";
 import "./admin.css";
@@ -16,7 +17,16 @@ export default async function AdminLayout({
   } = await supabase.auth.getUser();
   const nonce = (await headers()).get("x-nonce") ?? undefined;
 
-  if (!user) {
+  // Defense in depth: proxy.ts already redirects non-admins to /admin/login,
+  // but if the proxy matcher ever regresses or is bypassed, this layout must
+  // not render the shell + service-role data for an unauthorised viewer.
+  // Falls back to the bare wrapper (used by /admin/login itself).
+  const isAdmin =
+    !!user &&
+    ADMIN_EMAILS.length > 0 &&
+    ADMIN_EMAILS.includes((user.email ?? "").toLowerCase());
+
+  if (!user || !isAdmin) {
     return (
       <div id="admin-root" className="admin-root" suppressHydrationWarning>
         <ThemeBootstrap nonce={nonce} />

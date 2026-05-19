@@ -60,6 +60,13 @@ export async function proxy(request: NextRequest) {
   const response = NextResponse.next({ request: { headers: requestHeaders } });
   response.headers.set("Content-Security-Policy", csp);
 
+  // Belt-and-suspenders on top of robots.txt: stamp the response header so
+  // any crawler (compliant or not) that fetches an admin / checkout page
+  // is told never to index or follow.
+  if (pathname.startsWith("/admin") || pathname.startsWith("/checkout")) {
+    response.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
+  }
+
   if (!pathname.startsWith("/admin")) return response;
   if (pathname === "/admin/login") return response;
 

@@ -59,6 +59,38 @@ export async function approveFieldProposal(id: string): Promise<void> {
   if (!ALLOWED_FIELDS.has(p.field))
     throw new Error(`Field not allowed: ${p.field}`);
 
+  // Per-field shape check before writing to the products column.
+  // proposed_value is a JSONB blob from the crawler — never trust the type.
+  const v = p.proposed_value;
+  const isStr = (x: unknown): x is string => typeof x === "string";
+  const isFiniteNum = (x: unknown): x is number =>
+    typeof x === "number" && Number.isFinite(x);
+  switch (p.field) {
+    case "description":
+    case "sku":
+      if (!isStr(v) || v.trim().length === 0)
+        throw new Error(`Invalid ${p.field}: expected non-empty string`);
+      break;
+    case "release_year":
+      if (!isFiniteNum(v) || !Number.isInteger(v) || v < 1900 || v > 2100)
+        throw new Error("Invalid release_year: expected integer 1900-2100");
+      break;
+    case "price":
+      if (!isFiniteNum(v) || v <= 0)
+        throw new Error("Invalid price: expected positive number");
+      break;
+    case "currency":
+      if (v !== "USD" && v !== "ARS")
+        throw new Error("Invalid currency: expected USD or ARS");
+      break;
+    case "tags":
+      if (!Array.isArray(v) || !v.every(isStr))
+        throw new Error("Invalid tags: expected string[]");
+      break;
+    default:
+      throw new Error(`Unhandled field: ${p.field}`);
+  }
+
   // Write proposed value back to products.
   const update: Record<string, unknown> = { [p.field]: p.proposed_value };
   const { error: upErr } = await admin

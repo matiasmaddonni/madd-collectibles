@@ -31,14 +31,29 @@ export async function signIn(formData: FormData): Promise<SignInResult> {
   const ip = xff ? xff.split(",")[0]!.trim() : h.get("x-real-ip") ?? "unknown";
 
   const admin = createAdminClient();
-  const { data: allowed, error: rlErr } = await admin.rpc("rate_limit_check", {
-    p_bucket: "admin_signin",
-    p_key: ip,
-    p_window_seconds: 300,
-    p_max: 10,
-  });
-  if (rlErr) console.error("rate_limit_check failed; failing open", rlErr);
-  if (allowed === false) {
+  // Two-key rate limit: per-IP (10/5min) defends shared infra, per-email
+  // (5/15min) defends an individual admin account from a rotating-IP
+  // botnet. RPC errors fail CLOSED -- a flaky limiter must not become a
+  // bypass.
+  const emailKey = email.toLowerCase().slice(0, 320);
+  const [{ data: ipAllowed, error: ipErr }, { data: emailAllowed, error: emErr }] =
+    await Promise.all([
+      admin.rpc("rate_limit_check", {
+        p_bucket: "admin_signin",
+        p_key: ip,
+        p_window_seconds: 300,
+        p_max: 10,
+      }),
+      admin.rpc("rate_limit_check", {
+        p_bucket: "admin_signin_email",
+        p_key: emailKey,
+        p_window_seconds: 900,
+        p_max: 5,
+      }),
+    ]);
+  if (ipErr) console.error("rate_limit_check (ip) failed; failing closed", ipErr);
+  if (emErr) console.error("rate_limit_check (email) failed; failing closed", emErr);
+  if (ipErr || emErr || ipAllowed === false || emailAllowed === false) {
     return { ok: false, error: "Too many attempts. Try again in a few minutes." };
   }
 
@@ -147,6 +162,12 @@ function parseProductForm(fd: FormData): ProductPayload {
   if (releaseYear != null && (releaseYear < 1900 || releaseYear > 2100))
     throw new Error("Invalid release_year");
 
+  const price = numReq("price");
+  if (price < 0) throw new Error("price must be >= 0");
+  const costPrice = num("cost_price");
+  if (costPrice != null && costPrice < 0)
+    throw new Error("cost_price must be >= 0");
+
   return {
     id: (fd.get("id") as string) || undefined,
     name: (fd.get("name") as string) ?? "",
@@ -154,8 +175,8 @@ function parseProductForm(fd: FormData): ProductPayload {
     sku: str("sku"),
     product_line_id: productLineId,
     series_id: seriesIdRaw,
-    price: numReq("price"),
-    cost_price: num("cost_price"),
+    price,
+    cost_price: costPrice,
     currency,
     condition,
     status,
@@ -291,6 +312,53 @@ function urlToStoragePath(url: string): string | null {
 
 const ALLOWED_IMAGE_EXTS = new Set(["jpg", "jpeg", "png", "webp", "avif"]);
 
+// Magic-byte sniff. Defends against a client-supplied content-type that
+// lies (".jpg" wrapper around a binary). Reads the first 16 bytes and
+// matches the well-known signature for each format. Returns the inferred
+// mime, or null if no allowed signature matches.
+function sniffImageMime(buf: Uint8Array): string | null {
+  if (buf.length < 12) return null;
+  // JPEG: FF D8 FF
+  if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return "image/jpeg";
+  // PNG: 89 50 4E 47 0D 0A 1A 0A
+  if (
+    buf[0] === 0x89 &&
+    buf[1] === 0x50 &&
+    buf[2] === 0x4e &&
+    buf[3] === 0x47 &&
+    buf[4] === 0x0d &&
+    buf[5] === 0x0a &&
+    buf[6] === 0x1a &&
+    buf[7] === 0x0a
+  )
+    return "image/png";
+  // WebP: "RIFF" + 4 bytes size + "WEBP"
+  if (
+    buf[0] === 0x52 &&
+    buf[1] === 0x49 &&
+    buf[2] === 0x46 &&
+    buf[3] === 0x46 &&
+    buf[8] === 0x57 &&
+    buf[9] === 0x45 &&
+    buf[10] === 0x42 &&
+    buf[11] === 0x50
+  )
+    return "image/webp";
+  // AVIF: ISOBMFF box "ftyp" at offset 4, brand "avif" or "avis" at 8
+  if (
+    buf[4] === 0x66 &&
+    buf[5] === 0x74 &&
+    buf[6] === 0x79 &&
+    buf[7] === 0x70 &&
+    buf[8] === 0x61 &&
+    buf[9] === 0x76 &&
+    buf[10] === 0x69 &&
+    (buf[11] === 0x66 || buf[11] === 0x73)
+  )
+    return "image/avif";
+  return null;
+}
+
 async function callAddImage(
   productId: string,
   url: string,
@@ -352,11 +420,27 @@ export async function uploadProductImage(fd: FormData) {
 
   const buf = Buffer.from(await file.arrayBuffer());
 
+  // Verify the bytes match the declared content-type. Client mime header
+  // is trivially spoofable; the file header is not. Mismatch rejects the
+  // upload outright -- protects storage from arbitrary blobs disguised
+  // as images.
+  const sniffed = sniffImageMime(buf.subarray(0, 16));
+  if (!sniffed) {
+    throw new Error(
+      "File contents don't look like a supported image (JPEG, PNG, WEBP, or AVIF).",
+    );
+  }
+  if (sniffed !== file.type.toLowerCase()) {
+    throw new Error(
+      `File header (${sniffed}) doesn't match the declared type (${file.type || "unknown"}). Re-export the image and try again.`,
+    );
+  }
+
   const { error: upErr } = await admin.storage
     .from("product-images")
     .upload(path, buf, {
       cacheControl: "3600",
-      contentType: file.type,
+      contentType: sniffed,
       upsert: false,
     });
   if (upErr) throw upErr;

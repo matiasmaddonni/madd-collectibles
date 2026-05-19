@@ -1,8 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getAllProductSlugs } from "@/lib/queries";
-
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://madd-collectibles.vercel.app";
+import { SITE_URL } from "@/lib/env";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const products = await getAllProductSlugs();
