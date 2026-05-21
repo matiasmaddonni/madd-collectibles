@@ -40,6 +40,19 @@ const nextConfig: NextConfig = {
         pathname: "/storage/v1/object/public/**",
       },
     ],
+    // Vercel free tier allows 5000 image transformations / month. A
+    // transformation = one unique (source × width × quality × format).
+    // The defaults explode that budget: 8 device widths × 8 image widths ×
+    // 2 formats (webp + avif) × any quality. We trim hard to stay free:
+    //   - one format (webp) instead of webp + avif → halves transforms
+    //   - one quality (75) → no per-quality multiplier
+    //   - four device widths + two fixed image widths → fewer variants
+    //   - 31-day cache → a given variant is generated once a month at most
+    formats: ["image/webp"],
+    qualities: [75],
+    deviceSizes: [640, 828, 1080, 1920],
+    imageSizes: [96, 256],
+    minimumCacheTTL: 2678400, // 31 days
   },
   async headers() {
     return [

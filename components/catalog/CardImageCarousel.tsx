@@ -168,7 +168,6 @@ export function CardImageCarousel({
               alt={alt}
               fill
               sizes={sizes}
-              quality={90}
               className={`object-cover ${i === idx ? "product-img-zoom" : ""}`}
               priority={priority && i === 0}
               loading={priority && i === 0 ? "eager" : "lazy"}
