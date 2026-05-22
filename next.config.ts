@@ -40,14 +40,18 @@ const nextConfig: NextConfig = {
         pathname: "/storage/v1/object/public/**",
       },
     ],
-    // Vercel free tier allows 5000 image transformations / month. A
-    // transformation = one unique (source × width × quality × format).
-    // The defaults explode that budget: 8 device widths × 8 image widths ×
-    // 2 formats (webp + avif) × any quality. We trim hard to stay free:
-    //   - one format (webp) instead of webp + avif → halves transforms
-    //   - one quality (75) → no per-quality multiplier
-    //   - four device widths + two fixed image widths → fewer variants
-    //   - 31-day cache → a given variant is generated once a month at most
+    // ZERO Vercel image transformations. We serve the originals straight
+    // from the Supabase Storage public CDN instead of going through
+    // Vercel's optimizer — the free tier caps optimizer transforms at
+    // 5000/month and a growing catalog burns through that. The stored
+    // files are already web-sized (median ~220 KB, crawler photos capped
+    // at 1024px, admin uploads ≤15 MB but typically a few hundred KB), so
+    // skipping resize/webp is an acceptable trade for staying free.
+    //
+    // The qualities/deviceSizes/formats knobs below are inert while
+    // unoptimized=true; kept so flipping back to the optimizer (e.g. on
+    // a paid plan) restores the tuned budget without re-deriving it.
+    unoptimized: true,
     formats: ["image/webp"],
     qualities: [75],
     deviceSizes: [640, 828, 1080, 1920],
