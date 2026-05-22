@@ -5,11 +5,17 @@ import { ThemeToggle } from "./ThemeToggle";
 
 type Props = {
   pendingProposals: number;
+  pendingOrders: number;
   taxonomyCounts: { brands: number; lines: number; series: number };
   userEmail: string;
 };
 
-export function ShellHeader({ pendingProposals, taxonomyCounts, userEmail }: Props) {
+export function ShellHeader({
+  pendingProposals,
+  pendingOrders,
+  taxonomyCounts,
+  userEmail,
+}: Props) {
   return (
     <header className="ah-header">
       <div className="ah-brand">
@@ -21,6 +27,7 @@ export function ShellHeader({ pendingProposals, taxonomyCounts, userEmail }: Pro
       <nav className="ah-nav">
         <NavLink href="/admin" label="Dashboard" exact />
         <NavLink href="/admin/products" label="Products" />
+        <NavLink href="/admin/orders" label="Pedidos" badge={pendingOrders} />
         <NavLink href="/admin/proposals" label="Proposals" badge={pendingProposals} />
         <SettingsDropdown counts={taxonomyCounts} />
       </nav>

@@ -36,16 +36,23 @@ export default async function AdminLayout({
   }
 
   const admin = createAdminClient();
-  const [propRes, imgRes, brandsRes, linesRes, seriesRes] = await Promise.all([
-    admin.from("crawl_proposals").select("product_id").eq("status", "pending"),
-    admin
-      .from("product_images")
-      .select("product_id")
-      .not("proposed_by_source", "is", null),
-    admin.from("brands").select("id", { count: "exact", head: true }),
-    admin.from("product_lines").select("id", { count: "exact", head: true }),
-    admin.from("series").select("id", { count: "exact", head: true }),
-  ]);
+  const [propRes, imgRes, brandsRes, linesRes, seriesRes, ordersRes] =
+    await Promise.all([
+      admin.from("crawl_proposals").select("product_id").eq("status", "pending"),
+      admin
+        .from("product_images")
+        .select("product_id")
+        .not("proposed_by_source", "is", null),
+      admin.from("brands").select("id", { count: "exact", head: true }),
+      admin.from("product_lines").select("id", { count: "exact", head: true }),
+      admin.from("series").select("id", { count: "exact", head: true }),
+      // Tolerates pre-migration-015 schema: if the status column doesn't
+      // exist yet the query errors and we fall back to 0 pending orders.
+      admin
+        .from("checkout_intents")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending"),
+    ]);
 
   // Count distinct product_ids with pending review work (field proposals OR
   // crawler-uploaded images). Matches the list view's grouped-by-product cards.
@@ -63,12 +70,14 @@ export default async function AdminLayout({
     lines: linesRes.count ?? 0,
     series: seriesRes.count ?? 0,
   };
+  const pendingOrders = ordersRes.error ? 0 : ordersRes.count ?? 0;
 
   return (
     <div id="admin-root" className="admin-root" suppressHydrationWarning>
       <ThemeBootstrap nonce={nonce} />
       <ShellHeader
         pendingProposals={pendingProposals}
+        pendingOrders={pendingOrders}
         taxonomyCounts={taxonomyCounts}
         userEmail={user.email ?? ""}
       />

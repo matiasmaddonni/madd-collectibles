@@ -71,8 +71,14 @@ export default async function AdminDashboard() {
   const richAll = await admin.from("products").select(richSelect);
   const hasTimestamps = !richAll.error;
 
-  const [allRes, recentSoldRes, reservedRes, linesRes, imageProductIdsRes] =
-    await Promise.all([
+  const [
+    allRes,
+    recentSoldRes,
+    reservedRes,
+    linesRes,
+    imageProductIdsRes,
+    pendingOrdersRes,
+  ] = await Promise.all([
       hasTimestamps
         ? Promise.resolve(richAll)
         : admin.from("products").select(basicSelect),
@@ -102,7 +108,16 @@ export default async function AdminDashboard() {
         : Promise.resolve({ data: [], error: null }),
       admin.from("product_lines").select("id, name, slug").order("name"),
       admin.from("product_images").select("product_id"),
+      // Pending WhatsApp orders awaiting approval. Tolerates pre-015 schema.
+      admin
+        .from("checkout_intents")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending"),
     ]);
+
+  const pendingOrders = pendingOrdersRes.error
+    ? 0
+    : pendingOrdersRes.count ?? 0;
 
   const all = ((allRes.data ?? []) as Array<Partial<ProductBase> & {
     id: string;
@@ -308,6 +323,12 @@ export default async function AdminDashboard() {
             </div>
           </div>
           <div className="ah-action-list">
+            <ActionRow
+              level="high"
+              label="Pedidos por aprobar"
+              count={pendingOrders}
+              href="/admin/orders?status=pending"
+            />
             <ActionRow
               level="high"
               label="Missing photos"
