@@ -27,7 +27,7 @@ export function ShellHeader({
       <nav className="ah-nav">
         <NavLink href="/admin" label="Dashboard" exact />
         <NavLink href="/admin/products" label="Products" />
-        <NavLink href="/admin/orders" label="Pedidos" badge={pendingOrders} />
+        <NavLink href="/admin/orders" label="Orders" badge={pendingOrders} />
         <NavLink href="/admin/proposals" label="Proposals" badge={pendingProposals} />
         <SettingsDropdown counts={taxonomyCounts} />
       </nav>

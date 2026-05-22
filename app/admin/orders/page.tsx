@@ -29,16 +29,16 @@ type IntentRow = {
 
 type SearchParams = { status?: string };
 const TABS: Array<{ key: "pending" | "approved" | "cancelled" | "all"; label: string }> = [
-  { key: "pending", label: "Pendientes" },
-  { key: "approved", label: "Aprobadas" },
-  { key: "cancelled", label: "Canceladas" },
-  { key: "all", label: "Todas" },
+  { key: "pending", label: "Pending" },
+  { key: "approved", label: "Approved" },
+  { key: "cancelled", label: "Cancelled" },
+  { key: "all", label: "All" },
 ];
 
 const STATUS_TAG: Record<OrderStatus, { cls: string; label: string }> = {
-  pending: { cls: "ah-tag--new", label: "PENDIENTE" },
-  approved: { cls: "ah-tag--ok", label: "APROBADA" },
-  cancelled: { cls: "ah-tag--off", label: "CANCELADA" },
+  pending: { cls: "ah-tag--new", label: "PENDING" },
+  approved: { cls: "ah-tag--ok", label: "APPROVED" },
+  cancelled: { cls: "ah-tag--off", label: "CANCELLED" },
 };
 
 function fmtTotals(totals: Record<string, number>): string {
@@ -88,7 +88,7 @@ export default async function OrdersPage({
     <div className="ah-page">
       <div className="ah-page-title">
         <h1 className="ah-h1">
-          Pedidos <span className="ah-h1-count">({counts.pending} pendientes)</span>
+          Orders <span className="ah-h1-count">({counts.pending} pending)</span>
         </h1>
       </div>
 
@@ -107,7 +107,7 @@ export default async function OrdersPage({
 
       {visible.length === 0 ? (
         <div className="ah-card">
-          <div className="ah-list-empty">No hay pedidos en esta vista.</div>
+          <div className="ah-list-empty">No orders in this view.</div>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -124,14 +124,14 @@ export default async function OrdersPage({
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <span className={`ah-tag ${tag.cls}`}>{tag.label}</span>
                       <span className="ah-card-title">
-                        {itemCount} {itemCount === 1 ? "figura" : "figuras"} ·{" "}
+                        {itemCount} {itemCount === 1 ? "item" : "items"} ·{" "}
                         {fmtTotals(order.totals)}
                       </span>
                     </div>
                     <div className="ah-card-sub">
                       {formatRelative(order.created_at)}
                       {order.decided_at
-                        ? ` · decidido ${formatRelative(order.decided_at)}`
+                        ? ` · decided ${formatRelative(order.decided_at)}`
                         : ""}
                     </div>
                   </div>

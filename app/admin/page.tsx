@@ -325,7 +325,7 @@ export default async function AdminDashboard() {
           <div className="ah-action-list">
             <ActionRow
               level="high"
-              label="Pedidos por aprobar"
+              label="Orders to approve"
               count={pendingOrders}
               href="/admin/orders?status=pending"
             />
