@@ -16,6 +16,11 @@ type IntentItem = {
   qty: number;
 };
 
+type ProductLite = {
+  stock_qty: number | null;
+  status: "draft" | "available" | "reserved" | "sold";
+};
+
 type ActionResult = { ok: true } | { ok: false; reason: string };
 
 function revalidateOrderPaths(slugs: string[]): void {
@@ -54,28 +59,42 @@ export async function approveOrder(intentId: string): Promise<ActionResult> {
   if (intent.status !== "pending")
     return { ok: false, reason: `Order already ${intent.status}` };
 
-  const ids = Array.from(
-    new Set(
-      (intent.items ?? [])
-        .map((i) => i.id)
-        .filter((id): id is string => typeof id === "string" && UUID_RE.test(id)),
-    ),
-  );
-
   const slugs = (intent.items ?? [])
     .map((i) => i.slug)
     .filter((s): s is string => Boolean(s));
 
-  if (ids.length > 0) {
-    // Only flip rows not already sold so sold_at reflects the first sale.
+  // Per-item decrement: when stock_qty after the sale is still > 0, leave
+  // status='available' and just lower the count. Only flip to status='sold'
+  // when the buyer takes the last unit — that's when sold_at should fire.
+  // Already-sold rows are skipped (re-approve / replay safe).
+  const items = (intent.items ?? []).filter(
+    (i) => typeof i.id === "string" && UUID_RE.test(i.id),
+  );
+  for (const item of items) {
+    const qty = Number.isFinite(item.qty) && item.qty > 0 ? Math.floor(item.qty) : 1;
+    const { data: prod, error: getErr } = await admin
+      .from("products")
+      .select("stock_qty, status")
+      .eq("id", item.id)
+      .maybeSingle();
+    if (getErr) {
+      console.error("approveOrder fetch failed", item.id, getErr);
+      return { ok: false, reason: "Could not read product stock" };
+    }
+    const p = prod as ProductLite | null;
+    if (!p) continue;
+    if (p.status === "sold") continue;
+    const current = p.stock_qty ?? 0;
+    const next = current - qty;
+    const update: { stock_qty: number; status?: "sold" } =
+      next <= 0 ? { stock_qty: 0, status: "sold" } : { stock_qty: next };
     const { error: upErr } = await admin
       .from("products")
-      .update({ status: "sold" })
-      .in("id", ids)
-      .neq("status", "sold");
+      .update(update)
+      .eq("id", item.id);
     if (upErr) {
-      console.error("approveOrder product update failed", upErr);
-      return { ok: false, reason: "Could not mark items sold" };
+      console.error("approveOrder product update failed", item.id, upErr);
+      return { ok: false, reason: "Could not update stock" };
     }
   }
 
