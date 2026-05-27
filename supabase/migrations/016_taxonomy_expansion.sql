@@ -24,12 +24,7 @@ FROM public.brands b WHERE b.slug = 'tamashii-nations'
 ON CONFLICT (slug) DO NOTHING;
 
 INSERT INTO public.product_lines (slug, name, brand_id, sort_order)
-SELECT 'meta-robot', 'META-ROBOT', b.id, 81
-FROM public.brands b WHERE b.slug = 'tamashii-nations'
-ON CONFLICT (slug) DO NOTHING;
-
-INSERT INTO public.product_lines (slug, name, brand_id, sort_order)
-SELECT 'metal-robot', 'METAL ROBOT', b.id, 82
+SELECT 'metal-robot', 'METAL ROBOT', b.id, 81
 FROM public.brands b WHERE b.slug = 'tamashii-nations'
 ON CONFLICT (slug) DO NOTHING;
 
@@ -91,7 +86,7 @@ ON CONFLICT (slug) DO NOTHING;
 
 INSERT INTO public.series (slug, name, product_line_id, sort_order)
 SELECT 'gundam', 'Mobile Suit Gundam', l.id, 0
-FROM public.product_lines l WHERE l.slug = 'meta-robot'
+FROM public.product_lines l WHERE l.slug = 'metal-robot'
 ON CONFLICT (slug) DO NOTHING;
 
 INSERT INTO public.series (slug, name, product_line_id, sort_order)
