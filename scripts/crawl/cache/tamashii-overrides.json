@@ -286,6 +286,67 @@
     "_comment_sh_figuarts_fill": "── SH Figuarts · existing rows, fill ID then run --batch=sh-figuarts-fill ──",
     "_comment_figuarts_zero_fill": "── Figuarts Zero · existing rows, fill ID then run --batch=figuarts-zero-fill ──",
     "_comment_otros_fill": "── Otros · existing Tamashii rows, fill ID then run --batch=otros-fill ──",
-    "_comment_saint_seiya_fill": "── Saint Seiya · existing rows missing images/desc, fill ID then run --batch=saint-seiya-fill ──"
+    "_comment_saint_seiya_fill": "── Saint Seiya · existing rows missing images/desc, fill ID then run --batch=saint-seiya-fill ──",
+    "_comment_2026_05_catalog_add": "── 2026-05 catalog expansion (new lines + new series) ──",
+    "figuarts-mini-hatsune-miku": {
+      "id": "13621",
+      "line": "figuarts-mini",
+      "name": "Figuarts Mini Hatsune Miku"
+    },
+    "meta-robot-12324": {
+      "id": "12324",
+      "line": "meta-robot",
+      "series": "Mobile Suit Gundam"
+    },
+    "meta-robot-14571": {
+      "id": "14571",
+      "line": "meta-robot",
+      "series": "Mobile Suit Gundam"
+    },
+    "metal-robot-13828": {
+      "id": "13828",
+      "line": "metal-robot",
+      "series": "Mobile Suit Gundam"
+    },
+    "shf-star-wars-12972": {
+      "id": "12972",
+      "line": "sh-figuarts",
+      "series": "Star Wars"
+    },
+    "shf-star-wars-12557": {
+      "id": "12557",
+      "line": "sh-figuarts",
+      "series": "Star Wars"
+    },
+    "fz-dr-stone-13524": {
+      "id": "13524",
+      "line": "figuarts-zero",
+      "series": "Dr. Stone"
+    },
+    "fz-one-piece-13166": {
+      "id": "13166",
+      "line": "figuarts-zero",
+      "series": "One Piece"
+    },
+    "fz-one-piece-12926": {
+      "id": "12926",
+      "line": "figuarts-zero",
+      "series": "One Piece"
+    },
+    "shf-sailor-moon-13875": {
+      "id": "13875",
+      "line": "sh-figuarts",
+      "series": "Sailor Moon"
+    },
+    "shf-batman-15022": {
+      "id": "15022",
+      "line": "sh-figuarts",
+      "series": "Batman"
+    },
+    "shf-dbz-12179": {
+      "id": "12179",
+      "line": "sh-figuarts",
+      "series": "Dragon Ball Z"
+    }
   }
 }

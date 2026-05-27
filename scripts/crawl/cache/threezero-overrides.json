@@ -88,6 +88,13 @@
       "url": "https://www.threezerohk.com/shop/3z0675-berserk-guts-black-swordsman-6437",
       "line": "figzero",
       "name": "Guts (Black Swordsman)"
+    },
+    "_comment_power_rangers": "── Power Rangers (FigZero) ────────────────────────────",
+    "figzero-green-ranger": {
+      "url": "https://www.threezerohk.com/shop/mighty-morphin-power-rangers-1-6-green-ranger-6614",
+      "line": "figzero",
+      "name": "Green Ranger",
+      "series": "Power Rangers"
     }
   }
 }
