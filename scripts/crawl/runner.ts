@@ -321,16 +321,18 @@ function slugToTitle(slug: string): string {
     .join(" ");
 }
 
-// Returns a Set of "<productId>|<source>" keys that already have either
-// a pending field proposal OR a candidate image. The runner uses this
-// to skip adapters that have already queued up data for a product, so
-// re-runs don't hammer the source sites or churn proposal rows.
+// Returns a Set of "<productId>|<source>" keys that should be skipped on
+// this run. A key is skipped if the source has ANY history with the
+// product — pending proposal, crawler-staged image, OR a decided
+// (approved / rejected) proposal. The decided case is what stops
+// re-runs from re-proposing data that the admin already handled.
+// Pass --force to ignore this set and re-fetch anyway.
 async function loadExistingProposalKeys(
   productIds: string[],
 ): Promise<Set<string>> {
   if (productIds.length === 0) return new Set();
   const admin = adminClient();
-  const [propsRes, imgsRes] = await Promise.all([
+  const [propsRes, imgsRes, decidedRes] = await Promise.all([
     admin
       .from("crawl_proposals")
       .select("product_id, source")
@@ -341,6 +343,11 @@ async function loadExistingProposalKeys(
       .select("product_id, proposed_by_source")
       .in("product_id", productIds)
       .not("proposed_by_source", "is", null),
+    admin
+      .from("crawl_proposals")
+      .select("product_id, source")
+      .in("product_id", productIds)
+      .in("status", ["approved", "rejected"]),
   ]);
   const keys = new Set<string>();
   for (const r of (propsRes.data ?? []) as Array<{
@@ -354,6 +361,12 @@ async function loadExistingProposalKeys(
     proposed_by_source: string;
   }>) {
     keys.add(`${r.product_id}|${r.proposed_by_source}`);
+  }
+  for (const r of (decidedRes.data ?? []) as Array<{
+    product_id: string;
+    source: string;
+  }>) {
+    keys.add(`${r.product_id}|${r.source}`);
   }
   return keys;
 }
