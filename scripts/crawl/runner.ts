@@ -23,6 +23,10 @@ import {
   threezeroSeriesForOverride,
   threezeroSlugsForBatch,
 } from "./sources/threezero";
+import {
+  loadGoodsmileOverrides,
+  goodsmileSeriesForOverride,
+} from "./sources/goodsmile";
 
 const ALL_ADAPTERS: SourceAdapter[] = [
   tamashiiAdapter,
@@ -85,7 +89,7 @@ type DraftCandidate = {
   slug: string;
   line: string;
   name?: string;
-  source: "tamashii" | "threezero";
+  source: "tamashii" | "threezero" | "goodsmile";
   id: string;
 };
 
@@ -99,10 +103,10 @@ async function findMissingOverrideSlugs(
 ): Promise<DraftCandidate[]> {
   const tamashiiOverrides = loadOverrides();
   const threezeroOverrides = loadThreezeroOverrides();
+  const goodsmileOverrides = loadGoodsmileOverrides();
 
-  // Batch-scope set covers both adapters: try tamashii's batches first,
-  // fall back to threezero's. Per-source batches are kept separate so a
-  // batch name only resolves inside its own override file.
+  // Batch-scope sets only apply to sources that publish batches today
+  // (tamashii + threezero). Goodsmile uses a flat map.
   const tamashiiBatchSlugs = opts.batch
     ? new Set(slugsForBatch(opts.batch))
     : null;
@@ -131,11 +135,22 @@ async function findMissingOverrideSlugs(
       id: v.url,
     });
   }
+  for (const [slug, v] of Object.entries(goodsmileOverrides)) {
+    if (!v.line) continue;
+    candidates.push({
+      slug,
+      line: v.line,
+      name: v.name,
+      source: "goodsmile",
+      id: v.url,
+    });
+  }
 
   const filtered = candidates.filter((c) => {
     if (opts.slug && c.slug !== opts.slug) return false;
     if (opts.line && c.line !== opts.line) return false;
     if (opts.batch) {
+      // Goodsmile has no batch concept yet; --batch never matches it.
       const inTamashii =
         c.source === "tamashii" && tamashiiBatchSlugs!.has(c.slug);
       const inThreezero =
@@ -270,7 +285,9 @@ async function ensureDraftsForOverrides(
     const seriesName =
       m.source === "tamashii"
         ? seriesForOverride(m.slug)
-        : threezeroSeriesForOverride(m.slug);
+        : m.source === "threezero"
+          ? threezeroSeriesForOverride(m.slug)
+          : goodsmileSeriesForOverride(m.slug);
     const seriesId = seriesName
       ? await ensureSeries(lineId, seriesName)
       : null;

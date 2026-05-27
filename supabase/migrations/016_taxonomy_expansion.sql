@@ -100,73 +100,11 @@ ON CONFLICT (slug) DO NOTHING;
 -- the admin can find the upstream listing while filling in the rest.
 -- Helper inserts use CTE-style id lookups to keep the SQL flat.
 
--- Good Smile / Nendoroid (4 working URLs)
-INSERT INTO public.products
-  (slug, name, product_line_id, series_id, price, currency, condition, status, stock_qty, description)
-SELECT
-  'nendoroid-shinobu-kocho',
-  'Nendoroid Shinobu Kocho',
-  (SELECT id FROM public.product_lines WHERE slug = 'nendoroid'),
-  (SELECT id FROM public.series WHERE slug = 'demon-slayer'),
-  0, 'USD', 'mint_sealed', 'draft', 1,
-  'TODO: fill from https://www.goodsmile.com/en/product/9147/Nendoroid+Shinobu+Kocho'
-ON CONFLICT (slug) DO NOTHING;
-
-INSERT INTO public.products
-  (slug, name, product_line_id, series_id, price, currency, condition, status, stock_qty, description)
-SELECT
-  'nendoroid-nezuko-kamado',
-  'Nendoroid Nezuko Kamado',
-  (SELECT id FROM public.product_lines WHERE slug = 'nendoroid'),
-  (SELECT id FROM public.series WHERE slug = 'demon-slayer'),
-  0, 'USD', 'mint_sealed', 'draft', 1,
-  'TODO: fill from https://www.goodsmile.com/en/product/6433/Nendoroid+Nezuko+Kamado'
-ON CONFLICT (slug) DO NOTHING;
-
-INSERT INTO public.products
-  (slug, name, product_line_id, series_id, price, currency, condition, status, stock_qty, description)
-SELECT
-  'nendoroid-jace-beleren',
-  'Nendoroid Jace Beleren',
-  (SELECT id FROM public.product_lines WHERE slug = 'nendoroid'),
-  NULL,
-  0, 'USD', 'mint_sealed', 'draft', 1,
-  'TODO: fill from https://www.goodsmile.com/en/product/9685/Nendoroid+Jace+Beleren'
-ON CONFLICT (slug) DO NOTHING;
-
-INSERT INTO public.products
-  (slug, name, product_line_id, series_id, price, currency, condition, status, stock_qty, description)
-SELECT
-  'nendoroid-chandra-nalaar',
-  'Nendoroid Chandra Nalaar',
-  (SELECT id FROM public.product_lines WHERE slug = 'nendoroid'),
-  NULL,
-  0, 'USD', 'mint_sealed', 'draft', 1,
-  'TODO: fill from https://www.goodsmile.com/en/product/9778/Nendoroid+Chandra+Nalaar'
-ON CONFLICT (slug) DO NOTHING;
-
--- Good Smile / figma (2)
-INSERT INTO public.products
-  (slug, name, product_line_id, series_id, price, currency, condition, status, stock_qty, description)
-SELECT
-  'figma-kyojuro-rengoku',
-  'figma Kyojuro Rengoku',
-  (SELECT id FROM public.product_lines WHERE slug = 'figma'),
-  (SELECT id FROM public.series WHERE slug = 'demon-slayer'),
-  0, 'USD', 'mint_sealed', 'draft', 1,
-  'TODO: fill from https://www.goodsmile.com/en/product/9776/figma+Kyojuro+Rengoku'
-ON CONFLICT (slug) DO NOTHING;
-
-INSERT INTO public.products
-  (slug, name, product_line_id, series_id, price, currency, condition, status, stock_qty, description)
-SELECT
-  'figma-hikaru-shidou',
-  'figma Hikaru Shidou',
-  (SELECT id FROM public.product_lines WHERE slug = 'figma'),
-  NULL,
-  0, 'USD', 'mint_sealed', 'draft', 1,
-  'TODO: fill from https://www.goodsmile.com/en/product/3547/figma+Hikaru+Shidou'
-ON CONFLICT (slug) DO NOTHING;
+-- Good Smile Nendoroid + figma drafts are NOT created here -- the
+-- goodsmile adapter now supports object-form overrides, so the runner
+-- inserts those drafts on the next crawl:apply (slugs:
+-- nendoroid-shinobu-kocho, nendoroid-nezuko-kamado, nendoroid-jace-beleren,
+-- nendoroid-chandra-nalaar, figma-kyojuro-rengoku, figma-hikaru-shidou).
 
 -- MegaHouse / G.E.M. (1) + POP (1)
 INSERT INTO public.products

@@ -70,12 +70,39 @@
     "pop-up-parade-tsuyu-asui": "https://www.goodsmile.com/en/product/9597",
     "pop-up-parade-yoko": "https://www.goodsmile.com/en/product/9603",
     "_comment_nendoroid": "── Nendoroid (Good Smile Company) ─────────────────────",
-    "nendoroid-shinobu-kocho": "https://www.goodsmile.com/en/product/9147/Nendoroid+Shinobu+Kocho",
-    "nendoroid-nezuko-kamado": "https://www.goodsmile.com/en/product/6433/Nendoroid+Nezuko+Kamado",
-    "nendoroid-jace-beleren": "https://www.goodsmile.com/en/product/9685/Nendoroid+Jace+Beleren",
-    "nendoroid-chandra-nalaar": "https://www.goodsmile.com/en/product/9778/Nendoroid+Chandra+Nalaar",
+    "nendoroid-shinobu-kocho": {
+      "url": "https://www.goodsmile.com/en/product/9147/Nendoroid+Shinobu+Kocho",
+      "line": "nendoroid",
+      "name": "Nendoroid Shinobu Kocho",
+      "series": "Demon Slayer"
+    },
+    "nendoroid-nezuko-kamado": {
+      "url": "https://www.goodsmile.com/en/product/6433/Nendoroid+Nezuko+Kamado",
+      "line": "nendoroid",
+      "name": "Nendoroid Nezuko Kamado",
+      "series": "Demon Slayer"
+    },
+    "nendoroid-jace-beleren": {
+      "url": "https://www.goodsmile.com/en/product/9685/Nendoroid+Jace+Beleren",
+      "line": "nendoroid",
+      "name": "Nendoroid Jace Beleren"
+    },
+    "nendoroid-chandra-nalaar": {
+      "url": "https://www.goodsmile.com/en/product/9778/Nendoroid+Chandra+Nalaar",
+      "line": "nendoroid",
+      "name": "Nendoroid Chandra Nalaar"
+    },
     "_comment_figma": "── figma (Good Smile Company) ─────────────────────────",
-    "figma-kyojuro-rengoku": "https://www.goodsmile.com/en/product/9776/figma+Kyojuro+Rengoku",
-    "figma-hikaru-shidou": "https://www.goodsmile.com/en/product/3547/figma+Hikaru+Shidou"
+    "figma-kyojuro-rengoku": {
+      "url": "https://www.goodsmile.com/en/product/9776/figma+Kyojuro+Rengoku",
+      "line": "figma",
+      "name": "figma Kyojuro Rengoku",
+      "series": "Demon Slayer"
+    },
+    "figma-hikaru-shidou": {
+      "url": "https://www.goodsmile.com/en/product/3547/figma+Hikaru+Shidou",
+      "line": "figma",
+      "name": "figma Hikaru Shidou"
+    }
   }
 }

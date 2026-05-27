@@ -16,11 +16,20 @@ import type { SourceAdapter } from "./types";
 //     <dl>, og:description catch-copy, and the /cgm/images/ CDN gallery)
 //
 // Override file: scripts/crawl/cache/goodsmile-overrides.json
-// Shape: { "overrides": { "<slug>": "<product url>" } }
-// Empty-string URLs are inert scaffold placeholders.
-//
-// All mapped slugs are EXISTING storefront rows, so there is no draft
-// creation here — the adapter only proposes data for admin review.
+// Two shapes:
+//   "<slug>": "<product url>"
+//      Existing storefront row -- adapter just proposes data.
+//   "<slug>": { url, line, name?, series? }
+//      New product. Runner inserts a draft row before the proposal loop
+//      runs, similar to the tamashii + threezero object-form overrides.
+// Empty-string URLs and `_comment_*` keys are skipped.
+
+export type GoodsmileOverride = {
+  url: string;
+  line?: string;
+  name?: string;
+  series?: string;
+};
 
 const OVERRIDES_PATH = join(
   process.cwd(),
@@ -30,24 +39,38 @@ const OVERRIDES_PATH = join(
   "goodsmile-overrides.json",
 );
 
-type Overrides = { overrides?: Record<string, string> };
+type RawOverrides = {
+  overrides?: Record<string, string | Partial<GoodsmileOverride>>;
+};
 
-let overridesCache: Record<string, string> | null = null;
+let overridesCache: Record<string, GoodsmileOverride> | null = null;
 
-export function loadGoodsmileOverrides(): Record<string, string> {
+export function loadGoodsmileOverrides(): Record<string, GoodsmileOverride> {
   if (overridesCache) return overridesCache;
-  const out: Record<string, string> = {};
+  const out: Record<string, GoodsmileOverride> = {};
   if (existsSync(OVERRIDES_PATH)) {
     try {
       const parsed = JSON.parse(
         readFileSync(OVERRIDES_PATH, "utf8"),
-      ) as Overrides;
-      for (const [slug, url] of Object.entries(parsed.overrides ?? {})) {
+      ) as RawOverrides;
+      for (const [slug, value] of Object.entries(parsed.overrides ?? {})) {
         // `_comment_*` keys are section dividers; empty strings are
         // unfilled scaffold placeholders. Skip both.
         if (slug.startsWith("_")) continue;
-        const trimmed = typeof url === "string" ? url.trim() : "";
-        if (trimmed) out[slug] = trimmed;
+        if (typeof value === "string") {
+          const trimmed = value.trim();
+          if (!trimmed) continue;
+          out[slug] = { url: trimmed };
+        } else if (value && typeof value === "object") {
+          const url = typeof value.url === "string" ? value.url.trim() : "";
+          if (!url) continue;
+          out[slug] = {
+            url,
+            line: value.line,
+            name: value.name,
+            series: value.series,
+          };
+        }
       }
     } catch {
       // fall through to empty
@@ -57,7 +80,12 @@ export function loadGoodsmileOverrides(): Record<string, string> {
   return overridesCache;
 }
 
-function findOverride(productSlug: string): string | null {
+export function goodsmileSeriesForOverride(slug: string): string | null {
+  const ov = loadGoodsmileOverrides()[slug];
+  return ov?.series ?? null;
+}
+
+function findOverride(productSlug: string): GoodsmileOverride | null {
   const overrides = loadGoodsmileOverrides();
   const stripped = stripVersionSuffix(productSlug);
   return overrides[productSlug] ?? overrides[stripped] ?? null;
@@ -250,8 +278,9 @@ function parseInfoPage(url: string, html: string): AdapterResult | null {
 export async function fetchBySlug(
   productSlug: string,
 ): Promise<AdapterResult | null> {
-  const url = findOverride(productSlug);
-  if (!url) return null;
+  const override = findOverride(productSlug);
+  if (!override) return null;
+  const url = override.url;
 
   const html = await fetchText(url, { browserLike: true });
   if (!html) return null;
