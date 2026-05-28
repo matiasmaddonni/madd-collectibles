@@ -18,7 +18,14 @@ function parseArgs(argv: string[]): RunnerOptions {
       opts.source = a.slice("--source=".length);
     else if (a.startsWith("--batch="))
       opts.batch = a.slice("--batch=".length);
-    else if (a.startsWith("--limit=")) {
+    else if (a.startsWith("--status=")) {
+      const v = a.slice("--status=".length);
+      if (v === "draft" || v === "available" || v === "all") {
+        opts.status = v;
+      } else {
+        console.warn(`Unknown --status value: ${v} (use draft|available|all)`);
+      }
+    } else if (a.startsWith("--limit=")) {
       const n = Number(a.slice("--limit=".length));
       if (Number.isFinite(n) && n > 0) opts.limit = Math.floor(n);
     } else if (a === "-h" || a === "--help") {
@@ -42,6 +49,8 @@ Flags:
   --source=<names>   Comma-separated adapter names (tamashii,fandom,ebay)
   --batch=<name>     Only crawl slugs grouped under this batch in the
                      tamashii-overrides "_batches" map (e.g. dbs-super-hero)
+  --status=<which>   Limit scope by products.status: draft (default when
+                     no --slug/--line/--batch), available, or all.
   --limit=<n>        Cap number of products processed
   --dry-run          (default) Log proposals, write nothing
   --apply            Persist proposals + upload candidate images

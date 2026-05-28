@@ -35,7 +35,7 @@ FROM public.brands b WHERE b.slug = 'good-smile'
 ON CONFLICT (slug) DO NOTHING;
 
 INSERT INTO public.product_lines (slug, name, brand_id, sort_order)
-SELECT 'figma', 'figma', b.id, 61
+SELECT 'figma', 'Figma', b.id, 61
 FROM public.brands b WHERE b.slug = 'good-smile'
 ON CONFLICT (slug) DO NOTHING;
 

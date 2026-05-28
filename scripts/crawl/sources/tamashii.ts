@@ -146,14 +146,17 @@ export function seriesForOverride(slug: string): string | null {
   return loadBatchSeries()[batch] ?? null;
 }
 
-// Modern listings: item_<10digit>_<hash>_<NN>.jpg.
-// Legacy listings (pre-2015 IDs): item_<10digit>_<NN>.jpg — no hash.
-// Capture the trailing sequence number for both shapes so the gallery
-// from an old listing (e.g. Wyvern Rhadamanthys, id 384) is found.
+// Modern listings (current): item_<10digit-padded>_<hash>_<NN>.jpg,
+// hosted under /storage/images/products/imported/. The page also embeds
+// related-item thumbnails (the "you may also like" rail) under the same
+// path, so we filter to the item ID taken from the override.
+// Legacy listings (pre-2015 IDs): item_<digits>_<NN>.jpg — no hash, no
+// padding, hosted under /images/item/. Same regex covers both.
+// Capture group 1 = unpadded item id, group 2 = trailing sequence num.
 const ITEM_IMAGE_RE =
-  /\/images\/item\/item_\d{6,}(?:_[A-Za-z0-9]+)?_(\d+)\.(?:jpg|jpeg|png|webp)/i;
+  /\/item_0*(\d+)(?:_[A-Za-z0-9]+)?_(\d+)\.(?:jpg|jpeg|png|webp)/i;
 
-function extractGallery(html: string): string[] {
+function extractGallery(html: string, itemId: string): string[] {
   const $ = cheerio.load(html);
   const seen = new Set<string>();
   $("img").each((_, el) => {
@@ -161,13 +164,15 @@ function extractGallery(html: string): string[] {
     if (!src) return;
     if (src.startsWith("//")) src = "https:" + src;
     if (src.startsWith("/")) src = "https://tamashiiweb.com" + src;
-    if (!ITEM_IMAGE_RE.test(src)) return;
+    const m = src.match(ITEM_IMAGE_RE);
+    if (!m) return;
+    if (m[1] !== itemId) return; // related-item thumbnail
     seen.add(src);
   });
   // Order by trailing _NN.jpg suffix so the hero (_01) comes first.
   const ordered = [...seen].sort((a, b) => {
-    const na = Number(a.match(ITEM_IMAGE_RE)?.[1] ?? "999");
-    const nb = Number(b.match(ITEM_IMAGE_RE)?.[1] ?? "999");
+    const na = Number(a.match(ITEM_IMAGE_RE)?.[2] ?? "999");
+    const nb = Number(b.match(ITEM_IMAGE_RE)?.[2] ?? "999");
     return na - nb;
   });
   return ordered;
@@ -326,7 +331,7 @@ export async function fetchBySlug(
   const releaseYear = parseReleaseYear(specRows);
   const description = buildSpecDescription(specRows);
   const title = parseTitle($);
-  const gallery = extractGallery(html);
+  const gallery = extractGallery(html, override.id);
 
   // No gallery + no metadata = useless result.
   if (gallery.length === 0 && releaseYear == null && !description) return null;

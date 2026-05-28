@@ -59,6 +59,11 @@ export type RunnerOptions = {
   // Pass --force to re-fetch anyway (useful when the source page got
   // updated and you want fresh data).
   force?: boolean;
+  // Limit the run to products in this status. Default 'draft' so the
+  // common workflow (add overrides → create drafts → crawl them) does
+  // not accidentally hit live products. Pass 'available' to fill gaps
+  // on published rows, or 'all' to disable the filter entirely.
+  status?: "draft" | "available" | "all";
 };
 
 type ProductRow = {
@@ -382,6 +387,12 @@ async function loadProducts(opts: RunnerOptions): Promise<ProductRow[]> {
     );
   if (opts.slug) q = q.eq("slug", opts.slug);
   if (opts.line) q = q.eq("product_lines.slug", opts.line);
+  // Status scope — default is 'draft'. Explicit --slug, --line, or
+  // --batch implies the caller knows what they're targeting, so don't
+  // narrow further by status unless they passed --status explicitly.
+  const explicitScope = Boolean(opts.slug || opts.line || opts.batch);
+  const status = opts.status ?? (explicitScope ? "all" : "draft");
+  if (status !== "all") q = q.eq("status", status);
   // Batch filter is applied post-fetch so version-suffixed slugs in the
   // products table (e.g. `garuda-aiacos-oce`) still match a stripped
   // override key like `garuda-aiacos` from the _batches list.
