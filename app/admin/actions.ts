@@ -169,6 +169,16 @@ function parseProductForm(fd: FormData): ProductPayload {
   if (costPrice != null && costPrice < 0)
     throw new Error("cost_price must be >= 0");
 
+  // figure_count: NULL = singleton (1 figure), N = bundle of N figures.
+  // Empty string from the form becomes NULL. Out-of-range throws.
+  const figureCountRaw = num("figure_count");
+  let figureCount: number | null = null;
+  if (figureCountRaw != null) {
+    if (!Number.isInteger(figureCountRaw) || figureCountRaw < 1 || figureCountRaw > 999)
+      throw new Error("figure_count must be an integer between 1 and 999");
+    figureCount = figureCountRaw;
+  }
+
   return {
     id: (fd.get("id") as string) || undefined,
     name: (fd.get("name") as string) ?? "",
@@ -186,6 +196,7 @@ function parseProductForm(fd: FormData): ProductPayload {
     release_year: releaseYear == null ? null : Math.floor(releaseYear),
     description: str("description"),
     tags,
+    figure_count: figureCount,
   };
 }
 

@@ -18,6 +18,7 @@ type ProductBase = {
   reserved_at: string | null;
   created_at: string;
   updated_at: string;
+  figure_count: number | null;
 };
 
 type RecentSold = {
@@ -64,9 +65,9 @@ export default async function AdminDashboard() {
   // query without sold_at/reserved_at so the dashboard still works
   // pre-migration -- some sections just go empty.
   const richSelect =
-    "id, status, price, currency, product_line_id, description, sold_at, reserved_at, created_at, updated_at";
+    "id, status, price, currency, product_line_id, description, sold_at, reserved_at, created_at, updated_at, figure_count";
   const basicSelect =
-    "id, status, price, currency, product_line_id, description, created_at, updated_at";
+    "id, status, price, currency, product_line_id, description, created_at, updated_at, figure_count";
 
   const richAll = await admin.from("products").select(richSelect);
   const hasTimestamps = !richAll.error;
@@ -157,6 +158,10 @@ export default async function AdminDashboard() {
   let missingPrice = 0;
   let staleReserved = 0;
   let draftsReady = 0;
+  // Total figures owned: sum of figure_count (NULL → 1) for every row
+  // that hasn't been sold. Lets a "Twelve Gold Saints" bundle count
+  // as 12 in the headline while staying a single row in the catalog.
+  let totalFigures = 0;
 
   // Dashboard "now" — Date.now() in a server component is the request time,
   // which is exactly the "today" we want for the stale-reservation cutoff.
@@ -170,6 +175,9 @@ export default async function AdminDashboard() {
 
   for (const p of all) {
     total++;
+    if (p.status !== "sold") {
+      totalFigures += p.figure_count ?? 1;
+    }
     if (p.status === "available") {
       available++;
       inventoryValueUSD += toUsd(Number(p.price) || 0, p.currency);
@@ -242,6 +250,11 @@ export default async function AdminDashboard() {
         <Tile label="Available" value={available} />
         <Tile label="Reserved" value={reservedCount} />
         <Tile label="Sold" value={soldCount} />
+        <Tile
+          label="Figures owned"
+          value={totalFigures}
+          sub="bundles counted by figure_count, NULL = 1"
+        />
         <Tile
           label="Inventory value"
           value={`$${Math.round(inventoryValueUSD).toLocaleString()}`}

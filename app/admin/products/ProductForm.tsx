@@ -27,6 +27,7 @@ export type ProductInitial = {
   release_year?: number | null;
   description?: string | null;
   tags?: string[];
+  figure_count?: number | null;
 };
 
 const CONDITIONS = ["mint_sealed", "mint_open", "near_mint", "good", "fair"];
@@ -207,6 +208,18 @@ export function ProductForm({
           name="stock_qty"
           type="number"
           defaultValue={initial.stock_qty ?? 1}
+          className="ah-input"
+        />
+      </Field>
+
+      <Field label="Figure count (bundles)">
+        <input
+          name="figure_count"
+          type="number"
+          min={1}
+          step={1}
+          placeholder="leave blank for single figure"
+          defaultValue={initial.figure_count ?? ""}
           className="ah-input"
         />
       </Field>
