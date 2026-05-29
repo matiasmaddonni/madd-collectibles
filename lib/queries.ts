@@ -537,14 +537,18 @@ const lookupRefs = cache(async () => {
   return { lineIdBySlug, seriesIdBySlug };
 });
 
-// Single query that returns count per product_line_id. Replaces the previous
-// N COUNT(*) queries (one per category) on the home page.
+// Single query that returns count per product_line_id, restricted to
+// rows shoppers can actually buy (`status='available'`). Drafts /
+// reserved / sold inflate the number in ways the storefront doesn't
+// reflect, and the home page already links to `/catalogo?linea=…`
+// which itself filters to available — so the badge needs to match.
 const getCountsByLineId = cache(
   async (): Promise<Record<string, number>> => {
     const supabase = await createClient();
     const { data } = await supabase
       .from("products")
-      .select("product_line_id");
+      .select("product_line_id")
+      .eq("status", "available");
     const counts: Record<string, number> = {};
     for (const row of (data ?? []) as Array<{ product_line_id: string | null }>) {
       const id = row.product_line_id;
@@ -650,5 +654,13 @@ export async function getHomeCategories(): Promise<HomeCategory[]> {
         : null,
       href: buildCategoryHref(def.slug),
     };
-  });
+  })
+    // Order home cards by inventory size so the biggest lines lead.
+    // Falls back to the CATEGORY_DEFS index for stable ordering on ties.
+    .sort((a, b) => {
+      if (b.productCount !== a.productCount) return b.productCount - a.productCount;
+      const ai = CATEGORY_DEFS.findIndex((d) => d.slug === a.slug);
+      const bi = CATEGORY_DEFS.findIndex((d) => d.slug === b.slug);
+      return ai - bi;
+    });
 }
