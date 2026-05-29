@@ -537,23 +537,31 @@ const lookupRefs = cache(async () => {
   return { lineIdBySlug, seriesIdBySlug };
 });
 
-// Single query that returns count per product_line_id, restricted to
-// rows shoppers can actually buy (`status='available'`). Drafts /
-// reserved / sold inflate the number in ways the storefront doesn't
-// reflect, and the home page already links to `/catalogo?linea=…`
-// which itself filters to available — so the badge needs to match.
+// Two parallel counts per product_line_id, both restricted to rows
+// shoppers can actually buy (`status='available'`):
+//   - rows:    number of storefront rows (what the badge shows)
+//   - figures: rows weighted by figure_count (NULL → 1; a bundle of 12
+//              counts as 12). Used only to rank home cards by real
+//              inventory size — drives the sort, not the badge.
+type LineCounts = { rows: number; figures: number };
 const getCountsByLineId = cache(
-  async (): Promise<Record<string, number>> => {
+  async (): Promise<Record<string, LineCounts>> => {
     const supabase = await createClient();
     const { data } = await supabase
       .from("products")
-      .select("product_line_id")
+      .select("product_line_id, figure_count")
       .eq("status", "available");
-    const counts: Record<string, number> = {};
-    for (const row of (data ?? []) as Array<{ product_line_id: string | null }>) {
+    const counts: Record<string, LineCounts> = {};
+    for (const row of (data ?? []) as Array<{
+      product_line_id: string | null;
+      figure_count: number | null;
+    }>) {
       const id = row.product_line_id;
       if (!id) continue;
-      counts[id] = (counts[id] ?? 0) + 1;
+      const c = counts[id] ?? { rows: 0, figures: 0 };
+      c.rows += 1;
+      c.figures += row.figure_count ?? 1;
+      counts[id] = c;
     }
     return counts;
   },
@@ -638,29 +646,48 @@ export async function getHomeCategories(): Promise<HomeCategory[]> {
     getCountsByLineId(),
   ]);
 
-  return CATEGORY_DEFS.map((def) => {
+  // Carry the figure-weighted count alongside the row count purely
+  // so we can sort by it; it's stripped off before returning.
+  const ranked = CATEGORY_DEFS.map((def) => {
     const ids = def.lineSlugs
       .map((s) => lineIdBySlug[s])
       .filter((id): id is string => Boolean(id));
-    const count = ids.reduce((sum, id) => sum + (countsByLineId[id] ?? 0), 0);
+    const rows = ids.reduce(
+      (sum, id) => sum + (countsByLineId[id]?.rows ?? 0),
+      0,
+    );
+    const figures = ids.reduce(
+      (sum, id) => sum + (countsByLineId[id]?.figures ?? 0),
+      0,
+    );
     const matchedFile = findCategoryImage(files, def.matchTokens);
     return {
       slug: def.slug,
       name: def.name,
       caseGradient: def.caseGradient,
-      productCount: count,
+      productCount: rows,
+      _figureWeight: figures,
       imageUrl: matchedFile
         ? `${CATEGORY_IMAGE_BASE}/${encodeURIComponent(matchedFile)}`
         : null,
       href: buildCategoryHref(def.slug),
     };
-  })
-    // Order home cards by inventory size so the biggest lines lead.
-    // Falls back to the CATEGORY_DEFS index for stable ordering on ties.
-    .sort((a, b) => {
-      if (b.productCount !== a.productCount) return b.productCount - a.productCount;
-      const ai = CATEGORY_DEFS.findIndex((d) => d.slug === a.slug);
-      const bi = CATEGORY_DEFS.findIndex((d) => d.slug === b.slug);
-      return ai - bi;
-    });
+  });
+
+  // Sort by figure-weighted inventory so a line dominated by bundles
+  // (e.g. Myth Cloth EX, where each bundle stands in for 12+ figures)
+  // leads ahead of a row-heavy but lighter line. The badge keeps the
+  // row count so the storefront doesn't appear to over-promise stock.
+  ranked.sort((a, b) => {
+    if (b._figureWeight !== a._figureWeight)
+      return b._figureWeight - a._figureWeight;
+    const ai = CATEGORY_DEFS.findIndex((d) => d.slug === a.slug);
+    const bi = CATEGORY_DEFS.findIndex((d) => d.slug === b.slug);
+    return ai - bi;
+  });
+
+  return ranked.map(({ _figureWeight: _w, ...rest }) => {
+    void _w;
+    return rest;
+  });
 }
