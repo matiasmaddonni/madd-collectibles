@@ -27,12 +27,19 @@ import {
   loadGoodsmileOverrides,
   goodsmileSeriesForOverride,
 } from "./sources/goodsmile";
+import {
+  bundleAdapter,
+  bundleSeriesForOverride,
+  isBundleSlug,
+  loadBundleOverrides,
+} from "./sources/bundle";
 
 const ALL_ADAPTERS: SourceAdapter[] = [
   tamashiiAdapter,
   goodsmileAdapter,
   megahouseAdapter,
   threezeroAdapter,
+  bundleAdapter,
   fandomAdapter,
   ebayAdapter,
 ];
@@ -41,6 +48,13 @@ const ALL_ADAPTERS: SourceAdapter[] = [
 // don't want to flood storage with every variant. The user can promote
 // or reject in the review UI.
 const MAX_IMAGES_PER_PRODUCT = 4;
+
+// Bundle proposals aggregate several photos per constituent figure
+// (5 each is the current adapter default) so the admin can pick a
+// good "primary" instead of being stuck with the hero shot. 100 is
+// enough headroom for a 20-figure bundle with 5 photos each, but
+// caps a runaway adapter from flooding storage.
+const MAX_IMAGES_PER_BUNDLE = 100;
 
 export type RunnerOptions = {
   slug?: string;
@@ -94,8 +108,13 @@ type DraftCandidate = {
   slug: string;
   line: string;
   name?: string;
-  source: "tamashii" | "threezero" | "goodsmile";
+  source: "tamashii" | "threezero" | "goodsmile" | "bundle";
+  // Source-specific identifier: Tamashii item ID, threezero/goodsmile
+  // URL, or the bundle slug itself.
   id: string;
+  // Only set for `source === "bundle"`: the number of figures the
+  // bundle row represents. Persisted to products.figure_count.
+  figureCount?: number;
 };
 
 // Returns the list of override slugs that don't yet exist in the
@@ -148,6 +167,17 @@ async function findMissingOverrideSlugs(
       name: v.name,
       source: "goodsmile",
       id: v.url,
+    });
+  }
+  for (const [slug, v] of Object.entries(loadBundleOverrides())) {
+    if (!v.line) continue;
+    candidates.push({
+      slug,
+      line: v.line,
+      name: v.name,
+      source: "bundle",
+      id: slug,
+      figureCount: v.items.length,
     });
   }
 
@@ -292,7 +322,9 @@ async function ensureDraftsForOverrides(
         ? seriesForOverride(m.slug)
         : m.source === "threezero"
           ? threezeroSeriesForOverride(m.slug)
-          : goodsmileSeriesForOverride(m.slug);
+          : m.source === "goodsmile"
+            ? goodsmileSeriesForOverride(m.slug)
+            : bundleSeriesForOverride(m.slug);
     const seriesId = seriesName
       ? await ensureSeries(lineId, seriesName)
       : null;
@@ -307,6 +339,9 @@ async function ensureDraftsForOverrides(
       condition: "mint_sealed",
       status: "draft",
       stock_qty: 1,
+      ...(m.source === "bundle" && m.figureCount != null
+        ? { figure_count: m.figureCount }
+        : {}),
     });
     if (error) {
       console.warn(`Failed to create draft ${m.slug}: ${error.message}`);
@@ -547,11 +582,20 @@ export async function run(opts: RunnerOptions): Promise<{
       continue;
     }
     const series = takeOne(product.series);
+    // Bundle slugs only need the bundle adapter — they don't have a
+    // single canonical Tamashii / eBay listing, so skipping those
+    // adapters avoids noisy "no match" lines and accidental
+    // eBay-priced proposals against a multi-figure SKU.
+    const productIsBundle = isBundleSlug(product.slug);
+    const adaptersForProduct = productIsBundle
+      ? enabled.filter((a) => a.name === "bundle")
+      : enabled;
     console.log(
-      `\n• ${product.name} (${product.slug}) · line=${line.slug}`,
+      `\n• ${product.name} (${product.slug}) · line=${line.slug}` +
+        (productIsBundle ? " · bundle" : ""),
     );
 
-    for (const adapter of enabled) {
+    for (const adapter of adaptersForProduct) {
       if (existingKeys.has(`${product.id}|${adapter.name}`)) {
         console.log(
           `  ↳ ${adapter.name}: skipped (already has pending data — use --force to re-crawl)`,
@@ -618,7 +662,11 @@ export async function run(opts: RunnerOptions): Promise<{
           });
           fieldsProposed++;
         }
-        const imagesToUpload = result.images.slice(0, MAX_IMAGES_PER_PRODUCT);
+        const cap =
+          result.source === "bundle"
+            ? MAX_IMAGES_PER_BUNDLE
+            : MAX_IMAGES_PER_PRODUCT;
+        const imagesToUpload = result.images.slice(0, cap);
         for (const img of imagesToUpload) {
           const r = await proposeImage({
             productId: product.id,

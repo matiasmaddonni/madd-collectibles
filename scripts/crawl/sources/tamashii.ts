@@ -273,9 +273,42 @@ function buildSpecDescription(rows: SpecRow[]): string | null {
 }
 
 function parseTitle($: cheerio.CheerioAPI): string | null {
+  // Tamashii localises strings via wovn.io. Most chrome (breadcrumbs,
+  // `<title>`, `<meta og:title>`) stays in Japanese; the dependable
+  // English version is built from two pieces inside `h1.productMain__nameBox`:
+  //   - `.productMain__brand img[alt]` → line, e.g. "SAINT CLOTH MYTH EX"
+  //   - `.productMain__name`           → character, e.g. "Gemini Saga (GOD CLOTH)"
+  // Composite "<brand> <character>" matches what shoppers see on the page.
+  const brand = $(".productMain__brand img")
+    .first()
+    .attr("alt")
+    ?.replace(/\s+/g, " ")
+    .trim();
+  const character = $(".productMain__name")
+    .first()
+    .text()
+    .replace(/\s+/g, " ")
+    .trim();
+  const composite = [brand, character].filter(Boolean).join(" ").trim();
+  if (composite.length > 3) return composite;
+
+  // Older / non-product pages: fall back to the breadcrumb's deepest
+  // itemprop="name" span that has actually been translated server-side
+  // (those without wovn-wait). Skip JP-looking strings — wovn leaves
+  // CJK characters in when translation hasn't run.
+  let best: string | null = null;
+  $('span[itemprop="name"]').each((_, el) => {
+    const $el = $(el);
+    if ($el.attr("wovn-wait") != null) return;
+    const text = $el.text().replace(/\s+/g, " ").trim();
+    if (text.length <= 3) return;
+    if (/[぀-ゟ゠-ヿ一-鿿]/.test(text)) return; // still JP
+    if (!best || text.length > best.length) best = text;
+  });
+  if (best) return best;
+
   const t = $("title").first().text().split("|")[0]?.trim();
-  if (t && t.length > 3) return t;
-  return null;
+  return t && t.length > 3 ? t : null;
 }
 
 async function fetchAdapter(
@@ -310,6 +343,45 @@ export async function fetchTamashiiBasics(
   if (!html) return null;
   const $ = cheerio.load(html);
   return { title: parseTitle($) };
+}
+
+// Richer per-item summary used by the bundle adapter. Pulls everything
+// it would otherwise scrape during a regular crawl in one shot:
+//   - title (productMain__name, falls back to <title>)
+//   - releaseYear (first YYYY in the "Release Date" spec row)
+//   - releaseDate (full Spanish "<mes> YYYY" if a month is parseable)
+//   - heroImage (the `_01.jpg` of the matching item ID, filtered so
+//     sidebar / related-item thumbnails don't slip in)
+// Returns null when Tamashii has no live page for the ID or the
+// request fails.
+export async function fetchTamashiiSummary(
+  itemId: string,
+): Promise<{
+  title: string | null;
+  releaseYear: number | null;
+  releaseDate: string | null;
+  heroImage: string | null;
+  // Full gallery, ordered by the trailing `_NN.jpg` sequence so the
+  // hero (`_01.jpg`) is at index 0. Bundle adapter takes a slice; the
+  // single-item path keeps using just `heroImage`.
+  images: string[];
+} | null> {
+  const url = `https://tamashiiweb.com/item/${itemId}/?wovn=en`;
+  const html = await fetchText(url);
+  if (!html) return null;
+  const $ = cheerio.load(html);
+
+  const specRows = parseSpecRows($);
+  const releaseYear = parseReleaseYear(specRows);
+  const releaseDate = spanishReleaseDate(
+    findSpec(specRows, "release date", "発売日"),
+  );
+  const title = parseTitle($);
+
+  const gallery = extractGallery(html, itemId);
+  const heroImage = gallery[0] ?? null;
+
+  return { title, releaseYear, releaseDate, heroImage, images: gallery };
 }
 
 // Slug-aware variant used by the runner. Matches the override map first

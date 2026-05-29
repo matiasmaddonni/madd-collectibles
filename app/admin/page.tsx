@@ -170,7 +170,10 @@ export default async function AdminDashboard() {
   // eslint-disable-next-line react-hooks/purity
   const fourteenDaysAgo = Date.now() - 14 * DAY_MS;
 
-  // Stock by line: count of `available` items per product_line_id.
+  // Stock by line: figures-owned weight per product_line_id (a bundle
+  // of 12 myth-cloth-ex figures counts as 12, not 1). Admin-only — this
+  // dashboard view never feeds storefront filters or search, so the
+  // public counts stay at row-level.
   const stockByLine = new Map<string, number>();
 
   for (const p of all) {
@@ -184,7 +187,7 @@ export default async function AdminDashboard() {
       if (p.product_line_id) {
         stockByLine.set(
           p.product_line_id,
-          (stockByLine.get(p.product_line_id) ?? 0) + 1,
+          (stockByLine.get(p.product_line_id) ?? 0) + (p.figure_count ?? 1),
         );
       }
       if (!productsWithImages.has(p.id)) missingPhotos++;

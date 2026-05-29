@@ -1,0 +1,22 @@
+{
+  "_doc": [
+    "Bundle products: a single storefront row that represents a batch",
+    "of figures sold together (e.g. the twelve Soul of Gold gold saints).",
+    "",
+    "Shape per slug:",
+    "  \"<bundle-slug>\": {",
+    "    \"line\":   \"<product_lines.slug>\",   /* required */",
+    "    \"name\":   \"<display name>\",",
+    "    \"series\": \"<find-or-create series name>\",",
+    "    \"items\":  [\"<tamashii item id>\", …]",
+    "  }",
+    "",
+    "Items today are Tamashii item IDs only. The runner fetches each",
+    "page, aggregates names + release years into a free-text description,",
+    "and uploads one hero image per figure (capped at MAX_IMAGES_PER_BUNDLE).",
+    "",
+    "Bundle slugs skip eBay + Fandom — group photo, final price, and",
+    "any narrative copy are added by hand in /admin/products/<id>."
+  ],
+  "overrides": {}
+}
