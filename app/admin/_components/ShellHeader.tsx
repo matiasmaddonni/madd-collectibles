@@ -29,6 +29,7 @@ export function ShellHeader({
         <NavLink href="/admin/products" label="Products" />
         <NavLink href="/admin/orders" label="Orders" badge={pendingOrders} />
         <NavLink href="/admin/proposals" label="Proposals" badge={pendingProposals} />
+        <NavLink href="/admin/analytics" label="Analytics" />
         <SettingsDropdown counts={taxonomyCounts} />
       </nav>
 

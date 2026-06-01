@@ -3,6 +3,8 @@ import { Bebas_Neue, DM_Sans, DM_Mono } from "next/font/google";
 import Script from "next/script";
 import { headers } from "next/headers";
 import { Analytics } from "@vercel/analytics/react";
+import { Suspense } from "react";
+import { Tracker } from "@/components/analytics/Tracker";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { META_PIXEL_ID, SITE_URL as ENV_SITE_URL } from "@/lib/env";
@@ -97,6 +99,9 @@ export default async function RootLayout({
           <CartDrawer />
         </CartProvider>
         <Analytics />
+        <Suspense fallback={null}>
+          <Tracker />
+        </Suspense>
         {safePixelId && (
           <>
             <Script

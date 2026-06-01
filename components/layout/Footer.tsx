@@ -1,5 +1,6 @@
 import { waLink } from "@/lib/contact";
 import { INSTAGRAM, TIKTOK } from "@/lib/social";
+import { SocialAnchor } from "./SocialAnchor";
 
 function WhatsAppIcon({ size = 14, color = "currentColor" }: { size?: number; color?: string }) {
   return (
@@ -130,16 +131,15 @@ export function Footer() {
 
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
           {SOCIAL_LINKS.map(({ label, href, Icon }) => (
-            <a
+            <SocialAnchor
               key={label}
+              network={label.toLowerCase()}
               href={href}
-              target="_blank"
-              rel="noreferrer"
-              aria-label={label}
+              ariaLabel={label}
               className="grid place-items-center w-10 h-10 rounded-md border border-border-subtle text-text-secondary hover:text-accent hover:border-accent transition-colors"
             >
               <Icon size={18} />
-            </a>
+            </SocialAnchor>
           ))}
         </div>
 

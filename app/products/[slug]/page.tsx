@@ -7,6 +7,7 @@ import { Footer } from "@/components/layout/Footer";
 import { CardImageCarousel } from "@/components/catalog/CardImageCarousel";
 import { ProductCard } from "@/components/catalog/ProductCard";
 import { ProductDetailCTA } from "./ProductDetailCTA";
+import { PdpViewTracker } from "./PdpViewTracker";
 import { StickyMobileCta } from "./StickyMobileCta";
 import { ShareButton } from "@/components/product/ShareButton";
 import Link from "next/link";
@@ -143,6 +144,14 @@ export default async function ProductDetailPage({ params }: PageProps) {
         // diff is noise.
         suppressHydrationWarning
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <PdpViewTracker
+        slug={product.slug}
+        productName={product.name}
+        line={product.lineName}
+        series={product.seriesName ?? null}
+        price={product.price}
+        currency={product.currency}
       />
       <Navbar />
       <main className="flex-1">

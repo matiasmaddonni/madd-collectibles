@@ -1,6 +1,7 @@
 "use client";
 
 import { useCart } from "./CartProvider";
+import { trackEvent } from "@/lib/analytics";
 
 function BagIcon() {
   return (
@@ -23,11 +24,16 @@ function BagIcon() {
 }
 
 export function CartButton() {
-  const { count, toggle } = useCart();
+  const { count, isOpen, toggle } = useCart();
+  const onClick = () => {
+    // Fire on opens only — closing the drawer isn't an engagement signal.
+    if (!isOpen) trackEvent("cart_open", { itemCount: count });
+    toggle();
+  };
   return (
     <button
       type="button"
-      onClick={toggle}
+      onClick={onClick}
       aria-label="Carrito"
       className="relative p-2 text-text-primary hover:text-accent transition-colors"
     >

@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import type { SupportedCurrency } from "@/lib/format";
+import { trackEvent } from "@/lib/analytics";
 
 export type CartItem = {
   id: string;
@@ -73,10 +74,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return [...prev, { ...item, qty: 1 }];
     });
     setIsOpen(true);
+    trackEvent("add_to_cart", {
+      slug: item.slug,
+      productName: item.name,
+      price: item.price,
+      currency: item.currency,
+      line: item.lineName,
+    });
   }, []);
 
   const remove = useCallback((id: string) => {
-    setItems((prev) => prev.filter((p) => p.id !== id));
+    setItems((prev) => {
+      const target = prev.find((p) => p.id === id);
+      if (target) trackEvent("remove_from_cart", { slug: target.slug });
+      return prev.filter((p) => p.id !== id);
+    });
   }, []);
 
   const clear = useCallback(() => setItems([]), []);
