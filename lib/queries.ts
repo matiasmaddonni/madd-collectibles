@@ -646,16 +646,14 @@ export async function getHomeCategories(): Promise<HomeCategory[]> {
     getCountsByLineId(),
   ]);
 
-  // Carry the figure-weighted count alongside the row count purely
-  // so we can sort by it; it's stripped off before returning.
+  // Both the sort key and the badge use the figure-weighted count
+  // (each bundle contributes its `figure_count`). Keeps the home
+  // ordering and number consistent with the admin dashboard, where
+  // a Myth Cloth EX bundle of 12 reads as 12 figures, not 1 row.
   const ranked = CATEGORY_DEFS.map((def) => {
     const ids = def.lineSlugs
       .map((s) => lineIdBySlug[s])
       .filter((id): id is string => Boolean(id));
-    const rows = ids.reduce(
-      (sum, id) => sum + (countsByLineId[id]?.rows ?? 0),
-      0,
-    );
     const figures = ids.reduce(
       (sum, id) => sum + (countsByLineId[id]?.figures ?? 0),
       0,
@@ -665,8 +663,7 @@ export async function getHomeCategories(): Promise<HomeCategory[]> {
       slug: def.slug,
       name: def.name,
       caseGradient: def.caseGradient,
-      productCount: rows,
-      _figureWeight: figures,
+      productCount: figures,
       imageUrl: matchedFile
         ? `${CATEGORY_IMAGE_BASE}/${encodeURIComponent(matchedFile)}`
         : null,
@@ -674,20 +671,12 @@ export async function getHomeCategories(): Promise<HomeCategory[]> {
     };
   });
 
-  // Sort by figure-weighted inventory so a line dominated by bundles
-  // (e.g. Myth Cloth EX, where each bundle stands in for 12+ figures)
-  // leads ahead of a row-heavy but lighter line. The badge keeps the
-  // row count so the storefront doesn't appear to over-promise stock.
   ranked.sort((a, b) => {
-    if (b._figureWeight !== a._figureWeight)
-      return b._figureWeight - a._figureWeight;
+    if (b.productCount !== a.productCount) return b.productCount - a.productCount;
     const ai = CATEGORY_DEFS.findIndex((d) => d.slug === a.slug);
     const bi = CATEGORY_DEFS.findIndex((d) => d.slug === b.slug);
     return ai - bi;
   });
 
-  return ranked.map(({ _figureWeight: _w, ...rest }) => {
-    void _w;
-    return rest;
-  });
+  return ranked;
 }
