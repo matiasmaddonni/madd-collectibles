@@ -96,6 +96,7 @@ type ProductPayload = {
   release_year: number | null;
   description: string | null;
   tags: string[];
+  figure_count: number | null;
 };
 
 const SLUG_RE = /^[a-z0-9-]+$/;
