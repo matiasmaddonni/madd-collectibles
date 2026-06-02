@@ -54,7 +54,7 @@ export function NavbarSearch() {
     <form
       onSubmit={onSubmit}
       role="search"
-      className="hidden md:flex flex-1 max-w-xl mx-auto"
+      className="order-3 w-full mt-3 flex md:order-2 md:mt-0 md:flex-1 md:max-w-xl md:mx-auto md:w-auto"
     >
       <label className="flex items-center gap-2 w-full px-3 py-2 bg-bg-surface border border-border-subtle rounded-sm text-text-secondary focus-within:border-border-medium">
         <SearchIcon />

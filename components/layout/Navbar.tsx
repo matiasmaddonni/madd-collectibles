@@ -7,21 +7,20 @@ import { MobileMenu } from "@/components/layout/MobileMenu";
 export function Navbar() {
   return (
     <header className="sticky top-0 z-50 bg-bg-deep/80 backdrop-blur border-b border-border-subtle">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-4 md:gap-6">
+      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center flex-wrap gap-4 md:flex-nowrap md:gap-6">
         <Link
           href="/"
-          className="font-display text-2xl tracked-mid text-text-primary"
+          className="order-1 font-display text-2xl tracked-mid text-text-primary"
         >
           MADD<span className="text-accent">.</span>
         </Link>
 
-        {/* Search visible on tablet+; on mobile flex-1 spacer keeps cart + menu pinned right. */}
-        <Suspense fallback={<div className="hidden md:block flex-1 max-w-xl mx-auto h-10" />}>
+        {/* Mobile: search wraps to its own row below the brand. Tablet+: stays inline. */}
+        <Suspense fallback={<div className="order-3 w-full mt-3 h-10 md:order-2 md:mt-0 md:flex-1 md:max-w-xl md:mx-auto md:w-auto" />}>
           <NavbarSearch />
         </Suspense>
-        <div className="flex-1 md:hidden" aria-hidden />
 
-        <nav className="hidden lg:flex items-center gap-6 font-body text-sm text-text-secondary">
+        <nav className="hidden lg:flex order-2 items-center gap-6 font-body text-sm text-text-secondary">
           <Link href="/catalogo" className="hover:text-text-primary transition-colors">
             Catálogo
           </Link>
@@ -33,8 +32,10 @@ export function Navbar() {
           </Link>
         </nav>
 
-        <CartButton />
-        <MobileMenu />
+        <div className="order-2 ml-auto md:ml-0 flex items-center gap-2">
+          <CartButton />
+          <MobileMenu />
+        </div>
       </div>
     </header>
   );
