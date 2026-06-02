@@ -150,8 +150,11 @@ export async function updateOrderPricing(fd: FormData): Promise<ActionResult> {
       }
     | null;
   if (!intent) return { ok: false, reason: "Order not found" };
-  if (intent.status !== "pending")
-    return { ok: false, reason: `Order already ${intent.status}` };
+  // Allow editing pending OR approved orders — pricing tweaks on an
+  // already-shipped order are how late-breaking discounts get logged
+  // for the dashboard. Cancelled orders stay frozen.
+  if (intent.status !== "pending" && intent.status !== "approved")
+    return { ok: false, reason: `Order is ${intent.status}` };
 
   const items = (intent.items ?? []).map((it, i) => {
     const raw = fd.get(`pricing__${i}`);
@@ -177,7 +180,7 @@ export async function updateOrderPricing(fd: FormData): Promise<ActionResult> {
     .from("checkout_intents")
     .update({ items, totals })
     .eq("id", intentId)
-    .eq("status", "pending");
+    .in("status", ["pending", "approved"]);
   if (upErr) {
     console.error("updateOrderPricing save failed", upErr);
     return { ok: false, reason: "Could not save prices" };

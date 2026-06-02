@@ -142,7 +142,7 @@ export default async function OrdersPage({
                   )}
                 </div>
 
-                {order.status === "pending" ? (
+                {order.status === "pending" || order.status === "approved" ? (
                   <OrderPricingForm
                     intentId={order.id}
                     items={order.items ?? []}
