@@ -256,7 +256,7 @@ export default async function AdminDashboard() {
         <Tile
           label="Figures owned"
           value={totalFigures}
-          sub="bundles counted by figure_count, NULL = 1"
+          sub="bundles count as their figure total"
         />
         <Tile
           label="Inventory value"
