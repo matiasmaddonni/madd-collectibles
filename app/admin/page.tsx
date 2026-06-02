@@ -79,6 +79,7 @@ export default async function AdminDashboard() {
     linesRes,
     imageProductIdsRes,
     pendingOrdersRes,
+    approvedOrdersRes,
   ] = await Promise.all([
       hasTimestamps
         ? Promise.resolve(richAll)
@@ -114,11 +115,40 @@ export default async function AdminDashboard() {
         .from("checkout_intents")
         .select("id", { count: "exact", head: true })
         .eq("status", "pending"),
+      // Approved orders w/ items — feeds the "discount given" tile.
+      admin
+        .from("checkout_intents")
+        .select("items")
+        .eq("status", "approved"),
     ]);
 
   const pendingOrders = pendingOrdersRes.error
     ? 0
     : pendingOrdersRes.count ?? 0;
+
+  // Discount summed across approved orders, converted to USD via the
+  // same fx rate the inventory tile uses. NULL salePrice → no discount
+  // on that line, asking price equals sale price.
+  type IntentItemLite = {
+    price?: number;
+    salePrice?: number | null;
+    currency?: string;
+    qty?: number;
+  };
+  let totalDiscountUSD = 0;
+  for (const row of (approvedOrdersRes.data ?? []) as Array<{
+    items?: IntentItemLite[];
+  }>) {
+    for (const it of row.items ?? []) {
+      const asking = Number(it.price ?? 0);
+      const sale =
+        it.salePrice == null ? asking : Number(it.salePrice);
+      if (!Number.isFinite(asking) || !Number.isFinite(sale)) continue;
+      const diff = (asking - sale) * (it.qty || 1);
+      if (diff <= 0) continue;
+      totalDiscountUSD += toUsd(diff, it.currency ?? "USD");
+    }
+  }
 
   const all = ((allRes.data ?? []) as Array<Partial<ProductBase> & {
     id: string;
@@ -263,6 +293,11 @@ export default async function AdminDashboard() {
           value={`$${Math.round(inventoryValueUSD).toLocaleString()}`}
           sub={`available · USD @ ${usdRate.toFixed(0)}`}
           wide
+        />
+        <Tile
+          label="Discount given"
+          value={`$${Math.round(totalDiscountUSD).toLocaleString()}`}
+          sub="across approved orders · asking − sale price"
         />
       </section>
 

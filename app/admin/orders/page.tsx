@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { formatPrice } from "@/lib/format";
 import { formatRelative } from "../products/_components/relativeTime";
 import { OrderActions } from "./OrderActions";
+import { OrderPricingForm } from "./OrderPricingForm";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,7 @@ type IntentItem = {
   name: string;
   lineName?: string;
   price: number;
+  salePrice?: number | null;
   currency: "ARS" | "USD";
   qty: number;
 };
@@ -140,33 +142,64 @@ export default async function OrdersPage({
                   )}
                 </div>
 
-                <div className="ah-list">
-                  {(order.items ?? []).map((it, i) => (
-                    <div key={`${it.id}-${i}`} className="ah-list-row">
-                      <div>
-                        <div className="ah-list-name">
-                          {it.slug ? (
-                            <Link
-                              href={`/admin/products/${it.id}`}
-                              className="ah-row-name"
-                            >
-                              {it.name}
-                            </Link>
-                          ) : (
-                            it.name
-                          )}
-                          {it.qty > 1 ? ` ×${it.qty}` : ""}
+                {order.status === "pending" ? (
+                  <OrderPricingForm
+                    intentId={order.id}
+                    items={order.items ?? []}
+                  />
+                ) : (
+                  <div className="ah-list">
+                    {(order.items ?? []).map((it, i) => {
+                      const sale =
+                        it.salePrice != null && it.salePrice !== it.price
+                          ? it.salePrice
+                          : null;
+                      return (
+                        <div key={`${it.id}-${i}`} className="ah-list-row">
+                          <div>
+                            <div className="ah-list-name">
+                              {it.slug ? (
+                                <Link
+                                  href={`/admin/products/${it.id}`}
+                                  className="ah-row-name"
+                                >
+                                  {it.name}
+                                </Link>
+                              ) : (
+                                it.name
+                              )}
+                              {it.qty > 1 ? ` ×${it.qty}` : ""}
+                            </div>
+                            {it.lineName && (
+                              <div className="ah-list-sub">{it.lineName}</div>
+                            )}
+                          </div>
+                          <div
+                            className="ah-list-meta"
+                            style={{ display: "flex", gap: 10, alignItems: "center" }}
+                          >
+                            {sale != null ? (
+                              <>
+                                <span
+                                  style={{
+                                    color: "var(--ah-text-3)",
+                                    textDecoration: "line-through",
+                                    fontSize: 12,
+                                  }}
+                                >
+                                  {formatPrice(it.price, it.currency)}
+                                </span>
+                                <span>{formatPrice(sale, it.currency)}</span>
+                              </>
+                            ) : (
+                              <span>{formatPrice(it.price, it.currency)}</span>
+                            )}
+                          </div>
                         </div>
-                        {it.lineName && (
-                          <div className="ah-list-sub">{it.lineName}</div>
-                        )}
-                      </div>
-                      <div className="ah-list-meta">
-                        {formatPrice(it.price, it.currency)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
               </section>
             );
           })}

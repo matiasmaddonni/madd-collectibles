@@ -11,7 +11,8 @@ type IntentItem = {
   id: string;
   slug: string | null;
   name: string;
-  price: number;
+  price: number;            // asking price at the time the cart was created
+  salePrice?: number | null; // negotiated price; falls back to `price` when null
   currency: "ARS" | "USD";
   qty: number;
 };
@@ -112,6 +113,76 @@ export async function approveOrder(intentId: string): Promise<ActionResult> {
   }
 
   revalidateOrderPaths(slugs);
+  return { ok: true };
+}
+
+// Apply admin-edited per-item sale prices on a pending order. The
+// asking price (`items[].price`) is kept untouched as the historical
+// list price — `salePrice` carries the negotiated number, which is
+// what the dashboard reports as the actual sold amount once the
+// order is approved. Totals are recomputed from the salePrices so
+// the order header card stays in sync.
+//
+// Each row is `pricing__<intent_item_index>` in the FormData, parsed
+// as a non-negative number. Empty / NaN → clears salePrice (revert
+// to asking price).
+export async function updateOrderPricing(fd: FormData): Promise<ActionResult> {
+  await requireAdmin();
+  const intentId = String(fd.get("intentId") ?? "");
+  if (!UUID_RE.test(intentId)) return { ok: false, reason: "Invalid id" };
+
+  const admin = createAdminClient();
+  const { data: row, error: getErr } = await admin
+    .from("checkout_intents")
+    .select("id, items, totals, status")
+    .eq("id", intentId)
+    .maybeSingle();
+  if (getErr) {
+    console.error("updateOrderPricing lookup failed", getErr);
+    return { ok: false, reason: "Lookup failed" };
+  }
+  const intent = row as
+    | {
+        id: string;
+        items: IntentItem[];
+        totals: Record<string, number>;
+        status: string;
+      }
+    | null;
+  if (!intent) return { ok: false, reason: "Order not found" };
+  if (intent.status !== "pending")
+    return { ok: false, reason: `Order already ${intent.status}` };
+
+  const items = (intent.items ?? []).map((it, i) => {
+    const raw = fd.get(`pricing__${i}`);
+    let salePrice: number | null = null;
+    if (typeof raw === "string" && raw.trim() !== "") {
+      const n = Number(raw);
+      if (Number.isFinite(n) && n >= 0) salePrice = n;
+    }
+    return { ...it, salePrice };
+  });
+
+  // Recompute per-currency totals using sale price × qty (fall back to
+  // asking when salePrice is null).
+  const totals: Record<string, number> = {};
+  for (const it of items) {
+    const unit = it.salePrice ?? it.price;
+    const qty = it.qty || 1;
+    const cur = it.currency;
+    totals[cur] = (totals[cur] ?? 0) + unit * qty;
+  }
+
+  const { error: upErr } = await admin
+    .from("checkout_intents")
+    .update({ items, totals })
+    .eq("id", intentId)
+    .eq("status", "pending");
+  if (upErr) {
+    console.error("updateOrderPricing save failed", upErr);
+    return { ok: false, reason: "Could not save prices" };
+  }
+  revalidateOrderPaths([]);
   return { ok: true };
 }
 
