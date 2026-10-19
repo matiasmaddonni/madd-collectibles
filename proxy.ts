@@ -31,8 +31,11 @@ function buildCsp(nonce: string): string {
     "font-src 'self' data: https://fonts.gstatic.com",
     `img-src 'self' data: blob: ${supabaseOrigin} https://www.facebook.com`,
     `connect-src 'self' ${supabaseOrigin} https://api.exchangerate.host https://dolarapi.com https://va.vercel-scripts.com https://vitals.vercel-insights.com https://www.facebook.com${isDev ? " ws: http://localhost:*" : ""}`,
-    "frame-src 'self'",
-    "form-action 'self' https://api.whatsapp.com https://wa.me",
+    // Meta Pixel sends events that carry custom data (Lead, InitiateCheckout)
+    // as a form POST into a hidden iframe on www.facebook.com, so both
+    // directives must allow it or those events are silently dropped.
+    "frame-src 'self' https://www.facebook.com",
+    "form-action 'self' https://api.whatsapp.com https://wa.me https://www.facebook.com",
     "base-uri 'self'",
     "object-src 'none'",
     "frame-ancestors 'none'",
