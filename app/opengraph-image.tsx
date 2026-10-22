@@ -13,7 +13,7 @@ const siteHost = (() => {
   try {
     return new URL(SITE_URL).host;
   } catch {
-    return "madd-collectibles.vercel.app";
+    return "madd.ar";
   }
 })();
 export const alt = "MADD. — Coleccionables Bandai en Argentina";

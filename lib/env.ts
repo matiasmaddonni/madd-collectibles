@@ -8,7 +8,13 @@ const optional = (value: string | undefined): string | null =>
 
 export const SITE_URL =
   optional(process.env.NEXT_PUBLIC_SITE_URL) ??
-  "https://madd-collectibles.vercel.app";
+  "https://madd.ar";
+
+// Origins that still serve the site besides SITE_URL. The vercel.app URL
+// stays live (no redirect) so old links, ads and bios keep working.
+export const SITE_ORIGINS: string[] = [
+  ...new Set([new URL(SITE_URL).origin, "https://madd-collectibles.vercel.app"]),
+];
 
 export const SUPABASE_URL = required(
   "NEXT_PUBLIC_SUPABASE_URL",

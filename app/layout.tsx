@@ -49,6 +49,10 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     description: SITE_DESCRIPTION,
   },
+  // Meta Business domain verification for madd.ar (portfolio 1380353685156777).
+  verification: {
+    other: { "facebook-domain-verification": "wi9fyj9fyzazwwq6offc7lyipltjy9" },
+  },
 };
 
 const PIXEL_ID_RE = /^[0-9]{6,32}$/;

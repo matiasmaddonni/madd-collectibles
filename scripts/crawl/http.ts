@@ -3,7 +3,7 @@
 // enforces a polite delay between hits to the same host.
 
 const UA_SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://madd-collectibles.vercel.app";
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://madd.ar";
 const USER_AGENT = `MaddCollectiblesCrawler/0.1 (+${UA_SITE_URL})`;
 
 // Sites that aggressively block non-browser UAs (eBay's /sch/ listings,

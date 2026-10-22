@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { EMAIL_FROM, EMAIL_TO, getResend } from "@/lib/email";
 import { formatPrice } from "@/lib/format";
-import { SITE_URL } from "@/lib/env";
+import { SITE_ORIGINS } from "@/lib/env";
 
 type IntentItem = {
   id: string;
@@ -57,7 +57,7 @@ function originAllowed(h: Headers): boolean {
   const origin = h.get("origin");
   if (!origin) return false;
   try {
-    return new URL(origin).origin === new URL(SITE_URL).origin;
+    return SITE_ORIGINS.includes(new URL(origin).origin);
   } catch {
     return false;
   }
