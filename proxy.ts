@@ -6,41 +6,7 @@ import {
   SUPABASE_HOSTNAME,
   SUPABASE_URL,
 } from "@/lib/env";
-
-function buildCsp(nonce: string): string {
-  const supabaseOrigin = SUPABASE_HOSTNAME
-    ? `https://${SUPABASE_HOSTNAME}`
-    : "https://*.supabase.co";
-  const isDev = process.env.NODE_ENV !== "production";
-  // strict-dynamic + nonce is the modern policy. Browsers that understand
-  // strict-dynamic ignore legacy fallbacks (host-list + 'unsafe-inline')
-  // anyway, so we drop them — pure nonce gating. Dev needs eval for
-  // React's dev runtime + Turbopack HMR; prod never does.
-  const scriptSrc = [
-    "'self'",
-    `'nonce-${nonce}'`,
-    "'strict-dynamic'",
-    isDev ? "'unsafe-eval'" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
-  return [
-    "default-src 'self'",
-    `script-src ${scriptSrc}`,
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' data: https://fonts.gstatic.com",
-    `img-src 'self' data: blob: ${supabaseOrigin} https://www.facebook.com`,
-    `connect-src 'self' ${supabaseOrigin} https://api.exchangerate.host https://dolarapi.com https://va.vercel-scripts.com https://vitals.vercel-insights.com https://www.facebook.com${isDev ? " ws: http://localhost:*" : ""}`,
-    // Meta Pixel sends events that carry custom data (Lead, InitiateCheckout)
-    // as a form POST into a hidden iframe on www.facebook.com, so both
-    // directives must allow it or those events are silently dropped.
-    "frame-src 'self' https://www.facebook.com",
-    "form-action 'self' https://api.whatsapp.com https://wa.me https://www.facebook.com",
-    "base-uri 'self'",
-    "object-src 'none'",
-    "frame-ancestors 'none'",
-  ].join("; ");
-}
+import { buildCsp } from "@/lib/csp";
 
 function isAdminEmail(email: string | null | undefined): boolean {
   if (!email || ADMIN_EMAILS.length === 0) return false;
@@ -50,11 +16,19 @@ function isAdminEmail(email: string | null | undefined): boolean {
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // CSP nonce — regenerated each request. Forwarded to RSC via request header
-  // and emitted as the response CSP. Layout reads it via headers() and threads
-  // it onto inline <Script nonce={…}> tags so they survive strict-dynamic.
+  // Admin only (see matcher). CSP nonce, regenerated each request. Forwarded
+  // to RSC via request header and emitted as the response CSP. The admin
+  // layout reads it via headers() and threads it onto inline scripts so
+  // they survive strict-dynamic. The storefront gets a static CSP from
+  // next.config.ts so its pages can be cached.
   const nonce = crypto.randomUUID().replace(/-/g, "");
-  const csp = buildCsp(nonce);
+  const csp = buildCsp({
+    nonce,
+    supabaseOrigin: SUPABASE_HOSTNAME
+      ? `https://${SUPABASE_HOSTNAME}`
+      : "https://*.supabase.co",
+    isDev: process.env.NODE_ENV !== "production",
+  });
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);
@@ -64,13 +38,10 @@ export async function proxy(request: NextRequest) {
   response.headers.set("Content-Security-Policy", csp);
 
   // Belt-and-suspenders on top of robots.txt: stamp the response header so
-  // any crawler (compliant or not) that fetches an admin / checkout page
-  // is told never to index or follow.
-  if (pathname.startsWith("/admin") || pathname.startsWith("/checkout")) {
-    response.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
-  }
+  // any crawler (compliant or not) that fetches an admin page is told
+  // never to index or follow. /checkout gets the same from next.config.ts.
+  response.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
 
-  if (!pathname.startsWith("/admin")) return response;
   if (pathname === "/admin/login") return response;
 
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -101,9 +72,8 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Run on every page request so CSP nonce is present everywhere, but skip
-  // static assets, image optimizer, and favicon for performance.
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|gif|webp|avif|svg|ico|txt|xml|json)$).*)",
-  ],
+  // Admin only. The proxy runs as a function on every matched request,
+  // so keeping storefront paths out saves an invocation per page view and
+  // lets cached pages be served straight from the CDN.
+  matcher: ["/admin", "/admin/:path*"],
 };

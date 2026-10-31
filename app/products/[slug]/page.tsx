@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
@@ -46,6 +45,12 @@ const statusTextClass: Record<ProductStatus, string> = {
 // Cache rendered product detail HTML at Vercel's edge for 10 minutes.
 // Mutations through admin actions call revalidatePath() to invalidate.
 export const revalidate = 600;
+
+// No paths at build time: each product renders on its first visit and is
+// then cached (ISR). Without this the route stays fully dynamic.
+export function generateStaticParams() {
+  return [];
+}
 
 type PageProps = { params: Promise<{ slug: string }> };
 
@@ -101,7 +106,6 @@ export default async function ProductDetailPage({ params }: PageProps) {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
   if (!product) notFound();
-  const nonce = (await headers()).get("x-nonce") ?? undefined;
 
   const isAvailable = product.status === "available" && product.stockQty > 0;
   const isSold = product.status === "sold";
@@ -157,10 +161,6 @@ export default async function ProductDetailPage({ params }: PageProps) {
     <>
       <script
         type="application/ld+json"
-        nonce={nonce}
-        // Browser strips the nonce attr after parsing -- React hydration
-        // diff is noise.
-        suppressHydrationWarning
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <PdpViewTracker

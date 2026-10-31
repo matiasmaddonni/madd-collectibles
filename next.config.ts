@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
+import { buildCsp } from "./lib/csp";
 
-// CSP is generated per-request in proxy.ts with a fresh nonce, so it isn't
-// listed here. Other security headers are static and live in next.config.
+// Static security headers. The storefront CSP lives here too (no nonce, so
+// pages stay cacheable); /admin gets a per-request nonce CSP in proxy.ts.
 const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -66,6 +67,23 @@ const nextConfig: NextConfig = {
       {
         source: "/:path*",
         headers: securityHeaders,
+      },
+      {
+        // Everything except /admin, which sets its own nonce CSP.
+        source: "/((?!admin(?:/|$)).*)",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: buildCsp({
+              supabaseOrigin: `https://${SUPABASE_HOST}`,
+              isDev: process.env.NODE_ENV !== "production",
+            }),
+          },
+        ],
+      },
+      {
+        source: "/checkout/:path*",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" }],
       },
     ];
   },

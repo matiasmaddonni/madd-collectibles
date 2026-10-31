@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Bebas_Neue, DM_Sans, DM_Mono } from "next/font/google";
 import Script from "next/script";
-import { headers } from "next/headers";
 import { Analytics } from "@vercel/analytics/react";
 import { Suspense } from "react";
 import { Tracker } from "@/components/analytics/Tracker";
@@ -57,16 +56,17 @@ export const metadata: Metadata = {
 
 const PIXEL_ID_RE = /^[0-9]{6,32}$/;
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   // Pixel ID only allowed if numeric — defends inline-script injection through
-  // env misconfiguration. proxy.ts seeds a per-request nonce we thread here.
+  // env misconfiguration. No nonce here: reading headers() would make every
+  // page dynamic. The storefront CSP allows inline scripts (lib/csp.ts) and
+  // under the admin nonce CSP next/script injects this via strict-dynamic.
   const safePixelId =
     META_PIXEL_ID && PIXEL_ID_RE.test(META_PIXEL_ID) ? META_PIXEL_ID : null;
-  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html
       lang="es-AR"
@@ -80,11 +80,6 @@ export default async function RootLayout({
         */}
         <script
           type="application/ld+json"
-          nonce={nonce}
-          // Browser strips the nonce attr off <script> tags after parsing for
-          // security, so React sees a mismatch on hydration. Behaviour-correct,
-          // warning is noise. Same suppression used in admin ThemeBootstrap.
-          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
@@ -111,7 +106,6 @@ export default async function RootLayout({
             <Script
               id="meta-pixel"
               strategy="afterInteractive"
-              nonce={nonce}
               dangerouslySetInnerHTML={{
                 __html: `
 !function(f,b,e,v,n,t,s)
