@@ -15,6 +15,7 @@ import { EditableProposed } from "./EditableProposed";
 import { PublishPanel } from "./PublishPanel";
 import { PropListItem } from "./_components/PropListItem";
 import { FilterTabs } from "./_components/FilterTabs";
+import { optimizedImageUrl } from "@/lib/image-url";
 
 export const dynamic = "force-dynamic";
 
@@ -539,7 +540,7 @@ function ImageCard({ img }: { img: ProposedImageRow }) {
     <div className={`ah-img${img.is_primary ? " is-approved" : ""}`}>
       <div className="ah-img-frame">
         <Image
-          src={img.url}
+          src={optimizedImageUrl(img.url, 256)}
           alt={img.alt ?? ""}
           width={400}
           height={400}

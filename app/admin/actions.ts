@@ -433,7 +433,8 @@ export async function uploadProductImage(fd: FormData) {
   const { error: upErr } = await admin.storage
     .from("product-images")
     .upload(path, buf, {
-      cacheControl: "3600",
+      // Keys are never reused, so the object can be cached for a year.
+      cacheControl: "31536000",
       contentType: sniffed,
       upsert: false,
     });

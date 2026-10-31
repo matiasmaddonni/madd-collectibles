@@ -34,8 +34,19 @@ async function main() {
     }
   }
 
-  // 2. Every path referenced by a product_images row.
-  const { data: rows } = await sb.from("product_images").select("url");
+  // 2. Every path referenced by a product_images row. Paged: PostgREST
+  // caps a select at 1000 rows, and unread rows would look like orphans.
+  const rows: { url: string }[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await sb
+      .from("product_images")
+      .select("url")
+      .order("id")
+      .range(from, from + 999);
+    if (error) throw error;
+    rows.push(...(data ?? []));
+    if (!data || data.length < 1000) break;
+  }
   const referenced = new Set<string>();
   const marker = `/object/public/${BUCKET}/`;
   for (const r of rows ?? []) {

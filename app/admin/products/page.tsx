@@ -7,6 +7,7 @@ import { InlineStatus } from "./_components/InlineStatus";
 import { InlineCondition } from "./_components/InlineCondition";
 import { Pager } from "./_components/Pager";
 import { formatRelative } from "./_components/relativeTime";
+import { optimizedImageUrl } from "@/lib/image-url";
 
 export const dynamic = "force-dynamic";
 
@@ -276,7 +277,7 @@ export default async function ProductsListPage({
                       <div className="ah-thumb">
                         {primaryUrl ? (
                           /* eslint-disable-next-line @next/next/no-img-element */
-                          <img src={primaryUrl} alt="" />
+                          <img src={optimizedImageUrl(primaryUrl, 256)} alt="" />
                         ) : null}
                       </div>
                     </td>

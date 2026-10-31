@@ -12,6 +12,7 @@ import {
   rejectImageProposal,
 } from "../actions";
 import { EditableProposed } from "../EditableProposed";
+import { optimizedImageUrl } from "@/lib/image-url";
 import { PublishPanel } from "../PublishPanel";
 
 const TEXT_EDITABLE_FIELDS = new Set(["description", "sku"]);
@@ -268,7 +269,7 @@ export default async function ProposalDetail({ params }: PageProps) {
                 <div className="relative aspect-square bg-zinc-100">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={img.url}
+                    src={optimizedImageUrl(img.url, 256)}
                     alt={img.alt ?? ""}
                     className="w-full h-full object-contain"
                   />

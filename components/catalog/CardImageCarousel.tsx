@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { ZoomIn, X } from "lucide-react";
+import { optimizedImageUrl } from "@/lib/image-url";
 
 // Fullscreen image overlay with click-to-toggle 1x/2x zoom on desktop and
 // native pinch-zoom on mobile. Click outside the image OR the X button OR
@@ -56,7 +57,7 @@ function ZoomOverlay({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={src}
+          src={optimizedImageUrl(src, 1200)}
           alt={alt}
           className="max-w-full max-h-[90vh] object-contain select-none"
           draggable={false}
@@ -88,7 +89,18 @@ export function CardImageCarousel({
   enableZoom = false,
   priority = false,
 }: Props) {
-  const [idx, setIdx] = useState(0);
+  // Slides sit side by side, so the browser's lazy-load margin catches the
+  // off-screen ones too and every card used to download all its photos.
+  // `seen` keeps a slide's image mounted only once it has been shown.
+  const [{ idx, seen }, setView] = useState<{
+    idx: number;
+    seen: ReadonlySet<number>;
+  }>(() => ({ idx: 0, seen: new Set([0]) }));
+  const setIdx = (next: number | ((cur: number) => number)) =>
+    setView((v) => {
+      const n = typeof next === "function" ? next(v.idx) : next;
+      return { idx: n, seen: v.seen.has(n) ? v.seen : new Set(v.seen).add(n) };
+    });
   const [zoomed, setZoomed] = useState(false);
   const total = images.length;
   const anchorRef = useRef<HTMLSpanElement | null>(null);
@@ -163,15 +175,17 @@ export function CardImageCarousel({
             className="absolute inset-0 z-0 pointer-events-none transition-transform duration-500 ease-[cubic-bezier(0.22,0.61,0.36,1)] will-change-transform"
             style={{ transform: `translate3d(${offset}%, 0, 0)` }}
           >
-            <Image
-              src={src}
-              alt={alt}
-              fill
-              sizes={sizes}
-              className={`object-cover ${i === idx ? "product-img-zoom" : ""}`}
-              priority={priority && i === 0}
-              loading={priority && i === 0 ? "eager" : "lazy"}
-            />
+            {(i === idx || seen.has(i)) && (
+              <Image
+                src={src}
+                alt={alt}
+                fill
+                sizes={sizes}
+                className={`object-cover ${i === idx ? "product-img-zoom" : ""}`}
+                priority={priority && i === 0}
+                loading={priority && i === 0 ? "eager" : "lazy"}
+              />
+            )}
           </div>
         );
       })}

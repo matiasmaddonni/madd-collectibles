@@ -15,6 +15,7 @@ import Link from "next/link";
 import { getProductBySlug, getRelatedProducts } from "@/lib/queries";
 import { formatPrice } from "@/lib/format";
 import { formatShortDate } from "@/lib/date";
+import { optimizedImageUrl } from "@/lib/image-url";
 import {
   convertArsToUsd,
   convertUsdToArs,
@@ -57,9 +58,17 @@ export async function generateMetadata({
   const priceStr = formatPrice(product.price, product.currency);
   const description = `${product.name} -- ${product.lineName} (${product.conditionLabel}). Precio: ${priceStr}.`;
   // Square dimensions: product photos are 1:1 so social previews crop
-  // cleanly. Twitter card images mirror OG.
+  // cleanly. Twitter card images mirror OG. Served through the optimizer
+  // so link previews and ad crawlers don't pull the original from Supabase.
   const images = product.imageUrl
-    ? [{ url: product.imageUrl, width: 1200, height: 1200, alt: product.name }]
+    ? [
+        {
+          url: optimizedImageUrl(product.imageUrl, 1200),
+          width: 1200,
+          height: 1200,
+          alt: product.name,
+        },
+      ]
     : undefined;
   return {
     title: product.name,

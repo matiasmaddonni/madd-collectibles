@@ -144,7 +144,8 @@ export async function proposeImage(p: ImageProposal): Promise<{
   const { error: upErr } = await admin.storage
     .from("product-images")
     .upload(path, downloaded.buffer, {
-      cacheControl: "3600",
+      // Keys are never reused, so the object can be cached for a year.
+      cacheControl: "31536000",
       contentType: downloaded.contentType,
       upsert: false,
     });

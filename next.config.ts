@@ -40,22 +40,25 @@ const nextConfig: NextConfig = {
         pathname: "/storage/v1/object/public/**",
       },
     ],
-    // ZERO Vercel image transformations. We serve the originals straight
-    // from the Supabase Storage public CDN instead of going through
-    // Vercel's optimizer — the free tier caps optimizer transforms at
-    // 5000/month and a growing catalog burns through that. The stored
-    // files are already web-sized (median ~220 KB, crawler photos capped
-    // at 1024px, admin uploads ≤15 MB but typically a few hundred KB), so
-    // skipping resize/webp is an acceptable trade for staying free.
+    // Storage photos go through the Vercel optimizer. Serving the originals
+    // straight from Supabase (unoptimized) made every page view count as
+    // Supabase cached egress: 10.4 GB in the Oct 2026 cycle against a 5 GB
+    // Free quota. Now Vercel fetches each original once per width, caches
+    // the WebP for 31 days and serves every later visitor from its CDN.
     //
-    // The qualities/deviceSizes/formats knobs below are inert while
-    // unoptimized=true; kept so flipping back to the optimizer (e.g. on
-    // a paid plan) restores the tuned budget without re-deriving it.
-    unoptimized: true,
+    // Budget: Vercel Hobby includes 5K transformations/month (one per cache
+    // miss per src+width). Past that, NEW variants return 402 while cached
+    // ones keep working. ~1.1K photos x 2 to 3 widths stays under, so keep
+    // the width lists short: each extra width is another possible
+    // transformation and another fetch of the original from Supabase.
+    // 256 = thumbs (cart, admin), 640 = catalog cards, 1200 = detail,
+    // zoom, OG and retina desktop cards.
     formats: ["image/webp"],
     qualities: [75],
-    deviceSizes: [640, 828, 1080, 1920],
-    imageSizes: [96, 256],
+    deviceSizes: [640, 1200],
+    imageSizes: [256],
+    // Object keys are never reused (uploads get a timestamped name), so a
+    // cached variant never goes stale; the long TTL stops re-fetches.
     minimumCacheTTL: 2678400, // 31 days
   },
   async headers() {

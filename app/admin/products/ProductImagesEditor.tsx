@@ -6,6 +6,7 @@ import {
   setPrimaryImage,
   deleteProductImage,
 } from "../actions";
+import { optimizedImageUrl } from "@/lib/image-url";
 
 export type ImageRow = {
   id: string;
@@ -108,7 +109,7 @@ export function ProductImagesEditor({
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={img.url}
+              src={optimizedImageUrl(img.url, 256)}
               alt=""
               style={{
                 width: "100%",
