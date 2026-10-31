@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { CardImageCarousel } from "@/components/catalog/CardImageCarousel";
+import { SoldStamp, soldMediaClass } from "@/components/catalog/SoldStamp";
 import { ProductCard } from "@/components/catalog/ProductCard";
 import { ProductDetailCTA } from "./ProductDetailCTA";
 import { PdpViewTracker } from "./PdpViewTracker";
@@ -94,6 +95,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
   const nonce = (await headers()).get("x-nonce") ?? undefined;
 
   const isAvailable = product.status === "available" && product.stockQty > 0;
+  const isSold = product.status === "sold";
   const [related, usdToArs] = await Promise.all([
     product.productLineSlug
       ? getRelatedProducts(product.productLineSlug, product.id, 4)
@@ -111,6 +113,13 @@ export default async function ProductDetailPage({ params }: PageProps) {
           amount: convertArsToUsd(product.price, usdToArs),
           currency: "USD" as const,
         };
+
+  // Where "Ver similares" sends shoppers from a sold page: the related
+  // section below when it has stock, else the line's available catalog.
+  const similarHref =
+    related.length > 0
+      ? "#similares"
+      : `/catalogo?linea=${encodeURIComponent(product.productLineSlug)}&disp=available`;
 
   const productUrl = `${SITE_URL}/products/${product.slug}`;
   const jsonLd = {
@@ -197,7 +206,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
           <div className="grid grid-cols-1 md:grid-cols-5 gap-8 md:gap-12">
             <div className="md:col-span-3">
               <div
-                className={`group relative aspect-[4/5] bg-bg-surface border border-border-subtle rounded-sm overflow-hidden ${caseClassMap[product.caseGradient]}`}
+                className={`group relative aspect-[4/5] bg-bg-surface border border-border-subtle rounded-sm overflow-hidden ${caseClassMap[product.caseGradient]} ${isSold ? soldMediaClass : ""}`}
               >
                 <span className="top-accent" aria-hidden />
                 <div className="absolute inset-0 silhouette-figure" />
@@ -226,6 +235,8 @@ export default async function ProductDetailPage({ params }: PageProps) {
                 <span className="absolute top-4 left-4 z-10 pointer-events-none font-mono text-[10px] tracked-wide uppercase px-2 py-1 bg-bg-deep/70 backdrop-blur-sm border border-border-subtle text-text-secondary">
                   {product.conditionLabel}
                 </span>
+
+                {isSold && <SoldStamp size="lg" />}
               </div>
             </div>
 
@@ -234,7 +245,9 @@ export default async function ProductDetailPage({ params }: PageProps) {
                 <span className="font-mono text-xs uppercase tracked-wide text-accent">
                   {product.lineName}
                 </span>
-                <h1 className="font-display text-5xl md:text-6xl tracked-mid text-text-primary leading-[0.95]">
+                <h1
+                  className={`font-display text-5xl md:text-6xl tracked-mid leading-[0.95] ${isSold ? "text-text-secondary" : "text-text-primary"}`}
+                >
                   {product.name}
                 </h1>
                 {product.seriesName && (
@@ -246,25 +259,35 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
               <div className="flex items-end justify-between gap-4 border-t border-b border-border-subtle py-5">
                 <div className="flex flex-col gap-1">
-                  <span className="font-display text-4xl tracked-mid text-text-primary">
+                  <span
+                    className={`font-display text-4xl tracked-mid ${isSold ? "text-ink-3 line-through decoration-accent decoration-4" : "text-text-primary"}`}
+                  >
                     {formatPrice(product.price, product.currency)}
                   </span>
-                  <span className="font-mono text-[11px] uppercase tracked-wide text-text-secondary">
-                    ≈ {formatPrice(altCurrency.amount, altCurrency.currency)}
-                    <span className="text-text-secondary/70">
-                      {" "}(al {formatShortDate()}, Dólar Blue)
+                  {!isSold && (
+                    <span className="font-mono text-[11px] uppercase tracked-wide text-text-secondary">
+                      ≈ {formatPrice(altCurrency.amount, altCurrency.currency)}
+                      <span className="text-text-secondary/70">
+                        {" "}(al {formatShortDate()}, Dólar Blue)
+                      </span>
                     </span>
-                  </span>
+                  )}
                 </div>
-                <span className="flex items-center gap-2 font-mono text-[11px] uppercase tracked-wide">
-                  <span
-                    aria-hidden
-                    className={`inline-block w-2 h-2 rounded-full ${statusDotClass[product.status]}`}
-                  />
-                  <span className={statusTextClass[product.status]}>
+                {isSold ? (
+                  <span className="font-mono text-[11px] uppercase tracked-wide text-accent">
                     {product.statusLabel}
                   </span>
-                </span>
+                ) : (
+                  <span className="flex items-center gap-2 font-mono text-[11px] uppercase tracked-wide">
+                    <span
+                      aria-hidden
+                      className={`inline-block w-2 h-2 rounded-full ${statusDotClass[product.status]}`}
+                    />
+                    <span className={statusTextClass[product.status]}>
+                      {product.statusLabel}
+                    </span>
+                  </span>
+                )}
               </div>
 
               <div>
@@ -279,6 +302,8 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
               <ProductDetailCTA
                 disabled={!isAvailable}
+                sold={isSold}
+                similarHref={similarHref}
                 slug={product.slug}
                 item={{
                   id: product.id,
@@ -293,6 +318,8 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
               <StickyMobileCta
                 disabled={!isAvailable}
+                sold={isSold}
+                similarHref={similarHref}
                 slug={product.slug}
                 item={{
                   id: product.id,
@@ -336,7 +363,10 @@ export default async function ProductDetailPage({ params }: PageProps) {
         </article>
 
         {related.length > 0 && (
-          <section className="bg-bg-surface border-t border-border-subtle">
+          <section
+            id="similares"
+            className="bg-bg-surface border-t border-border-subtle scroll-mt-36"
+          >
             <div className="max-w-7xl mx-auto px-6 py-20 md:py-28">
               <header className="flex flex-col gap-2 mb-10 pl-4 border-l-2 border-accent">
                 <span className="font-mono text-xs uppercase tracked-wide text-text-secondary">

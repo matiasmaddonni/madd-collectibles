@@ -5,6 +5,7 @@ import type { HomeProductCard } from "@/lib/queries";
 import type { ProductStatus } from "@/lib/supabase/types";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
 import { CardImageCarousel } from "@/components/catalog/CardImageCarousel";
+import { SoldStamp, soldMediaClass } from "@/components/catalog/SoldStamp";
 
 const statusDotClass: Record<ProductStatus, string> = {
   available: "bg-green-500 dot-pulse",
@@ -35,6 +36,7 @@ export function ProductCard({
   priority?: boolean;
 }) {
   const href = `/products/${card.slug}`;
+  const isSold = card.status === "sold";
   return (
     <article className="group relative bg-bg-surface border border-border-subtle rounded-sm overflow-hidden flex flex-col">
       <span className="top-accent" aria-hidden />
@@ -52,7 +54,9 @@ export function ProductCard({
         className="absolute inset-0 z-[1]"
       />
 
-      <div className="relative aspect-square overflow-hidden">
+      <div
+        className={`relative aspect-square overflow-hidden ${isSold ? soldMediaClass : ""}`}
+      >
         <div
           className={`absolute inset-0 ${caseClassMap[card.caseGradient]} silhouette-figure`}
         />
@@ -83,22 +87,28 @@ export function ProductCard({
           {card.lineName}
         </span>
 
-        <AddToCartButton
-          disabled={card.status !== "available"}
-          item={{
-            id: card.id,
-            slug: card.slug,
-            name: card.name,
-            lineName: card.lineName,
-            price: card.price,
-            currency: card.currency,
-            imageUrl: card.imageUrl,
-          }}
-        />
+        {isSold ? (
+          <SoldStamp />
+        ) : (
+          <AddToCartButton
+            disabled={card.status !== "available"}
+            item={{
+              id: card.id,
+              slug: card.slug,
+              name: card.name,
+              lineName: card.lineName,
+              price: card.price,
+              currency: card.currency,
+              imageUrl: card.imageUrl,
+            }}
+          />
+        )}
       </div>
 
       <div className="flex flex-col gap-2 p-4 flex-1 group-hover:text-accent transition-colors">
-        <h3 className="font-body font-semibold text-text-primary leading-snug group-hover:text-accent transition-colors">
+        <h3
+          className={`font-body font-semibold leading-snug group-hover:text-accent transition-colors ${isSold ? "text-text-secondary" : "text-text-primary"}`}
+        >
           {card.name}
         </h3>
         <p className="font-body text-sm text-text-secondary flex items-baseline flex-wrap gap-x-1.5">
@@ -113,19 +123,27 @@ export function ProductCard({
           )}
         </p>
 
-        <div className="mt-auto flex items-end justify-between pt-3">
-          <span className="font-display text-2xl tracked-mid text-text-primary">
+        <div className="mt-auto flex items-end justify-between gap-3 pt-3">
+          <span
+            className={`font-display text-2xl tracked-mid ${isSold ? "text-ink-3 line-through decoration-accent decoration-[3px]" : "text-text-primary"}`}
+          >
             {formatPrice(card.price, card.currency)}
           </span>
-          <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracked-wide">
-            <span
-              aria-hidden
-              className={`inline-block w-2 h-2 rounded-full ${statusDotClass[card.status]}`}
-            />
-            <span className={statusTextClass[card.status]}>
-              {card.statusLabel}
+          {isSold ? (
+            <span className="font-mono text-[10px] uppercase tracked-wide text-accent text-right leading-tight">
+              Ya tiene dueño
             </span>
-          </span>
+          ) : (
+            <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracked-wide">
+              <span
+                aria-hidden
+                className={`inline-block w-2 h-2 rounded-full ${statusDotClass[card.status]}`}
+              />
+              <span className={statusTextClass[card.status]}>
+                {card.statusLabel}
+              </span>
+            </span>
+          )}
         </div>
       </div>
     </article>

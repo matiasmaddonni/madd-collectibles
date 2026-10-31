@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useCart, type CartItem } from "@/components/cart/CartProvider";
 import { trackEvent, trackMetaEvent } from "@/lib/analytics";
 import { waLink } from "@/lib/contact";
 import { SITE_URL } from "@/lib/env";
 import { formatPrice } from "@/lib/format";
+import { openSoldWhatsApp } from "./ProductDetailCTA";
 
 function WhatsAppIcon({ size = 16, color = "#25D366" }: { size?: number; color?: string }) {
   return (
@@ -19,13 +21,22 @@ type Props = {
   item: Omit<CartItem, "qty">;
   slug: string;
   disabled?: boolean;
+  // Sold pages swap the buy actions for "Escribinos" + "Ver similares".
+  sold?: boolean;
+  similarHref?: string;
 };
 
 // Mobile-only sticky bottom bar. Mirrors ProductDetailCTA actions so the
 // primary WhatsApp + secondary cart paths stay reachable while the user
 // scrolls past the in-flow CTA. Visibility is driven by an IntersectionObserver
 // watching a sentinel that ProductDetailCTA's parent renders inline.
-export function StickyMobileCta({ item, slug, disabled }: Props) {
+export function StickyMobileCta({
+  item,
+  slug,
+  disabled,
+  sold,
+  similarHref,
+}: Props) {
   const { add, has, open } = useCart();
   const inCart = has(item.id);
   const [visible, setVisible] = useState(false);
@@ -96,25 +107,46 @@ export function StickyMobileCta({ item, slug, disabled }: Props) {
         }`}
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <div className="flex items-stretch gap-2 px-4 py-3">
-          <button
-            type="button"
-            onClick={onWhatsApp}
-            disabled={disabled}
-            className="cta-primary flex-1 inline-flex items-center justify-center gap-2 h-11 rounded-sm font-mono uppercase tracked-wide text-xs text-text-primary disabled:opacity-50"
-          >
-            <WhatsAppIcon size={14} />
-            Consultar
-          </button>
-          <button
-            type="button"
-            onClick={onCart}
-            disabled={disabled}
-            className="px-4 h-11 inline-flex items-center justify-center rounded-sm border border-border-subtle font-mono uppercase tracked-wide text-[11px] text-text-primary disabled:opacity-50 hover:border-accent hover:text-accent transition-colors"
-          >
-            {inCart ? "Ver carrito" : "Agregar"}
-          </button>
-        </div>
+        {sold ? (
+          <div className="flex items-stretch gap-2 px-4 py-3">
+            <button
+              type="button"
+              onClick={() => openSoldWhatsApp(item, slug)}
+              className="cta-primary flex-1 inline-flex items-center justify-center gap-2 h-11 rounded-sm font-mono uppercase tracked-wide text-xs text-text-primary"
+            >
+              <WhatsAppIcon size={14} />
+              Escribinos
+            </button>
+            {similarHref && (
+              <Link
+                href={similarHref}
+                className="flex-1 inline-flex items-center justify-center h-11 rounded-sm border border-border-medium font-mono uppercase tracked-wide text-[11px] text-text-primary hover:border-accent hover:text-accent transition-colors"
+              >
+                Ver similares
+              </Link>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-stretch gap-2 px-4 py-3">
+            <button
+              type="button"
+              onClick={onWhatsApp}
+              disabled={disabled}
+              className="cta-primary flex-1 inline-flex items-center justify-center gap-2 h-11 rounded-sm font-mono uppercase tracked-wide text-xs text-text-primary disabled:opacity-50"
+            >
+              <WhatsAppIcon size={14} />
+              Consultar
+            </button>
+            <button
+              type="button"
+              onClick={onCart}
+              disabled={disabled}
+              className="px-4 h-11 inline-flex items-center justify-center rounded-sm border border-border-subtle font-mono uppercase tracked-wide text-[11px] text-text-primary disabled:opacity-50 hover:border-accent hover:text-accent transition-colors"
+            >
+              {inCart ? "Ver carrito" : "Agregar"}
+            </button>
+          </div>
+        )}
       </div>
     </>
   );

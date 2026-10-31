@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCart, type CartItem } from "@/components/cart/CartProvider";
 import { trackEvent, trackMetaEvent } from "@/lib/analytics";
 import { waLink } from "@/lib/contact";
@@ -18,9 +19,18 @@ type Props = {
   item: Omit<CartItem, "qty">;
   slug: string;
   disabled?: boolean;
+  // Sold pages swap the buy actions for "Escribinos" + "Ver similares".
+  sold?: boolean;
+  similarHref?: string;
 };
 
-export function ProductDetailCTA({ item, slug, disabled }: Props) {
+export function ProductDetailCTA({
+  item,
+  slug,
+  disabled,
+  sold,
+  similarHref,
+}: Props) {
   const { add, has, open } = useCart();
   const inCart = has(item.id);
 
@@ -59,6 +69,38 @@ export function ProductDetailCTA({ item, slug, disabled }: Props) {
     add({ ...item, slug });
   };
 
+  if (sold) {
+    return (
+      <div className="flex flex-col gap-4 p-6 bg-bg-surface border border-border-subtle rounded-sm">
+        <h2 className="font-display text-5xl tracked-mid text-text-primary leading-[0.9]">
+          Ya tiene dueño<span className="text-accent">.</span>
+        </h2>
+        <p className="font-body text-text-secondary leading-relaxed">
+          ¿Buscás la tuya? Escribinos y te mostramos por chat lo que tenemos
+          parecido, con fotos reales.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => openSoldWhatsApp(item, slug)}
+            className="cta-primary inline-flex items-center justify-center gap-2 px-6 h-12 rounded-sm font-mono uppercase tracked-wide text-sm text-text-primary"
+          >
+            <WhatsAppIcon size={16} />
+            Escribinos
+          </button>
+          {similarHref && (
+            <Link
+              href={similarHref}
+              className="inline-flex items-center justify-center px-6 h-12 rounded-sm font-mono uppercase tracked-wide text-xs border border-border-medium text-text-primary hover:border-accent hover:text-accent transition-colors"
+            >
+              Ver similares
+            </Link>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   if (disabled) {
     return (
       <div className="flex flex-col gap-3">
@@ -92,4 +134,20 @@ export function ProductDetailCTA({ item, slug, disabled }: Props) {
       </button>
     </div>
   );
+}
+
+// Sold-page WhatsApp: asks for something similar instead of "¿Sigue
+// disponible?". Same event as the regular product button so admin
+// metrics keep counting it as a product lead.
+export function openSoldWhatsApp(item: Omit<CartItem, "qty">, slug: string) {
+  trackEvent("whatsapp_click_product", {
+    slug,
+    productName: item.name,
+    price: item.price,
+    currency: item.currency,
+    line: item.lineName,
+  });
+  const url = `${SITE_URL}/products/${slug}`;
+  const msg = `Hola Matias, vi que "${item.name}" ya se vendió. ¿Tenés algo parecido?\n${url}`;
+  window.open(waLink(msg), "_blank");
 }

@@ -366,6 +366,11 @@ export async function getCatalogProducts(
     q = q.or(orParts.join(","));
   }
 
+  // Sold figures always sink below what's still for sale, whatever the
+  // chosen sort. status is plain text, so alphabetical order already reads
+  // available < reserved < sold.
+  q = q.order("status", { ascending: true });
+
   switch (f.sort) {
     case "price-asc":
       q = q.order("price", { ascending: true });
