@@ -51,11 +51,9 @@ export type HomeCategory = {
 };
 
 const CONDITION_LABEL: Record<ProductCondition, string> = {
-  mint_sealed: "Sellado",
-  mint_open: "Como Nuevo",
-  near_mint: "Loose",
-  good: "Used",
-  fair: "Detalles",
+  mint_sealed: "Nuevo",
+  mint_open: "Usado como nuevo",
+  fair: "Usado detalles",
 };
 
 const STATUS_LABEL: Record<ProductStatus, string> = {
@@ -123,7 +121,9 @@ function toCard(row: Row): HomeProductCard {
     lineName: productLine?.name ?? "—",
     caseGradient:
       (productLine && LINE_GRADIENT[productLine.slug]) ?? "cool",
-    conditionLabel: CONDITION_LABEL[row.condition],
+    // ?? guards rows still on a retired tier (near_mint / good) until
+    // migration 020 runs.
+    conditionLabel: CONDITION_LABEL[row.condition] ?? "Usado",
     status: row.status,
     statusLabel: STATUS_LABEL[row.status],
     price: Number(row.price),
@@ -440,7 +440,11 @@ export async function getCatalogFacets(): Promise<{
       if (cur) cur.count++;
       else seriesMap.set(ser.slug, { slug: ser.slug, name: ser.name, count: 1 });
     }
-    condMap.set(r.condition, (condMap.get(r.condition) ?? 0) + 1);
+    // Skip rows on a retired tier (pre-migration 020) so the filter only
+    // offers values it can label.
+    if (CONDITION_LABEL[r.condition]) {
+      condMap.set(r.condition, (condMap.get(r.condition) ?? 0) + 1);
+    }
   }
 
   const lines = [...lineMap.values()].sort((a, b) => a.name.localeCompare(b.name));

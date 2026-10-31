@@ -32,7 +32,7 @@ type SearchParams = {
 };
 
 type Status = "draft" | "available" | "reserved" | "sold";
-type Cond = "mint_sealed" | "mint_open" | "near_mint" | "good" | "fair";
+type Cond = "mint_sealed" | "mint_open" | "fair";
 
 type Row = {
   id: string;

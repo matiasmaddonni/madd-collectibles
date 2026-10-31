@@ -4,22 +4,18 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { patchProduct } from "../../actions";
 
-type Cond = "mint_sealed" | "mint_open" | "near_mint" | "good" | "fair";
+type Cond = "mint_sealed" | "mint_open" | "fair";
 
 const OPTIONS: { value: Cond; label: string }[] = [
-  { value: "mint_sealed", label: "mint sealed" },
-  { value: "mint_open", label: "mint open" },
-  { value: "near_mint", label: "near mint" },
-  { value: "good", label: "good" },
-  { value: "fair", label: "fair" },
+  { value: "mint_sealed", label: "nuevo" },
+  { value: "mint_open", label: "como nuevo" },
+  { value: "fair", label: "detalles" },
 ];
 
 const SHORT: Record<Cond, string> = {
-  mint_sealed: "mint·s",
-  mint_open: "mint·o",
-  near_mint: "n.mint",
-  good: "good",
-  fair: "fair",
+  mint_sealed: "nuevo",
+  mint_open: "c.nuevo",
+  fair: "detalles",
 };
 
 export function InlineCondition({

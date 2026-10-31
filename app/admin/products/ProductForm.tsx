@@ -30,7 +30,11 @@ export type ProductInitial = {
   figure_count?: number | null;
 };
 
-const CONDITIONS = ["mint_sealed", "mint_open", "near_mint", "good", "fair"];
+const CONDITIONS = [
+  { value: "mint_sealed", label: "Nuevo (sellado)" },
+  { value: "mint_open", label: "Usado como nuevo" },
+  { value: "fair", label: "Usado detalles" },
+];
 const STATUSES = ["draft", "available", "reserved", "sold"];
 
 function slugify(s: string) {
@@ -181,8 +185,8 @@ export function ProductForm({
           className="ah-input"
         >
           {CONDITIONS.map((c) => (
-            <option key={c} value={c}>
-              {c}
+            <option key={c.value} value={c.value}>
+              {c.label}
             </option>
           ))}
         </select>

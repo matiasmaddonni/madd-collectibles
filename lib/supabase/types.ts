@@ -1,4 +1,5 @@
-export type ProductCondition = 'mint_sealed' | 'mint_open' | 'near_mint' | 'good' | 'fair'
+// Three buyer-facing tiers; see migration 020 for what each one means.
+export type ProductCondition = 'mint_sealed' | 'mint_open' | 'fair'
 export type ProductStatus = 'available' | 'reserved' | 'sold'
 export type Currency = 'USD' | 'ARS'
 

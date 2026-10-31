@@ -32,13 +32,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/catalogo" },
 };
 
-const VALID_CONDITIONS: ProductCondition[] = [
-  "mint_sealed",
-  "mint_open",
-  "near_mint",
-  "good",
-  "fair",
-];
+const VALID_CONDITIONS: ProductCondition[] = ["mint_sealed", "mint_open", "fair"];
 
 const VALID_STATUSES = ["available", "reserved", "sold"] as const;
 type PublicStatus = (typeof VALID_STATUSES)[number];

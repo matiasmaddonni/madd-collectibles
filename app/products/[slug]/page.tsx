@@ -138,7 +138,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
       priceCurrency: product.currency,
       availability: SCHEMA_AVAILABILITY[product.status],
       itemCondition:
-        product.conditionLabel === "Sellado"
+        product.conditionLabel === "Nuevo"
           ? "https://schema.org/NewCondition"
           : "https://schema.org/UsedCondition",
     },

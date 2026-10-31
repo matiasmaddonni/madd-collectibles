@@ -102,13 +102,7 @@ type ProductPayload = {
 const SLUG_RE = /^[a-z0-9-]+$/;
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const CONDITIONS = new Set([
-  "mint_sealed",
-  "mint_open",
-  "near_mint",
-  "good",
-  "fair",
-]);
+const CONDITIONS = new Set(["mint_sealed", "mint_open", "fair"]);
 const STATUSES = new Set(["draft", "available", "reserved", "sold"]);
 
 function parseProductForm(fd: FormData): ProductPayload {
@@ -241,13 +235,7 @@ export async function updateProduct(fd: FormData) {
 // Lean partial update for inline edits (price / status / condition). Avoids
 // re-running parseProductForm, which expects the full edit form payload.
 const PATCH_STATUSES = new Set(["draft", "available", "reserved", "sold"]);
-const PATCH_CONDITIONS = new Set([
-  "mint_sealed",
-  "mint_open",
-  "near_mint",
-  "good",
-  "fair",
-]);
+const PATCH_CONDITIONS = new Set(["mint_sealed", "mint_open", "fair"]);
 export async function patchProduct(fd: FormData) {
   await requireAdmin();
   const id = fd.get("id") as string;
